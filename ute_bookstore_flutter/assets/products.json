@@ -1,0 +1,26 @@
+[
+  {
+    "name": "Sách Flutter Nâng Cao",
+    "description": "Học cách xây dựng các ứng dụng phức tạp với kiến trúc Clean Architecture và Provider.",
+    "price": 350000,
+    "image": "background.jpg"
+  },
+  {
+    "name": "Dart Design Patterns",
+    "description": "Áp dụng các mẫu thiết kế kinh điển vào ngôn ngữ lập trình Dart.",
+    "price": 280000,
+    "image": "background.jpg"
+  },
+  {
+    "name": "UI/UX Mobile Design",
+    "description": "Bí quyết tạo ra giao diện người dùng tuyệt đẹp và trải nghiệm mượt mà.",
+    "price": 420000,
+    "image": "background.jpg"
+  },
+  {
+    "name": "Firebase for Flutter",
+    "description": "Tích hợp Backend hoàn chỉnh cho ứng dụng di động của bạn.",
+    "price": 310000,
+    "image": "background.jpg"
+  }
+]
