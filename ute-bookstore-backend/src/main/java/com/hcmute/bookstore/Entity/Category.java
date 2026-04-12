@@ -10,7 +10,7 @@ import java.util.List;
 public class Category {
 
     @Id
-    @Column(name = "categoryId", length = 10)
+    @Column(name = "categoryId", length = 50)
     private String categoryId;
 
     @Column(name = "categoryName", length = 50)

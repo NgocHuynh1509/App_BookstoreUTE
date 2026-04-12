@@ -13,25 +13,26 @@ public class OrderDetail {
     @EmbeddedId
     private OrderdetailId orderDetailId;
 
-    @Column(name = "quantity")
+    @Column(name = "quantity", nullable = false)
     @NotNull
-    @Min(0)
+    @Min(1) // Số lượng thường phải từ 1 trở lên
     private int quantity;
 
-    @Column(name = "unitPrice", precision = 12, scale = 0)
+    @Column(name = "unitPrice", precision = 12, scale = 0, nullable = false)
     @NotNull
     @Min(0)
     private BigDecimal unitPrice;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @MapsId("orderId")
-    @JoinColumn(name = "orderId", referencedColumnName = "orderId", columnDefinition = "VARCHAR(10)")
+    @JoinColumn(name = "orderId", referencedColumnName = "orderId")
     @NotNull
     private Orders order;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @MapsId("bookId")
-    @JoinColumn(name = "bookId", referencedColumnName = "bookId", columnDefinition = "VARCHAR(10)")
+    @JoinColumn(name = "bookId", referencedColumnName = "bookId")
+    @NotNull // Thêm NotNull để khớp với SQL
     private Books book;
 
     public OrderDetail() {

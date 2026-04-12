@@ -15,7 +15,7 @@ import java.util.Date;
 public class Review {
 
     @Id
-    @Column(name = "reviewId", length = 10)
+    @Column(name = "reviewId", length = 50)
     private String reviewId;
 
     @Column(name = "rating")

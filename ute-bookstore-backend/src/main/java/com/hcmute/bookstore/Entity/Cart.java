@@ -15,7 +15,7 @@ import java.util.List;
 public class Cart {
 
     @Id
-    @Column(name = "cartId", length = 10)
+    @Column(name = "cartId", length = 50)
     private String cartId;
 
     @Column(name = "quantity")

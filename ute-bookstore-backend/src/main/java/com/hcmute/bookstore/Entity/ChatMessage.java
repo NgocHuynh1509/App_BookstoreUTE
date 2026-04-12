@@ -13,8 +13,8 @@ import java.time.LocalDateTime;
 public class ChatMessage {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @Column(name = "id", length = 50) // Đổi sang String
+    private String id;
 
     // user đang chat
     private String userName;

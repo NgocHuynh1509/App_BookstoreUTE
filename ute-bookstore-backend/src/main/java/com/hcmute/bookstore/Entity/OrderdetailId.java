@@ -9,10 +9,10 @@ import java.math.BigDecimal;
 @Embeddable
 public class OrderdetailId implements Serializable {
 
-    @Column(name = "orderId", length = 10)
+    @Column(name = "orderId", length = 50)
     private String orderId;
 
-    @Column(name = "bookId", length =  10)
+    @Column(name = "bookId", length =  50)
     private String bookId;
 
     public OrderdetailId() {
