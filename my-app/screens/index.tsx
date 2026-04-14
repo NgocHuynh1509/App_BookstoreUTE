@@ -188,7 +188,8 @@ export default function LoginScreen({ navigation }: any) {
       console.log("LOGIN RESPONSE:", res.data);
 
       await saveUser({
-        userName: res.data.userName,
+        id: res.data.userId,
+        username: res.data.userName,
         role: res.data.role,
         token: res.data.token,
       });

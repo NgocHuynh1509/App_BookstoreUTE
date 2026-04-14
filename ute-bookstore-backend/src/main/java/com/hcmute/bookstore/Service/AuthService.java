@@ -185,6 +185,7 @@ public class AuthService {
 
         return new AuthResponse(
                 token,
+                user.getCustomer().getCustomerId(),
                 user.getUserName(),   // vẫn trả username nếu m muốn app dùng
                 user.getRole(),
                 "Login thành công"
