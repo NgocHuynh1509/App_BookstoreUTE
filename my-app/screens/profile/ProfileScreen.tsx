@@ -16,8 +16,7 @@ import Constants from "expo-constants";
 import { useFocusEffect } from "@react-navigation/native";
 import { RefreshControl } from "react-native";
 
-const BASE_URL = Constants.expoConfig.extra.BASE_URL;
-
+const BASE_URL = Constants.expoConfig.extra.API_URL;
 // ─── Palette — light blue ─────────────────────────────────────────────────────
 const C = {
   primary:     "#1565C0",   // deep blue
@@ -74,8 +73,9 @@ function MenuItem({ icon, text, onPress, noBorder, badge }) {
 // ─── MAIN ─────────────────────────────────────────────────────────────────────
 export default function ProfileScreen() {
   const navigation = useNavigation<any>();
-  const { user, loadUser } = useAuth();
+  const { user, loadUser, loadingUser, logout } = useAuth();
   const [refreshing, setRefreshing] = useState(false);
+
 
   console.log("USER DATA FROM CONTEXT:", user);
   console.log("AVATAR URL:", `${BASE_URL}/uploads/${user?.avatar}`);
@@ -239,7 +239,14 @@ export default function ProfileScreen() {
         </View>
 
         {/* ── LOGOUT ───────────────────────────────────────────────── */}
-        <TouchableOpacity style={styles.logoutBtn} activeOpacity={0.85}>
+        <TouchableOpacity
+            style={styles.logoutBtn}
+            activeOpacity={0.85}
+            onPress={async () => {
+              await logout();
+              navigation.navigate("Login");
+            }}
+        >
           <Ionicons name="log-out-outline" size={20} color={C.primaryMid} />
           <Text style={styles.logoutTxt}>Đăng xuất</Text>
         </TouchableOpacity>

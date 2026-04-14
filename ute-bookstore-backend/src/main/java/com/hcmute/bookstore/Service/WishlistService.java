@@ -7,6 +7,7 @@ import com.hcmute.bookstore.Repository.BooksRepository;
 import com.hcmute.bookstore.Repository.UsersRepository;
 import com.hcmute.bookstore.Repository.WishlistRepository;
 import com.hcmute.bookstore.dto.WishlistResponse;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -30,6 +31,7 @@ public class WishlistService {
                 .toList();
     }
 
+    @Transactional
     public String addWishlist(String email, String bookId) {
         Users user = usersRepository.findByCustomer_Email(email)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy user"));
@@ -51,6 +53,7 @@ public class WishlistService {
         return "Đã thêm vào wishlist";
     }
 
+    @Transactional
     public String removeWishlist(String email, String bookId) {
         Users user = usersRepository.findByCustomer_Email(email)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy user"));

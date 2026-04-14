@@ -1,9 +1,10 @@
-
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useEffect, useState } from "react";
+import api from "../services/api";
 
 export const useAuth = () => {
   const [user, setUser] = useState<any>(null);
+  const [loadingUser, setLoadingUser] = useState(true);
 
   useEffect(() => {
     loadUser();
@@ -11,12 +12,46 @@ export const useAuth = () => {
 
   const loadUser = async () => {
     try {
-      const savedUser = await AsyncStorage.getItem("user");
-      if (savedUser) {
-        setUser(JSON.parse(savedUser));
+      setLoadingUser(true);
+
+      const token = await AsyncStorage.getItem("token");
+      console.log("LOAD USER TOKEN:", token);
+
+      if (!token) {
+        setUser(null);
+        return;
       }
-    } catch (error) {
+
+      const res = await api.get("/profile", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      console.log("PROFILE RESPONSE:", res.data);
+
+      const profile = {
+        id: res.data.id,
+        username: res.data.username ?? res.data.userName,
+        fullName: res.data.fullName,
+        email: res.data.email,
+        phone: res.data.phone,
+        address: res.data.address,
+        avatar: res.data.avatar,
+        reward_points: res.data.reward_points ?? res.data.rewardPoints ?? 0,
+        role: res.data.role,
+        token,
+      };
+
+      await AsyncStorage.setItem("user", JSON.stringify(profile));
+      setUser(profile);
+    } catch (error: any) {
+      console.log("LOAD USER STATUS:", error?.response?.status);
+      console.log("LOAD USER DATA:", error?.response?.data);
       console.log("Load user failed:", error);
+      setUser(null);
+    } finally {
+      setLoadingUser(false);
     }
   };
 
@@ -25,8 +60,18 @@ export const useAuth = () => {
       if (data.token) {
         await AsyncStorage.setItem("token", data.token);
       }
-      await AsyncStorage.setItem("user", JSON.stringify(data));
-      setUser(data);
+
+      const basicUser = {
+        id: data.id ?? data.userId,
+        username: data.username ?? data.userName,
+        role: data.role,
+        token: data.token,
+      };
+
+      await AsyncStorage.setItem("user", JSON.stringify(basicUser));
+      setUser(basicUser);
+
+      await loadUser();
     } catch (error) {
       console.log("Save user failed:", error);
     }
@@ -38,5 +83,5 @@ export const useAuth = () => {
     setUser(null);
   };
 
-  return { user, saveUser, logout, loadUser };
+  return { user, saveUser, logout, loadUser, loadingUser };
 };

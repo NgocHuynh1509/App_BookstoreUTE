@@ -8,6 +8,7 @@ import { useRoute, useNavigation } from "@react-navigation/native";
 import api from "../services/api";
 // ─── KEY IMPORT: lưu lịch sử xem ────────────────────────────────────────────
 import { saveRecentlyViewed } from "../services/recentlyViewed";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const { width: SW, height: SH } = Dimensions.get("window");
 
@@ -154,11 +155,22 @@ export default function BookDetail() {
   };
 
   const loadFavoriteState = async () => {
-    if (!user?.token) return;
     try {
-      const res = await api.get("/wishlist");
+      const token = await AsyncStorage.getItem("token");
+      console.log("BOOK DETAIL TOKEN:", token);
+
+      if (!token) return;
+
+      const res = await api.get("/wishlist", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
       setIsFavorite(res.data.some((item: any) => item.book_id == id));
-    } catch (err) {
+    } catch (err: any) {
+      console.log("WISHLIST STATUS:", err?.response?.status);
+      console.log("WISHLIST DATA:", err?.response?.data);
       console.log("❌ Lỗi load wishlist:", err);
     }
   };
@@ -173,7 +185,9 @@ export default function BookDetail() {
   }, [id, user?.token]);
 
   const toggleFavorite = async () => {
-    if (!user?.token) {
+    const token = await AsyncStorage.getItem("token");
+
+    if (!token) {
       Alert.alert("Thông báo", "Vui lòng đăng nhập để dùng wishlist");
       navigation.navigate("Login");
       return;
@@ -181,13 +195,27 @@ export default function BookDetail() {
 
     try {
       if (isFavorite) {
-        await api.delete(`/wishlist/${id}`);
+        await api.delete(`/wishlist/${id}`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
         setIsFavorite(false);
       } else {
-        await api.post("/wishlist", { book_id: id });
+        await api.post(
+            "/wishlist",
+            { book_id: id },
+            {
+              headers: {
+                Authorization: `Bearer ${token}`,
+              },
+            }
+        );
         setIsFavorite(true);
       }
-    } catch (error) {
+    } catch (error: any) {
+      console.log("TOGGLE STATUS:", error?.response?.status);
+      console.log("TOGGLE DATA:", error?.response?.data);
       console.log("Lỗi toggle:", error);
     }
   };
