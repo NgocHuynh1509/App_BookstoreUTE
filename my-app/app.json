@@ -7,7 +7,7 @@
     "icon": "./assets/images/icon.png",
     "userInterfaceStyle": "automatic",
     "extra": {
-      "API_URL": "http://10.139.68.63:8080"
+      "API_URL": "http://172.16.0.167:8080"
     },
     "ios": {
       "supportsTablet": true

@@ -154,27 +154,51 @@ export default function BookDetail() {
   };
 
   const loadFavoriteState = async () => {
+    if (!user?.token) return;
     try {
       const res = await api.get("/wishlist");
       setIsFavorite(res.data.some((item: any) => item.book_id == id));
-    } catch (err) { console.log("❌ Lỗi load wishlist:", err); }
+    } catch (err) {
+      console.log("❌ Lỗi load wishlist:", err);
+    }
   };
+
 
   useEffect(() => { loadReviews(); },       [id]);
   useEffect(() => { loadBook(); },          [id]);
-  useEffect(() => { loadFavoriteState(); }, [id]);
+  useEffect(() => {
+    if (user?.token) {
+      loadFavoriteState();
+    }
+  }, [id, user?.token]);
 
   const toggleFavorite = async () => {
+    if (!user?.token) {
+      Alert.alert("Thông báo", "Vui lòng đăng nhập để dùng wishlist");
+      navigation.navigate("Login");
+      return;
+    }
+
     try {
-      if (isFavorite) { await api.delete(`/wishlist/${id}`); setIsFavorite(false); }
-      else { await api.post("/wishlist", { book_id: id }); setIsFavorite(true); }
-    } catch (error) { console.log("Lỗi toggle:", error); }
+      if (isFavorite) {
+        await api.delete(`/wishlist/${id}`);
+        setIsFavorite(false);
+      } else {
+        await api.post("/wishlist", { book_id: id });
+        setIsFavorite(true);
+      }
+    } catch (error) {
+      console.log("Lỗi toggle:", error);
+    }
   };
 
   const handleAddToCart = async () => {
     if (!book || book.stock <= 0) { Alert.alert("Thông báo", "Sản phẩm hiện đã hết hàng."); return; }
     try {
-      await api.post("/cart/add", { userId: user.id, bookId: book.id, quantity });
+      await api.post("/cart/add", {
+        bookId: book.id,
+        quantity,
+      });
       Alert.alert("✓ Thành công", "Đã thêm vào giỏ hàng!");
     } catch (error: any) { Alert.alert("Lỗi", error.response?.data?.message || "Có lỗi xảy ra"); }
   };

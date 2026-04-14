@@ -45,12 +45,17 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable())
                 .sessionManagement(sess -> sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/auth/**",
+                        .requestMatchers(
+                                "/auth/**",
                                 "/books/**",
                                 "/categories/**",
-                                "/profile",
-                                "/cart/**"
-                                ).permitAll()
+                                "/reviews/book/**"
+                        ).permitAll()
+                        .requestMatchers(
+                                "/wishlist/**",
+                                "/cart/**",
+                                "/profile"
+                        ).authenticated()
                         .anyRequest().authenticated()
                 )
                 .authenticationProvider(authenticationProvider())

@@ -9,5 +9,7 @@ import java.util.List;
 @Repository
 public interface ReviewRepository extends JpaRepository<Review, String> {
 
+    List<Review> findByBook_BookId(String bookId);
+    int countByBook_BookId(String bookId);
 
 }
