@@ -3,6 +3,7 @@
   <component name="ProjectModuleManager">
     <modules>
       <module fileurl="file://$PROJECT_DIR$/.idea/mobie-nangcao.iml" filepath="$PROJECT_DIR$/.idea/mobie-nangcao.iml" />
+      <module fileurl="file://$PROJECT_DIR$/ute-bookstore-backend/ute-bookstore-backend.iml" filepath="$PROJECT_DIR$/ute-bookstore-backend/ute-bookstore-backend.iml" />
     </modules>
   </component>
 </project>

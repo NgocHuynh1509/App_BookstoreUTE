@@ -1,7 +1,7 @@
 import {
   View, Text, Image, TouchableOpacity, ScrollView,
   ActivityIndicator, StyleSheet, StatusBar, Modal,
-  FlatList, Pressable,
+  FlatList, Pressable,Alert, Platform
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
@@ -9,11 +9,18 @@ import { useAuth } from "../hooks/useAuth";
 import { useEffect, useState, useCallback } from "react";
 import { useFocusEffect } from "@react-navigation/native";
 import api from "../services/api";
+import Constants from "expo-constants";
+import axios from "axios";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+
 import {
   getRecentlyViewed,
   clearRecentlyViewed,
   type RecentBook,
 } from "../services/recentlyViewed";
+
+const API_URL = Constants.expoConfig?.extra?.API_URL;
+
 
 // ─── Palette ──────────────────────────────────────────────────────────────────
 const C = {
@@ -223,13 +230,13 @@ function BookCardH({ item, onPress, onLongPress, onAddToCart, onBuyNow }: any) {
 
         <View style={s.cardActionRow}>
           <TouchableOpacity
-              style={s.cartBtn}
-              onPress={() => onAddToCart(item)}
-              activeOpacity={0.85}
-          >
-            <Ionicons name="cart-outline" size={14} color={C.primaryMid} />
-            <Text style={s.cartBtnTxt}>Thêm</Text>
-          </TouchableOpacity>
+                    style={s.cartBtn}
+                    onPress={() => onAddToCart(item)} // Gọi hàm truyền từ cha xuống
+                    activeOpacity={0.85}
+                  >
+                    <Ionicons name="cart-outline" size={14} color={C.primaryMid} />
+                    <Text style={s.cartBtnTxt}>Thêm</Text>
+                  </TouchableOpacity>
 
           <TouchableOpacity
               style={s.buyBtn}
@@ -330,6 +337,8 @@ function BookCardG({ item, onPress, onLongPress, showDiscount, onAddToCart, onBu
           </View>
         </View>
       </TouchableOpacity>
+
+
   );
 }
 // ─── MAIN ─────────────────────────────────────────────────────────────────────
@@ -349,6 +358,17 @@ export default function HomeScreen({ navigation }: any) {
   const [page, setPage]                           = useState(1);
   const [hasMore, setHasMore]                     = useState(true);
   const [loadingMore, setLoadingMore]             = useState(false);
+  // State quản lý Modal
+  const [showQtyModal, setShowQtyModal] = useState(false);
+  const [selectedItem, setSelectedItem] = useState<any>(null);
+  const [quantity, setQuantity] = useState(1);
+
+  const handleOpenModal = (item: any) => {
+    console.log("Dữ liệu sách chọn:", item); // Xem trong terminal xem nó là 'quantity' hay 'stock'
+    setSelectedItem(item);
+    setQuantity(1);
+    setShowQtyModal(true);
+  };
 
   // ── Recently viewed: reload khi focus lại màn hình
   const [recentBooks, setRecentBooks] = useState<RecentBook[]>([]);
@@ -364,20 +384,38 @@ export default function HomeScreen({ navigation }: any) {
   const [selectedBook, setSelectedBook] = useState<any>(null);
   const handleLongPress = (item: any) => { setSelectedBook(item); setSheetVisible(true); };
 
-  const handleAddToCart = async (item: any) => {
+  const confirmAddToCart = async () => {
     try {
-      if (!user?.token) {
-        Alert.alert("Thông báo", "Vui lòng đăng nhập để thêm vào giỏ hàng");
-        navigation.navigate("Login");
+      const token = await AsyncStorage.getItem("token");
+      if (!token) {
+        Alert.alert("Lỗi", "Bạn cần đăng nhập để thực hiện thao tác này");
         return;
       }
 
-      Alert.alert("Thành công", `Đã thêm "${item.title}" vào giỏ hàng`);
+      const payload = {
+        bookId: selectedItem.id, // Đã đổi sang .id cho khớp với log
+        quantity: quantity,
+      };
+
+      console.log("Đang gửi payload:", payload);
+
+      const response = await axios.post(`${API_URL}/cart/add`, payload, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      if (response.status === 200 || response.status === 201) {
+        Alert.alert("Thành công", "Đã thêm vào giỏ hàng");
+        setShowQtyModal(false);
+      }
     } catch (err: any) {
-      Alert.alert(
-          "Lỗi",
-          err?.response?.data?.message || "Không thể thêm vào giỏ hàng"
-      );
+      // CHỈ KHAI BÁO MỘT LẦN DUY NHẤT Ở ĐÂY
+      console.log("Chi tiết lỗi API:", err.response?.data);
+
+      const errorMsg = err.response?.data?.error ||
+                       err.response?.data?.message ||
+                       "Không thể thêm vào giỏ hàng";
+
+      Alert.alert("Lỗi", errorMsg);
     }
   };
 
@@ -563,7 +601,7 @@ export default function HomeScreen({ navigation }: any) {
                                 item={item}
                                 onPress={() => navigation.navigate("BookDetail", { id: item.id })}
                                 onLongPress={() => handleLongPress(item)}
-                                onAddToCart={handleAddToCart}
+                                onAddToCart={handleOpenModal}
                                 onBuyNow={handleBuyNow}
                             />
                         )}
@@ -581,7 +619,7 @@ export default function HomeScreen({ navigation }: any) {
                             item={item}
                             onPress={() => navigation.navigate("BookDetail", { id: item.id })}
                             onLongPress={() => handleLongPress(item)}
-                            onAddToCart={handleAddToCart}
+                            onAddToCart={handleOpenModal}
                             onBuyNow={handleBuyNow}
                             showDiscount={false}
                         />
@@ -598,7 +636,7 @@ export default function HomeScreen({ navigation }: any) {
                           item={item}
                           onPress={() => navigation.navigate("BookDetail", { id: item.id })}
                           onLongPress={() => handleLongPress(item)}
-                          onAddToCart={handleAddToCart}
+                          onAddToCart={handleOpenModal}
                           onBuyNow={handleBuyNow}
                           showDiscount
                       />
@@ -620,6 +658,59 @@ export default function HomeScreen({ navigation }: any) {
         onClose={() => setSheetVisible(false)}
         onNavigate={id => navigation.navigate("BookDetail", { id })}
       />
+      {/* --- MODAL CHỌN SỐ LƯỢNG --- */}
+            <Modal visible={showQtyModal} transparent animationType="slide">
+              <View style={s.modalOverlay}>
+                <View style={s.modalContent}>
+
+                  {/* Thông tin nhanh sản phẩm */}
+                  <View style={s.modalHeader}>
+                    <Image
+                      source={{ uri: selectedItem?.cover_image?.startsWith('http') ? selectedItem.cover_image : `${API_URL}/uploads/${selectedItem?.cover_image}` }}
+                      style={s.modalImage}
+                    />
+                    <View style={{ flex: 1, justifyContent: 'center' }}>
+                      <Text style={s.modalPrice}>{Number(selectedItem?.price).toLocaleString('vi-VN')}đ</Text>
+                      <Text style={s.modalStock}>Kho: {selectedItem?.quantity || 0}</Text>
+                    </View>
+                    <TouchableOpacity onPress={() => setShowQtyModal(false)}>
+                      <Ionicons name="close-circle" size={28} color="#CCC" />
+                    </TouchableOpacity>
+                  </View>
+
+                  {/* Bộ tăng giảm số lượng */}
+                  <View style={s.qtyRow}>
+                    <Text style={{ fontSize: 16, fontWeight: '600' }}>Số lượng</Text>
+                    <View style={s.qtyStepper}>
+                      <TouchableOpacity
+                        style={s.stepBtn}
+                        onPress={() => setQuantity(Math.max(1, quantity - 1))}
+                      >
+                        <Text style={s.stepBtnTxt}>−</Text>
+                      </TouchableOpacity>
+                      <Text style={s.qtyText}>{quantity}</Text>
+                      <TouchableOpacity
+                        style={s.stepBtn}
+                        // Chỗ nút bấm "+" trong React Native:
+                        onPress={() => {
+                            // Đổi .stock thành .quantity để khớp với Entity Books
+                            if(quantity < selectedItem?.quantity) setQuantity(quantity + 1);
+                            else Alert.alert("Thông báo", "Đã đạt giới hạn tồn kho");
+                        }}
+                      >
+                        <Text style={s.stepBtnTxt}>+</Text>
+                      </TouchableOpacity>
+                    </View>
+                  </View>
+
+                  {/* Nút chốt đơn */}
+                  <TouchableOpacity style={s.confirmBtn} onPress={confirmAddToCart}>
+                    <Text style={s.confirmBtnTxt}>Xác nhận thêm vào giỏ hàng</Text>
+                  </TouchableOpacity>
+
+                </View>
+              </View>
+            </Modal>
     </SafeAreaView>
   );
 }
@@ -749,4 +840,57 @@ const s = StyleSheet.create({
     fontSize: 12,
     fontWeight: "800",
   },
+modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.4)',
+    justifyContent: 'flex-end',
+  },
+  modalContent: {
+    backgroundColor: '#FFF',
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    padding: 20,
+    paddingBottom: Platform.OS === 'ios' ? 40 : 25,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    marginBottom: 20,
+    gap: 15,
+  },
+  modalImage: {
+    width: 90,
+    height: 120,
+    borderRadius: 12,
+    marginTop: -40, // Hiệu ứng ảnh nổi lên trên nền modal
+    borderWidth: 3,
+    borderColor: '#FFF',
+    backgroundColor: '#F5F5F5',
+  },
+  modalPrice: { fontSize: 22, fontWeight: '900', color: '#E53935' },
+  modalStock: { fontSize: 13, color: '#888', marginTop: 4 },
+  qtyRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 20,
+    borderTopWidth: 0.5,
+    borderColor: '#EEE',
+  },
+  qtyStepper: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F5F5F5',
+    borderRadius: 8,
+  },
+  stepBtn: { paddingHorizontal: 15, paddingVertical: 8 },
+  stepBtnTxt: { fontSize: 20, fontWeight: 'bold', color: '#333' },
+  qtyText: { fontSize: 16, fontWeight: '700', minWidth: 30, textAlign: 'center' },
+  confirmBtn: {
+    backgroundColor: '#1E88E5',
+    paddingVertical: 16,
+    borderRadius: 12,
+    alignItems: 'center',
+    marginTop: 10,
+  },
+  confirmBtnTxt: { color: '#FFF', fontSize: 16, fontWeight: '800' },
 });

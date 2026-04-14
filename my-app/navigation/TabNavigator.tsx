@@ -23,7 +23,7 @@ export default function TabNavigator() {
         name="HomeTab"
         component={HomeScreen}
         options={{
-          tabBarLabel: "Home",
+          tabBarLabel: "Trang chủ",
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="home-outline" size={24} color={color} />
           ),
@@ -34,7 +34,7 @@ export default function TabNavigator() {
         name="ProfileTab"
         component={ProfileScreen}
         options={{
-          tabBarLabel: "Profile",
+          tabBarLabel: "Tôi",
           tabBarIcon: ({ color }) => (
             <Ionicons name="person-outline" size={24} color={color} />
           ),

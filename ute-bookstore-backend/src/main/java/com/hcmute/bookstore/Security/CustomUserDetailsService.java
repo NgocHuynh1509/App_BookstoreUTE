@@ -2,6 +2,7 @@ package com.hcmute.bookstore.Security;
 
 import com.hcmute.bookstore.Entity.Users;
 import com.hcmute.bookstore.Repository.UsersRepository;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.*;
@@ -16,6 +17,7 @@ public class CustomUserDetailsService implements UserDetailsService {
     private final UsersRepository appUserRepository;
 
     @Override
+    @Transactional
     public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
         Users user = appUserRepository.findByCustomer_Email(email)
                 .orElseThrow(() -> new UsernameNotFoundException("Email không tồn tại"));

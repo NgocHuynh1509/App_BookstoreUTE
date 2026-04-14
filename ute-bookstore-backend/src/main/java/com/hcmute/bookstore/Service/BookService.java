@@ -111,7 +111,8 @@ public class BookService {
                 price,
                 originalPrice,
                 book.getSoldQuantity(),
-                discountPercent
+                discountPercent,
+                book.getQuantity() // <--- Thêm đối số thứ 9 này vào đây
         );
     }
 

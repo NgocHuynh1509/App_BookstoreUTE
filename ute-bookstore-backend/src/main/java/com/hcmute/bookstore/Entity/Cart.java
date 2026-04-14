@@ -81,11 +81,11 @@ public class Cart {
     public void setCustomer(Customers customer) {
         this.customer = customer;
     }
-//    public List<CartDetail> getCartDetails() {
-//        return cartDetails;
-//    }
-//    public void setCartDetails(List<CartDetail> cartDetails) {
-//        this.cartDetails = cartDetails;
-//    }
+    public List<CartDetail> getCartDetails() {
+        return cartDetails;
+    }
+    public void setCartDetails(List<CartDetail> cartDetails) {
+        this.cartDetails = cartDetails;
+    }
 
 }
