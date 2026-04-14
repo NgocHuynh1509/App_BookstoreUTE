@@ -14,50 +14,21 @@ import { useState } from "react";
 import api from "../services/api";
 
 export default function RegisterScreen({ navigation }: any) {
-  const [step, setStep] = useState(1); // 1: Email, 2: OTP + info
+  const [step, setStep] = useState(1); // 1: nhập info, 2: nhập OTP
   const [email, setEmail] = useState("");
   const [otp, setOtp] = useState("");
-  const [username, setUsername] = useState("");
+  const [userName, setUserName] = useState("");
+  const [fullName, setFullName] = useState("");
+  const [phone, setPhone] = useState("");
+  const [address, setAddress] = useState("");
+  const [dateOfBirth, setDateOfBirth] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
 
-  // Bước 1: Gửi OTP
-  const handleSendOTP = async () => {
-    if (!email) {
-      Alert.alert("Lỗi", "Vui lòng nhập email");
-      return;
-    }
-
-    setLoading(true);
-    try {
-      const res = await api.post("/register/send-otp", { email });
-      Alert.alert("Thành công", res.data.message || "OTP đã được gửi tới email");
-      setStep(2);
-    } catch (err: any) {
-      Alert.alert(
-        "Lỗi",
-        err?.response?.data?.message || "Không thể gửi OTP"
-      );
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Bước 2: Xác minh OTP & đăng ký
   const handleRegister = async () => {
-    if (!otp || otp.length !== 6) {
-      Alert.alert("Lỗi", "Vui lòng nhập mã OTP 6 số");
-      return;
-    }
-
-    if (!username) {
-      Alert.alert("Lỗi", "Vui lòng nhập username");
-      return;
-    }
-
-    if (!password) {
-      Alert.alert("Lỗi", "Vui lòng nhập mật khẩu");
+    if (!userName || !fullName || !email || !phone || !address || !password) {
+      Alert.alert("Lỗi", "Vui lòng nhập đầy đủ thông tin");
       return;
     }
 
@@ -73,14 +44,43 @@ export default function RegisterScreen({ navigation }: any) {
 
     setLoading(true);
     try {
-      await api.post("/register", {
-        username,
-        email,
+      const res = await api.post("/auth/register", {
+        userName,
         password,
-        otp,
+        fullName,
+        email,
+        phone,
+        address,
+        dateOfBirth,
       });
 
-      Alert.alert("Thành công", "Đăng ký thành công!", [
+      Alert.alert("Thành công", res.data.message || "OTP đã được gửi về email");
+      setStep(2);
+    } catch (err: any) {
+      Alert.alert(
+          "Lỗi",
+          err?.response?.data?.message || "Đăng ký thất bại"
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleVerifyOtp = async () => {
+    if (!otp || otp.length !== 6) {
+      Alert.alert("Lỗi", "Vui lòng nhập mã OTP 6 số");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const res = await api.post("/auth/verify-register-otp", {
+        email,
+        otp,
+        otpType: "REGISTER",
+      });
+
+      Alert.alert("Thành công", res.data.message || "Xác thực email thành công", [
         {
           text: "OK",
           onPress: () => navigation.replace("Login"),
@@ -88,166 +88,199 @@ export default function RegisterScreen({ navigation }: any) {
       ]);
     } catch (err: any) {
       Alert.alert(
-        "Lỗi",
-        err?.response?.data?.message || "Đăng ký thất bại"
+          "Lỗi",
+          err?.response?.data?.message || "Xác thực OTP thất bại"
       );
     } finally {
       setLoading(false);
     }
   };
 
-  // Gửi lại OTP
-  const handleResendOTP = async () => {
+  const handleResendOtp = async () => {
     setLoading(true);
     try {
-      await api.post("/register/send-otp", { email });
-      Alert.alert("Thành công", "Mã OTP mới đã được gửi!");
+      const res = await api.post(
+          `/auth/resend-otp?email=${encodeURIComponent(email)}&otpType=REGISTER`
+      );
+      Alert.alert("Thành công", res.data.message || "OTP mới đã được gửi");
     } catch (err: any) {
       Alert.alert(
-        "Lỗi",
-        err?.response?.data?.message || "Không thể gửi lại OTP"
+          "Lỗi",
+          err?.response?.data?.message || "Không thể gửi lại OTP"
       );
     } finally {
       setLoading(false);
     }
   };
 
-  // Quay lại
   const handleBack = () => {
     if (step === 2) {
       setStep(1);
       setOtp("");
-      setUsername("");
-      setPassword("");
-      setConfirmPassword("");
     } else {
       navigation.replace("Login");
     }
   };
 
   return (
-    <KeyboardAvoidingView
-      style={styles.container}
-      behavior={Platform.OS === "ios" ? "padding" : "height"}
-    >
-      <ScrollView contentContainerStyle={styles.scrollContainer}>
-        <View style={styles.card}>
-          <Text style={styles.title}>Đăng ký tài khoản</Text>
-          <Text style={styles.subtitle}>
-            {step === 1
-              ? "Nhập email để nhận mã OTP"
-              : "Nhập mã OTP và thông tin tài khoản"}
-          </Text>
-
-          {step === 1 ? (
-            <>
-              <TextInput
-                style={styles.input}
-                placeholder="Email"
-                placeholderTextColor="#999"
-                keyboardType="email-address"
-                autoCapitalize="none"
-                value={email}
-                onChangeText={setEmail}
-                editable={!loading}
-              />
-
-              <TouchableOpacity
-                style={[styles.button, loading && styles.buttonDisabled]}
-                onPress={handleSendOTP}
-                disabled={loading}
-              >
-                {loading ? (
-                  <ActivityIndicator color="#fff" />
-                ) : (
-                  <Text style={styles.buttonText}>Gửi mã OTP</Text>
-                )}
-              </TouchableOpacity>
-            </>
-          ) : (
-            <>
-              <View style={styles.emailInfo}>
-                <Text style={styles.emailLabel}>Email: </Text>
-                <Text style={styles.emailValue}>{email}</Text>
-              </View>
-
-              <TextInput
-                style={styles.input}
-                placeholder="Mã OTP (6 số)"
-                placeholderTextColor="#999"
-                keyboardType="number-pad"
-                maxLength={6}
-                value={otp}
-                onChangeText={setOtp}
-                editable={!loading}
-              />
-
-              <TextInput
-                style={styles.input}
-                placeholder="Username"
-                placeholderTextColor="#999"
-                value={username}
-                onChangeText={setUsername}
-                editable={!loading}
-              />
-
-              <TextInput
-                style={styles.input}
-                placeholder="Mật khẩu"
-                placeholderTextColor="#999"
-                secureTextEntry
-                value={password}
-                onChangeText={setPassword}
-                editable={!loading}
-              />
-
-              <TextInput
-                style={styles.input}
-                placeholder="Xác nhận mật khẩu"
-                placeholderTextColor="#999"
-                secureTextEntry
-                value={confirmPassword}
-                onChangeText={setConfirmPassword}
-                editable={!loading}
-              />
-
-              <TouchableOpacity
-                style={[styles.button, loading && styles.buttonDisabled]}
-                onPress={handleRegister}
-                disabled={loading}
-              >
-                {loading ? (
-                  <ActivityIndicator color="#fff" />
-                ) : (
-                  <Text style={styles.buttonText}>Đăng ký</Text>
-                )}
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={styles.resendButton}
-                onPress={handleResendOTP}
-                disabled={loading}
-              >
-                <Text style={styles.resendText}>Gửi lại mã OTP</Text>
-              </TouchableOpacity>
-            </>
-          )}
-
-          <TouchableOpacity style={styles.backButton} onPress={handleBack}>
-            <Text style={styles.backText}>
-              {step === 1 ? "Đã có tài khoản? Đăng nhập" : "Quay lại"}
+      <KeyboardAvoidingView
+          style={styles.container}
+          behavior={Platform.OS === "ios" ? "padding" : "height"}
+      >
+        <ScrollView contentContainerStyle={styles.scrollContainer}>
+          <View style={styles.card}>
+            <Text style={styles.title}>Đăng ký tài khoản</Text>
+            <Text style={styles.subtitle}>
+              {step === 1
+                  ? "Nhập thông tin để đăng ký"
+                  : "Nhập mã OTP đã gửi về email"}
             </Text>
-          </TouchableOpacity>
-        </View>
-      </ScrollView>
-    </KeyboardAvoidingView>
+
+            {step === 1 ? (
+                <>
+                  <TextInput
+                      style={styles.input}
+                      placeholder="Username"
+                      placeholderTextColor="#999"
+                      value={userName}
+                      onChangeText={setUserName}
+                      editable={!loading}
+                  />
+
+                  <TextInput
+                      style={styles.input}
+                      placeholder="Họ và tên"
+                      placeholderTextColor="#999"
+                      value={fullName}
+                      onChangeText={setFullName}
+                      editable={!loading}
+                  />
+
+                  <TextInput
+                      style={styles.input}
+                      placeholder="Email"
+                      placeholderTextColor="#999"
+                      keyboardType="email-address"
+                      autoCapitalize="none"
+                      value={email}
+                      onChangeText={setEmail}
+                      editable={!loading}
+                  />
+
+                  <TextInput
+                      style={styles.input}
+                      placeholder="Số điện thoại"
+                      placeholderTextColor="#999"
+                      value={phone}
+                      onChangeText={setPhone}
+                      editable={!loading}
+                  />
+
+                  <TextInput
+                      style={styles.input}
+                      placeholder="Địa chỉ"
+                      placeholderTextColor="#999"
+                      value={address}
+                      onChangeText={setAddress}
+                      editable={!loading}
+                  />
+
+                  <TextInput
+                      style={styles.input}
+                      placeholder="Ngày sinh (yyyy-MM-dd)"
+                      placeholderTextColor="#999"
+                      value={dateOfBirth}
+                      onChangeText={setDateOfBirth}
+                      editable={!loading}
+                  />
+
+                  <TextInput
+                      style={styles.input}
+                      placeholder="Mật khẩu"
+                      placeholderTextColor="#999"
+                      secureTextEntry
+                      value={password}
+                      onChangeText={setPassword}
+                      editable={!loading}
+                  />
+
+                  <TextInput
+                      style={styles.input}
+                      placeholder="Xác nhận mật khẩu"
+                      placeholderTextColor="#999"
+                      secureTextEntry
+                      value={confirmPassword}
+                      onChangeText={setConfirmPassword}
+                      editable={!loading}
+                  />
+
+                  <TouchableOpacity
+                      style={[styles.button, loading && styles.buttonDisabled]}
+                      onPress={handleRegister}
+                      disabled={loading}
+                  >
+                    {loading ? (
+                        <ActivityIndicator color="#fff" />
+                    ) : (
+                        <Text style={styles.buttonText}>Đăng ký</Text>
+                    )}
+                  </TouchableOpacity>
+                </>
+            ) : (
+                <>
+                  <View style={styles.emailInfo}>
+                    <Text style={styles.emailLabel}>Email: </Text>
+                    <Text style={styles.emailValue}>{email}</Text>
+                  </View>
+
+                  <TextInput
+                      style={styles.input}
+                      placeholder="Mã OTP (6 số)"
+                      placeholderTextColor="#999"
+                      keyboardType="number-pad"
+                      maxLength={6}
+                      value={otp}
+                      onChangeText={setOtp}
+                      editable={!loading}
+                  />
+
+                  <TouchableOpacity
+                      style={[styles.button, loading && styles.buttonDisabled]}
+                      onPress={handleVerifyOtp}
+                      disabled={loading}
+                  >
+                    {loading ? (
+                        <ActivityIndicator color="#fff" />
+                    ) : (
+                        <Text style={styles.buttonText}>Xác thực OTP</Text>
+                    )}
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
+                      style={styles.resendButton}
+                      onPress={handleResendOtp}
+                      disabled={loading}
+                  >
+                    <Text style={styles.resendText}>Gửi lại mã OTP</Text>
+                  </TouchableOpacity>
+                </>
+            )}
+
+            <TouchableOpacity style={styles.backButton} onPress={handleBack}>
+              <Text style={styles.backText}>
+                {step === 1 ? "Đã có tài khoản? Đăng nhập" : "Quay lại"}
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </ScrollView>
+      </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#FFD6E7", // Hồng pastel
+    backgroundColor: "#FFD6E7",
   },
   scrollContainer: {
     flexGrow: 1,

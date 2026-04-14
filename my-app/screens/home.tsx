@@ -178,44 +178,160 @@ function SimilarBooksSheet({ visible, book, onClose, onNavigate }: {
 }
 
 // ─── Book cards ───────────────────────────────────────────────────────────────
-function BookCardH({ item, onPress, onLongPress }: any) {
-  return (
-    <TouchableOpacity style={s.cardH} onPress={onPress} onLongPress={onLongPress} delayLongPress={400} activeOpacity={0.85}>
-      <Image source={{ uri: item.cover_image }} style={s.cardHImg} resizeMode="cover" />
-      <Text style={s.cardHTitle} numberOfLines={2}>{item.title}</Text>
-      <Text style={s.cardHAuthor} numberOfLines={1}>{item.author_name}</Text>
-      <Text style={s.cardHPrice}>{Number(item.price).toLocaleString("vi-VN")}đ</Text>
-      {item.original_price && Number(item.original_price) > Number(item.price) && (
-        <Text style={s.cardHOldPrice}>{Number(item.original_price).toLocaleString("vi-VN")}đ</Text>
-      )}
-    </TouchableOpacity>
-  );
-}
+// function BookCardH({ item, onPress, onLongPress }: any) {
+//   return (
+//     <TouchableOpacity style={s.cardH} onPress={onPress} onLongPress={onLongPress} delayLongPress={400} activeOpacity={0.85}>
+//       <Image source={{ uri: item.cover_image }} style={s.cardHImg} resizeMode="cover" />
+//       <Text style={s.cardHTitle} numberOfLines={2}>{item.title}</Text>
+//       <Text style={s.cardHAuthor} numberOfLines={1}>{item.author_name}</Text>
+//       <Text style={s.cardHPrice}>{Number(item.price).toLocaleString("vi-VN")}đ</Text>
+//       {item.original_price && Number(item.original_price) > Number(item.price) && (
+//         <Text style={s.cardHOldPrice}>{Number(item.original_price).toLocaleString("vi-VN")}đ</Text>
+//       )}
+//     </TouchableOpacity>
+//   );
+// }
 
-function BookCardG({ item, onPress, onLongPress, showDiscount }: any) {
+function BookCardH({ item, onPress, onLongPress, onAddToCart, onBuyNow }: any) {
   return (
-    <TouchableOpacity style={s.cardG} onPress={onPress} onLongPress={onLongPress} delayLongPress={400} activeOpacity={0.85}>
-      <View style={{ position: "relative" }}>
-        <Image source={{ uri: item.cover_image }} style={s.cardGImg} resizeMode="cover" />
-        {showDiscount && item.discount_percent > 0 && (
-          <View style={s.discountBadge}><Text style={s.discountBadgeTxt}>-{Math.round(item.discount_percent)}%</Text></View>
-        )}
-        <View style={s.longPressHint}>
-          <Ionicons name="ellipsis-horizontal" size={12} color="#FFF" />
-        </View>
-      </View>
-      <View style={s.cardGBody}>
-        <Text style={s.cardGTitle} numberOfLines={2}>{item.title}</Text>
-        <Text style={s.cardGAuthor} numberOfLines={1}>{item.author_name || "Không rõ"}</Text>
-        <Text style={s.cardGPrice}>{Number(item.price).toLocaleString("vi-VN")}đ</Text>
+      <TouchableOpacity
+          style={s.cardH}
+          onPress={onPress}
+          onLongPress={onLongPress}
+          delayLongPress={400}
+          activeOpacity={0.85}
+      >
+        <Image source={{ uri: item.cover_image }} style={s.cardHImg} resizeMode="cover" />
+
+        <Text style={s.cardHTitle} numberOfLines={2}>
+          {item.title}
+        </Text>
+
+        <Text style={s.cardHAuthor} numberOfLines={1}>
+          {item.author_name}
+        </Text>
+
+        <Text style={s.cardHPrice}>
+          {Number(item.price).toLocaleString("vi-VN")}đ
+        </Text>
+
         {item.original_price && Number(item.original_price) > Number(item.price) && (
-          <Text style={s.cardGOldPrice}>{Number(item.original_price).toLocaleString("vi-VN")}đ</Text>
+            <Text style={s.cardHOldPrice}>
+              {Number(item.original_price).toLocaleString("vi-VN")}đ
+            </Text>
         )}
-      </View>
-    </TouchableOpacity>
+
+        <View style={s.cardActionRow}>
+          <TouchableOpacity
+              style={s.cartBtn}
+              onPress={() => onAddToCart(item)}
+              activeOpacity={0.85}
+          >
+            <Ionicons name="cart-outline" size={14} color={C.primaryMid} />
+            <Text style={s.cartBtnTxt}>Thêm</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+              style={s.buyBtn}
+              onPress={() => onBuyNow(item)}
+              activeOpacity={0.85}
+          >
+            <Text style={s.buyBtnTxt}>Mua ngay</Text>
+          </TouchableOpacity>
+        </View>
+      </TouchableOpacity>
   );
 }
 
+// function BookCardG({ item, onPress, onLongPress, showDiscount }: any) {
+//   return (
+//     <TouchableOpacity style={s.cardG} onPress={onPress} onLongPress={onLongPress} delayLongPress={400} activeOpacity={0.85}>
+//       <View style={{ position: "relative" }}>
+//         <Image source={{ uri: item.cover_image }} style={s.cardGImg} resizeMode="cover" />
+//         {showDiscount && item.discount_percent > 0 && (
+//           <View style={s.discountBadge}><Text style={s.discountBadgeTxt}>-{Math.round(item.discount_percent)}%</Text></View>
+//         )}
+//         <View style={s.longPressHint}>
+//           <Ionicons name="ellipsis-horizontal" size={12} color="#FFF" />
+//         </View>
+//       </View>
+//       <View style={s.cardGBody}>
+//         <Text style={s.cardGTitle} numberOfLines={2}>{item.title}</Text>
+//         <Text style={s.cardGAuthor} numberOfLines={1}>{item.author_name || "Không rõ"}</Text>
+//         <Text style={s.cardGPrice}>{Number(item.price).toLocaleString("vi-VN")}đ</Text>
+//         {item.original_price && Number(item.original_price) > Number(item.price) && (
+//           <Text style={s.cardGOldPrice}>{Number(item.original_price).toLocaleString("vi-VN")}đ</Text>
+//         )}
+//       </View>
+//     </TouchableOpacity>
+//   );
+// }
+function BookCardG({ item, onPress, onLongPress, showDiscount, onAddToCart, onBuyNow }: any) {
+  return (
+      <TouchableOpacity
+          style={s.cardG}
+          onPress={onPress}
+          onLongPress={onLongPress}
+          delayLongPress={400}
+          activeOpacity={0.85}
+      >
+        <View style={{ position: "relative" }}>
+          <Image source={{ uri: item.cover_image }} style={s.cardGImg} resizeMode="cover" />
+
+          {showDiscount && item.discount_percent > 0 && (
+              <View style={s.discountBadge}>
+                <Text style={s.discountBadgeTxt}>
+                  -{Math.round(item.discount_percent)}%
+                </Text>
+              </View>
+          )}
+
+          <View style={s.longPressHint}>
+            <Ionicons name="ellipsis-horizontal" size={12} color="#FFF" />
+          </View>
+        </View>
+
+        <View style={s.cardGBody}>
+          <Text style={s.cardGTitle} numberOfLines={2}>
+            {item.title}
+          </Text>
+
+          <Text style={s.cardGAuthor} numberOfLines={1}>
+            {item.author_name || "Không rõ"}
+          </Text>
+
+          <Text style={s.cardGPrice}>
+            {Number(item.price).toLocaleString("vi-VN")}đ
+          </Text>
+
+          {item.original_price && Number(item.original_price) > Number(item.price) && (
+              <Text style={s.cardGOldPrice}>
+                {Number(item.original_price).toLocaleString("vi-VN")}đ
+              </Text>
+          )}
+
+          <View style={s.cardActionRow}>
+            <TouchableOpacity
+                style={s.cartBtn}
+                onPress={() => onAddToCart(item)}
+                activeOpacity={0.85}
+            >
+              <Ionicons name="cart-outline" size={14} color={C.primaryMid} />
+              <Text style={s.cartBtnTxt}>Thêm</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+                style={s.buyBtn}
+                onPress={() => onBuyNow(item)}
+                activeOpacity={0.85}
+            >
+              <Text style={s.buyBtnTxt}>Mua ngay</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </TouchableOpacity>
+  );
+}
 // ─── MAIN ─────────────────────────────────────────────────────────────────────
 export default function HomeScreen({ navigation }: any) {
   const { user } = useAuth();
@@ -248,6 +364,41 @@ export default function HomeScreen({ navigation }: any) {
   const [selectedBook, setSelectedBook] = useState<any>(null);
   const handleLongPress = (item: any) => { setSelectedBook(item); setSheetVisible(true); };
 
+  const handleAddToCart = async (item: any) => {
+    try {
+      if (!user?.token) {
+        Alert.alert("Thông báo", "Vui lòng đăng nhập để thêm vào giỏ hàng");
+        navigation.navigate("Login");
+        return;
+      }
+
+      Alert.alert("Thành công", `Đã thêm "${item.title}" vào giỏ hàng`);
+    } catch (err: any) {
+      Alert.alert(
+          "Lỗi",
+          err?.response?.data?.message || "Không thể thêm vào giỏ hàng"
+      );
+    }
+  };
+
+  const handleBuyNow = (item: any) => {
+    if (!user?.token) {
+      Alert.alert("Thông báo", "Vui lòng đăng nhập để mua hàng");
+      navigation.navigate("Login");
+      return;
+    }
+
+    navigation.navigate("Checkout", {
+      buyNowItem: {
+        bookId: item.id,
+        quantity: 1,
+        title: item.title,
+        price: item.price,
+        cover_image: item.cover_image,
+        author_name: item.author_name,
+      },
+    });
+  };
   // ==========================
   // DATA LOADING (all unchanged)
   // ==========================
@@ -407,8 +558,16 @@ export default function HomeScreen({ navigation }: any) {
               <FlatList data={bestSellers} horizontal keyExtractor={(item: any) => item.id.toString()}
                 showsHorizontalScrollIndicator={false}
                 contentContainerStyle={{ paddingLeft: 16, paddingRight: 8, paddingVertical: 4 }}
-                renderItem={({ item }: any) => <BookCardH item={item}
-                  onPress={() => navigation.navigate("BookDetail", { id: item.id })}
+                        renderItem={({ item }: any) => (
+                            <BookCardH
+                                item={item}
+                                onPress={() => navigation.navigate("BookDetail", { id: item.id })}
+                                onLongPress={() => handleLongPress(item)}
+                                onAddToCart={handleAddToCart}
+                                onBuyNow={handleBuyNow}
+                            />
+                        )}
+                        onPress={() => navigation.navigate("BookDetail", { id: item.id })}
                   onLongPress={() => handleLongPress(item)} />} />}
           </>
         )}
@@ -417,16 +576,34 @@ export default function HomeScreen({ navigation }: any) {
         {loadingDiscount ? <ActivityIndicator color={C.primaryMid} style={{ margin: 20 }} /> :
           <FlatList data={topDiscounts} numColumns={2} scrollEnabled={false}
             keyExtractor={(item: any) => item.id.toString()} columnWrapperStyle={s.gridRow}
-            renderItem={({ item }: any) => <BookCardG item={item}
-              onPress={() => navigation.navigate("BookDetail", { id: item.id })}
+                    renderItem={({ item }: any) => (
+                        <BookCardG
+                            item={item}
+                            onPress={() => navigation.navigate("BookDetail", { id: item.id })}
+                            onLongPress={() => handleLongPress(item)}
+                            onAddToCart={handleAddToCart}
+                            onBuyNow={handleBuyNow}
+                            showDiscount={false}
+                        />
+                    )}
+                    onPress={() => navigation.navigate("BookDetail", { id: item.id })}
               onLongPress={() => handleLongPress(item)} showDiscount />} />}
 
         <SectionTitle title="📖 Tất cả sách" />
         <FlatList data={allBooks} numColumns={2} scrollEnabled={false}
           keyExtractor={(item: any, index: number) => item.id.toString() + index}
           columnWrapperStyle={s.gridRow}
-          renderItem={({ item }: any) => <BookCardG item={item}
-            onPress={() => navigation.navigate("BookDetail", { id: item.id })}
+                  renderItem={({ item }: any) => (
+                      <BookCardG
+                          item={item}
+                          onPress={() => navigation.navigate("BookDetail", { id: item.id })}
+                          onLongPress={() => handleLongPress(item)}
+                          onAddToCart={handleAddToCart}
+                          onBuyNow={handleBuyNow}
+                          showDiscount
+                      />
+                  )}
+                  onPress={() => navigation.navigate("BookDetail", { id: item.id })}
             onLongPress={() => handleLongPress(item)} showDiscount={false} />} />
 
         {loadingMore && (
@@ -533,4 +710,43 @@ const s = StyleSheet.create({
   similarOldPrice: { fontSize: 11, color: C.text3, textDecorationLine: "line-through" },
   sheetEmpty: { alignItems: "center", paddingVertical: 40, gap: 10 },
   sheetEmptyTxt: { fontSize: 14, color: C.text3 },
+  cardActionRow: {
+    flexDirection: "row",
+    gap: 8,
+    marginTop: 10,
+  },
+
+  cartBtn: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 4,
+    backgroundColor: C.primarySoft,
+    borderWidth: 1,
+    borderColor: C.primaryTint,
+    borderRadius: 10,
+    paddingVertical: 8,
+  },
+
+  cartBtnTxt: {
+    color: C.primaryMid,
+    fontSize: 12,
+    fontWeight: "700",
+  },
+
+  buyBtn: {
+    flex: 1,
+    backgroundColor: C.sale,
+    borderRadius: 10,
+    paddingVertical: 8,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
+  buyBtnTxt: {
+    color: "#FFF",
+    fontSize: 12,
+    fontWeight: "800",
+  },
 });
