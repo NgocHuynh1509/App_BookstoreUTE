@@ -54,7 +54,8 @@ public class SecurityConfig {
                         .requestMatchers(
                                 "/wishlist/**",
                                 "/cart/**",
-                                "/profile"
+                                "/profile",
+                                "/addresses/**"
                         ).authenticated()
                         .anyRequest().authenticated()
                 )

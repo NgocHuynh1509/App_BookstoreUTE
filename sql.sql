@@ -1,5 +1,5 @@
-DROP DATABASE IF EXISTS bookdb;
-CREATE DATABASE bookdb;
+-- DROP DATABASE IF EXISTS bookdb;
+-- CREATE DATABASE bookdb;
 USE bookdb;
 INSERT INTO category VALUES
 ('C01', 'Kinh doanh'),
@@ -126,6 +126,13 @@ VALUES
 ('vananh', '$2a$12$o2ldvPsqcZmATybq/SM.euTy4LEqQDQXHS6H3eRf8Jd/RfriOi0L2', 'ROLE_CUSTOMER', 'Phạm Thị Vân Ánh', CURRENT_DATE, 'CU52',1,1),
 ('hoangdat', '$2a$12$o2ldvPsqcZmATybq/SM.euTy4LEqQDQXHS6H3eRf8Jd/RfriOi0L2', 'ROLE_CUSTOMER', 'Tạ Hoàng Đạt', CURRENT_DATE, 'CU53',1,1),
 ('minhduc', '$2a$12$o2ldvPsqcZmATybq/SM.euTy4LEqQDQXHS6H3eRf8Jd/RfriOi0L2', 'ROLE_CUSTOMER', 'Vũ Minh Đức', CURRENT_DATE, 'CU54',1,1);
+USE bookdb;
+-- INSERT INTO customers (customerId, fullName, email, phone, address, dateOfBirth) VALUES
+-- ('AD01', 'Admin', 'admin@gmail.com', '0901152521', 'TP. HCM', '2005-07-24');
+INSERT INTO Users 
+(userName, password, role, fullName, registrationDate, customerId, enabled, email_verified)
+VALUES
+('admin', '$2a$12$o2ldvPsqcZmATybq/SM.euTy4LEqQDQXHS6H3eRf8Jd/RfriOi0L2', 'ROLE_ADMIN', 'Admin', CURRENT_DATE, NULL,1,1);
 
 INSERT INTO cart (cartId, quantity, totalAmount, customerId) VALUES
 ('CA01', 4, 546620.00, 'CU01'),
