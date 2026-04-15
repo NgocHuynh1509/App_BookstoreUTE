@@ -1,10 +1,7 @@
 package com.hcmute.bookstore.Controller;
 
 import com.hcmute.bookstore.Service.ProfileService;
-import com.hcmute.bookstore.dto.ProfileResponse;
-import com.hcmute.bookstore.dto.SendOtpChangeEmailRequest;
-import com.hcmute.bookstore.dto.UpdateProfileInfoRequest;
-import com.hcmute.bookstore.dto.VerifyOtpChangeEmailRequest;
+import com.hcmute.bookstore.dto.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
 import org.springframework.security.core.Authentication;
@@ -67,5 +64,14 @@ public class ProfileController {
                 request.getOtp_server(),
                 request.getNew_email()
         );
+    }
+
+    @PutMapping("/profile/change-password")
+    public Map<String, String> changePassword(
+            @RequestBody ChangePasswordRequest request,
+            Authentication authentication
+    ) {
+        String email = authentication.getName();
+        return Map.of("message", profileService.changePassword(email, request));
     }
 }

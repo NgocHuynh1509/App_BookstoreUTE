@@ -5,10 +5,12 @@ import com.hcmute.bookstore.Entity.Users;
 import com.hcmute.bookstore.Repository.CustomerRepository;
 import com.hcmute.bookstore.Repository.UsersRepository;
 import com.hcmute.bookstore.Security.JwtService;
+import com.hcmute.bookstore.dto.ChangePasswordRequest;
 import com.hcmute.bookstore.dto.ProfileResponse;
 import com.hcmute.bookstore.dto.UpdateProfileInfoRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -26,6 +28,8 @@ public class ProfileService {
     private final CustomerRepository customerRepository;
     private final EmailService emailService;
     private final JwtService jwtService;
+    private final PasswordEncoder passwordEncoder;
+
 
     public ProfileResponse getProfileByEmail(String email) {
         Users user = usersRepository.findByCustomer_Email(email)
@@ -182,5 +186,33 @@ public class ProfileService {
                 "message", "Đổi email thành công",
                 "token", newToken
         );
+    }
+
+    @Transactional
+    public String changePassword(String email, ChangePasswordRequest request) {
+        if (request.getOld_password() == null || request.getOld_password().isBlank()
+                || request.getNew_password() == null || request.getNew_password().isBlank()) {
+            throw new RuntimeException("Vui lòng nhập đầy đủ mật khẩu cũ và mật khẩu mới");
+        }
+
+        if (request.getNew_password().length() < 6) {
+            throw new RuntimeException("Mật khẩu mới phải có ít nhất 6 ký tự");
+        }
+
+        Users user = usersRepository.findByCustomer_Email(email)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy user"));
+
+        if (!passwordEncoder.matches(request.getOld_password(), user.getPassword())) {
+            throw new RuntimeException("Mật khẩu hiện tại không đúng");
+        }
+
+        if (passwordEncoder.matches(request.getNew_password(), user.getPassword())) {
+            throw new RuntimeException("Mật khẩu mới không được trùng mật khẩu cũ");
+        }
+
+        user.setPassword(passwordEncoder.encode(request.getNew_password()));
+        usersRepository.save(user);
+
+        return "Đổi mật khẩu thành công";
     }
 }
