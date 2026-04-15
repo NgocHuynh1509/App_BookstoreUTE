@@ -12,4 +12,5 @@ import java.util.List;
 public interface OrderDetailRepository extends JpaRepository<OrderDetail, OrderdetailId> {
     List<OrderDetail> findByOrder_OrderId(String orderId);
 
+    boolean existsByOrder_OrderIdAndBook_BookId(String orderId, String bookId);
 }
