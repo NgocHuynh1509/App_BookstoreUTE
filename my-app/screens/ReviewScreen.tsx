@@ -7,7 +7,7 @@ import {
 import api from "../services/api";
 import { useRoute, useNavigation } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
-
+import AsyncStorage from "@react-native-async-storage/async-storage";
 // ─── Palette ──────────────────────────────────────────────────────────────────
 const C = {
   primary:     "#1565C0",
@@ -44,7 +44,27 @@ export default function ReviewScreen() {
   const sendReview = async () => {
     setLoading(true);
     try {
-      const res = await api.post("/reviews", { book_id, order_id, rating, comment });
+      const token = await AsyncStorage.getItem("token");
+      console.log("REVIEW TOKEN:", token);
+      console.log("REVIEW URL:", `${api.defaults.baseURL}/reviews`);
+
+      if (!token) {
+        Alert.alert("Lỗi", "Bạn chưa đăng nhập");
+        return;
+      }
+
+      const res = await api.post(
+          "/reviews",
+          { book_id, order_id, rating, comment },
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+      );
+
+      console.log("REVIEW RESPONSE:", res.data);
+
       Alert.alert("Thành công", res.data.message);
 
       if (res.data.reward.type === "points") {
@@ -55,7 +75,11 @@ export default function ReviewScreen() {
 
       navigation.goBack();
     } catch (err: any) {
-      Alert.alert("Lỗi", err.response?.data?.message || "Có lỗi xảy ra");
+      console.log("REVIEW STATUS:", err?.response?.status);
+      console.log("REVIEW DATA:", err?.response?.data);
+      console.log("REVIEW ERROR:", err);
+
+      Alert.alert("Lỗi", err?.response?.data?.message || "Có lỗi xảy ra");
     } finally {
       setLoading(false);
     }

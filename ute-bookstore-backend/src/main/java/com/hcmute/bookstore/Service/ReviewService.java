@@ -17,7 +17,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Date;
 import java.util.UUID;
-
 @Service
 @RequiredArgsConstructor
 public class ReviewService {
