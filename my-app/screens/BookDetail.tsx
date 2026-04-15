@@ -86,9 +86,19 @@ function RatingBar({ star, count, total }: any) {
   );
 }
 
-function BottomBar({ quantity, onDecrease, onIncrease, onAddCart, isOutOfStock }: any) {
+function BottomBar({ quantity, onDecrease, onIncrease, onAddCart, onBuyNow, onChat, isOutOfStock }: any) {
   return (
     <View style={s.bottomBar}>
+      {/* CHAT BUTTON */}
+      <TouchableOpacity
+          style={s.chatBtn}
+          onPress={onChat}
+          activeOpacity={0.85}
+      >
+        <Text style={{ fontSize: 18 }}>💬</Text>
+        <Text style={s.chatBtnTxt}>Chat</Text>
+      </TouchableOpacity>
+
       {!isOutOfStock && (
         <View style={s.qtyWrap}>
           <TouchableOpacity onPress={onDecrease} style={s.qtyBtn}><Text style={s.qtyBtnTxt}>−</Text></TouchableOpacity>
@@ -102,6 +112,16 @@ function BottomBar({ quantity, onDecrease, onIncrease, onAddCart, isOutOfStock }
       >
         <Text style={{ fontSize: 20 }}>🛒</Text>
         <Text style={s.cartBtnTxt}>{isOutOfStock ? "Hết hàng" : "Thêm vào giỏ hàng"}</Text>
+      </TouchableOpacity>
+      <TouchableOpacity
+          style={[s.buyNowBtn, isOutOfStock && { backgroundColor: "#D9D9D9" }]}
+          onPress={onBuyNow}
+          disabled={isOutOfStock}
+          activeOpacity={0.85}
+      >
+        <Text style={s.buyNowBtnTxt}>
+          {isOutOfStock ? "Hết hàng" : "Mua ngay"}
+        </Text>
       </TouchableOpacity>
     </View>
   );
@@ -125,6 +145,13 @@ export default function BookDetail() {
 
   const scrollY       = useRef(new Animated.Value(0)).current;
   const headerOpacity = scrollY.interpolate({ inputRange: [180, 260], outputRange: [0, 1], extrapolate: "clamp" });
+
+  const handleChat = () => {
+    navigation.navigate("Chat", {
+      sellerId: book?.seller_id,
+      bookId: book?.id,
+    });
+  };
 
   // ==========================
   // API LOGIC (all unchanged)
@@ -245,6 +272,30 @@ export default function BookDetail() {
       <Text style={{ color: C.text2, marginTop: 10, fontSize: 15 }}>Không tìm thấy sách</Text>
     </View>
   );
+
+  const handleBuyNow = () => {
+    if (!book || book.stock <= 0) {
+      Alert.alert("Thông báo", "Sản phẩm hiện đã hết hàng.");
+      return;
+    }
+
+    if (!user?.token) {
+      Alert.alert("Thông báo", "Vui lòng đăng nhập để mua hàng");
+      navigation.navigate("Login");
+      return;
+    }
+
+    navigation.navigate("Checkout", {
+      buyNowItem: {
+        bookId: book.id,
+        quantity,
+        title: book.title,
+        price: book.price,
+        cover_image: book.cover_image,
+        author_name: book.author_name,
+      },
+    });
+  };
 
   const isOutOfStock = book.stock <= 0;
   const avgRating    = reviews.length > 0 ? reviews.reduce((sum: number, r: any) => sum + r.rating, 0) / reviews.length : 0;
@@ -389,6 +440,8 @@ export default function BookDetail() {
         onDecrease={() => setQuantity(q => Math.max(1, q - 1))}
         onIncrease={() => setQuantity(q => Math.min(book.stock, q + 1))}
         onAddCart={handleAddToCart}
+        onBuyNow={handleBuyNow}
+        onChat={handleChat}
         isOutOfStock={isOutOfStock}
       />
     </View>
@@ -425,11 +478,68 @@ const s = StyleSheet.create({
   avatar: { width: 38, height: 38, borderRadius: 19, justifyContent: "center", alignItems: "center" },
   avatarTxt: { color: "#FFF", fontWeight: "700", fontSize: 16 },
   emptyState: { alignItems: "center", paddingVertical: 30, borderWidth: 1, borderStyle: "dashed", borderColor: C.border, borderRadius: 16 },
-  bottomBar: { position: "absolute", bottom: 0, left: 0, right: 0, flexDirection: "row", gap: 10, backgroundColor: C.surface, paddingHorizontal: 16, paddingTop: 12, paddingBottom: Platform.OS === "ios" ? 28 : 14, borderTopWidth: 1, borderColor: C.border, elevation: 20, shadowColor: C.primary, shadowOffset: { width: 0, height: -3 }, shadowOpacity: 0.10, shadowRadius: 12 },
+  bottomBar: {
+    position: "absolute",
+    bottom: 0,
+    left: 0,
+    right: 0,
+    flexDirection: "row",
+    gap: 8,
+    backgroundColor: C.surface,
+    paddingHorizontal: 12,
+    paddingTop: 12,
+    paddingBottom: Platform.OS === "ios" ? 28 : 14,
+    borderTopWidth: 1,
+    borderColor: C.border,
+    elevation: 20,
+    shadowColor: C.primary,
+    shadowOffset: { width: 0, height: -3 },
+    shadowOpacity: 0.10,
+    shadowRadius: 12,
+    alignItems: "center",
+  },
+
   qtyWrap: { flexDirection: "row", alignItems: "center", borderWidth: 1.5, borderColor: C.primaryMid, borderRadius: 12, overflow: "hidden" },
   qtyBtn: { width: 42, height: 50, justifyContent: "center", alignItems: "center", backgroundColor: C.primarySoft },
   qtyBtnTxt: { fontSize: 22, fontWeight: "700", color: C.primaryMid, lineHeight: 26 },
   qtyVal: { width: 46, textAlign: "center", fontSize: 17, fontWeight: "800", color: C.text1 },
   cartBtn: { flex: 1, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, backgroundColor: C.primaryMid, borderRadius: 14, height: 50, elevation: 5, shadowColor: C.primaryMid, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.35, shadowRadius: 10 },
   cartBtnTxt: { color: "#FFF", fontSize: 16, fontWeight: "800" },
+
+  chatBtn: {
+    width: 70,
+    height: 50,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: "#DDEEFF",
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#F5F9FF",
+  },
+
+  chatBtnTxt: {
+    fontSize: 11,
+    fontWeight: "700",
+    color: "#1565C0",
+  },
+
+  buyNowBtn: {
+    flex: 1,
+    height: 50,
+    borderRadius: 14,
+    backgroundColor: C.sale,
+    justifyContent: "center",
+    alignItems: "center",
+    elevation: 5,
+    shadowColor: C.sale,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.25,
+    shadowRadius: 10,
+  },
+
+  buyNowBtnTxt: {
+    color: "#FFF",
+    fontSize: 15,
+    fontWeight: "800",
+  },
 });

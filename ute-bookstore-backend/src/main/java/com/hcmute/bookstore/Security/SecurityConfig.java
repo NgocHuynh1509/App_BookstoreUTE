@@ -49,12 +49,14 @@ public class SecurityConfig {
                                 "/auth/**",
                                 "/books/**",
                                 "/categories/**",
-                                "/reviews/book/**"
+                                "/reviews/book/**",
+                                "/uploads/**"
                         ).permitAll()
                         .requestMatchers(
                                 "/wishlist/**",
                                 "/cart/**",
                                 "/profile",
+                                "/profile/**",
                                 "/addresses/**"
                         ).authenticated()
                         .anyRequest().authenticated()
