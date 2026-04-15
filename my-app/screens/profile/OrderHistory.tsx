@@ -18,7 +18,7 @@ import Constants from "expo-constants";
 import { Ionicons } from "@expo/vector-icons";
 import { Order } from "../../types/order";
 
-const BASE_URL = Constants.expoConfig?.extra?.BASE_URL;
+const BASE_URL = Constants.expoConfig?.extra?.API_URL;
 
 // ─── Palette ──────────────────────────────────────────────────────────────────
 const C = {

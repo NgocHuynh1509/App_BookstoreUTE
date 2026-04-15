@@ -198,11 +198,7 @@ export default function ProfileScreen() {
         {/* ── MENU CARDS ───────────────────────────────────────────── */}
         <View style={styles.menuCard}>
           <Text style={styles.cardLabel}>Quản lý tài khoản</Text>
-          <MenuItem
-            icon="bag-handle-outline"
-            text="Giỏ hàng của tôi"
-            onPress={() => navigation.navigate("Cart")}
-          />
+
           <MenuItem
             icon="receipt-outline"
             text="Đơn hàng của tôi"

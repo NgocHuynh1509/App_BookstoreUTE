@@ -57,7 +57,8 @@ public class SecurityConfig {
                                 "/cart/**",
                                 "/profile",
                                 "/profile/**",
-                                "/addresses/**"
+                                "/addresses/**",
+                                "/api/orders/**"
                         ).authenticated()
                         .anyRequest().authenticated()
                 )
