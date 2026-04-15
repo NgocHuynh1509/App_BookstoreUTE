@@ -516,11 +516,12 @@ export default function HomeScreen({ navigation }: any) {
             </View>
             <View style={{ flexDirection: "row", gap: 10 }}>
               <TouchableOpacity
-                style={s.headerIconBtn}
-                onPress={() => navigation.navigate("Cart")}
+                  style={s.headerIconBtn}
+                  onPress={() => navigation.navigate("Chat")}
               >
-                <Ionicons name="cart-outline" size={22} color="#FFF" />
+                <Ionicons name="chatbubble-ellipses-outline" size={22} color="#FFF" />
               </TouchableOpacity>
+
               <TouchableOpacity style={s.headerIconBtn}>
                 <Ionicons name="notifications-outline" size={22} color="#FFF" />
                 <View style={s.notifDot} />

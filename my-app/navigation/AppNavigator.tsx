@@ -24,7 +24,7 @@ import SearchResultScreen from "../screens/SearchResultScreen";
 import AddressScreen from "../screens/profile/AddressList";
 import AddressFormScreen from "../screens/profile/AddressForm";
 import CheckoutScreen from "../screens/profile/CheckoutScreen";
-
+import ChatScreen from "../screens/profile/ChatScreen";
 
 
 const Stack = createNativeStackNavigator();
@@ -55,6 +55,7 @@ export default function AppNavigator() {
       <Stack.Screen name="OrderHistory" component={OrderHistoryScreen} />
       <Stack.Screen name="OrderDetail" component={OrderDetailScreen} />
 
+      <Stack.Screen name="Chat" component={ChatScreen} />
     </Stack.Navigator>
   );
 }
