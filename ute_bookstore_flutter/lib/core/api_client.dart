@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 
 import '../api_config.dart';
 import 'session_storage.dart';
@@ -19,6 +20,18 @@ class ApiClient {
       ),
     );
 
+    if (!kReleaseMode) {
+      dio.interceptors.add(
+        LogInterceptor(
+          requestBody: true,
+          responseBody: true,
+          requestHeader: true,
+          responseHeader: false,
+          logPrint: (object) => debugPrint(object.toString()),
+        ),
+      );
+    }
+
     dio.interceptors.add(
       InterceptorsWrapper(
         onRequest: (options, handler) async {
@@ -30,6 +43,10 @@ class ApiClient {
           handler.next(options);
         },
         onError: (error, handler) async {
+          if (!kReleaseMode) {
+            debugPrint('HTTP ERROR ${error.response?.statusCode} ${error.requestOptions.uri}');
+            debugPrint('BODY: ${error.response?.data}');
+          }
           if (error.response?.statusCode == 401 ||
               error.response?.statusCode == 403) {
             await storage.clear();

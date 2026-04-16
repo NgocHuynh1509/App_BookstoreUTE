@@ -6,6 +6,7 @@ public class DashboardSummaryResponse {
 
     private long totalBooks;
     private long totalOrders;
+    private long totalUsers;
     private BigDecimal revenueDay;
     private BigDecimal revenueMonth;
     private BigDecimal revenueYear;
@@ -27,6 +28,14 @@ public class DashboardSummaryResponse {
 
     public void setTotalOrders(long totalOrders) {
         this.totalOrders = totalOrders;
+    }
+
+    public long getTotalUsers() {
+        return totalUsers;
+    }
+
+    public void setTotalUsers(long totalUsers) {
+        this.totalUsers = totalUsers;
     }
 
     public BigDecimal getRevenueDay() {

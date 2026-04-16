@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../widgets/primary_button.dart';
 import '../data/product_models.dart';
+import 'product_detail_screen.dart';
 import 'product_state.dart';
 
 class ProductsScreen extends ConsumerStatefulWidget {
@@ -134,65 +135,76 @@ class _ProductCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.04),
-            blurRadius: 10,
-            offset: const Offset(0, 6),
+    return InkWell(
+      borderRadius: BorderRadius.circular(16),
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => ProductDetailScreen(product: product),
           ),
-        ],
-      ),
-      child: Row(
-        children: [
-          ClipRRect(
-            borderRadius: BorderRadius.circular(12),
-            child: Image.network(
-              product.picture,
-              width: 64,
-              height: 80,
-              fit: BoxFit.cover,
-              errorBuilder: (_, __, ___) => Container(
+        );
+      },
+      child: Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.04),
+              blurRadius: 10,
+              offset: const Offset(0, 6),
+            ),
+          ],
+        ),
+        child: Row(
+          children: [
+            ClipRRect(
+              borderRadius: BorderRadius.circular(12),
+              child: Image.network(
+                product.picture,
                 width: 64,
                 height: 80,
-                color: Colors.grey[200],
-                child: const Icon(Icons.image_not_supported),
+                fit: BoxFit.cover,
+                errorBuilder: (_, __, ___) => Container(
+                  width: 64,
+                  height: 80,
+                  color: Colors.grey[200],
+                  child: const Icon(Icons.image_not_supported),
+                ),
               ),
             ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    product.title,
+                    style: const TextStyle(fontWeight: FontWeight.w600),
+                  ),
+                  const SizedBox(height: 4),
+                  Text('Tồn kho: ${product.quantity}'),
+                  Text('Giá: ${product.price.toStringAsFixed(0)}'),
+                  Text('Thể loại: ${product.categoryName}'),
+                ],
+              ),
+            ),
+            Column(
               children: [
-                Text(
-                  product.title,
-                  style: const TextStyle(fontWeight: FontWeight.w600),
+                IconButton(
+                  onPressed: onEdit,
+                  icon: const Icon(Icons.edit_outlined),
                 ),
-                const SizedBox(height: 4),
-                Text('Tồn kho: ${product.quantity}'),
-                Text('Giá: ${product.price.toStringAsFixed(0)}'),
-                Text('Thể loại: ${product.categoryName}'),
+                IconButton(
+                  onPressed: onDelete,
+                  icon: const Icon(Icons.delete_outline, color: Colors.redAccent),
+                ),
               ],
             ),
-          ),
-          Column(
-            children: [
-              IconButton(
-                onPressed: onEdit,
-                icon: const Icon(Icons.edit_outlined),
-              ),
-              IconButton(
-                onPressed: onDelete,
-                icon: const Icon(Icons.delete_outline, color: Colors.redAccent),
-              ),
-            ],
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

@@ -10,7 +10,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import Constants from "expo-constants";
 import { useAuth } from "../../hooks/useAuth";
 
-const BASE_URL = Constants.expoConfig?.extra?.BASE_URL;
+const API_URL = Constants.expoConfig?.extra?.API_URL;
 
 // ─── Palette ──────────────────────────────────────────────────────────────────
 const C = {
@@ -31,16 +31,6 @@ const C = {
   orangeBg:    "#FFF3E0",
 };
 
-function SectionHeader({ icon, title }: { icon: string; title: string }) {
-  return (
-    <View style={s.sectionHeader}>
-      <View style={s.sectionIconWrap}>
-        <Ionicons name={icon as any} size={15} color={C.primaryMid} />
-      </View>
-      <Text style={s.sectionTitle}>{title}</Text>
-    </View>
-  );
-}
 
 export default function CheckoutScreen() {
   const route      = useRoute<any>();
@@ -65,30 +55,123 @@ export default function CheckoutScreen() {
   const [userPoints, setUserPoints]   = useState(0);
   const [usedPoints, setUsedPoints]   = useState(0);
   const [pointsInput, setPointsInput] = useState("");
+  // State cho form địa chỉ mới
+  function SectionHeader({ icon, title }: { icon: string; title: string }) {
+      return (
+        <View style={s.sectionHeader}>
+          <View style={s.sectionIconWrap}>
+            <Ionicons name={icon as any} size={15} color={C.primaryMid} />
+          </View>
+          <Text style={s.sectionTitle}>{title}</Text>
+        </View>
+      );
+    }
 
-  useEffect(() => { fetchInitialAddress(); fetchUserPoints(); }, [user?.id]);
+    useEffect(() => { fetchInitialAddress(); fetchUserPoints(); }, [user?.id]);
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [newAddr, setNewAddr] = useState({
+    recipientName: '',
+    phoneNumber: '',
+    province: '',
+    district: '',
+    ward: '',
+    specificAddress: '',
+    isDefault: false
+  });
 
-  // ==========================
-  // API LOGIC (unchanged)
-  // ==========================
-  const fetchInitialAddress = async () => {
-    if (!user?.id) return;
-    try {
-      const token = await AsyncStorage.getItem('token');
-      const res   = await fetch(`${BASE_URL}/api/addresses/default/${user.id}`, {
-        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-      });
-      const data = await res.json();
-      if (res.ok && data) setCurrentAddress(data);
-    } catch (err) { console.error("Lỗi fetch địa chỉ:", err); }
-  };
+  // ─── 1. HÀM LƯU ĐỊA CHỈ (GỘP & TỐI ƯU) ──────────────────────────
+    const handleAddNewAddress = async () => {
+      // 1. Kiểm tra đầu vào
+      if (!newAddr.recipientName || !newAddr.phoneNumber || !newAddr.specificAddress || !newAddr.province) {
+        Alert.alert("Thông báo", "Vui lòng điền đầy đủ các thông tin bắt buộc");
+        return;
+      }
+
+      // 2. Kiểm tra User ID (Tránh lỗi 400 như trong ảnh bạn gửi)
+      if (!user?.id) {
+        Alert.alert("Lỗi", "Phiên đăng nhập hết hạn, vui lòng đăng nhập lại");
+        return;
+      }
+
+      setLoading(true);
+      try {
+        const token = await AsyncStorage.getItem('token');
+
+        // Payload gửi đi bao gồm cả isDefault (true/false)
+        const payload = {
+          ...newAddr,
+          customer: { customerId: user.id }
+        };
+
+        const response = await fetch(`${API_URL}/addresses/add`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(payload),
+        });
+
+        const result = await response.json();
+
+        if (response.ok) {
+          // Backend trả về savedAddressDTO trong result.data
+          setCurrentAddress(result.data);
+
+          setShowAddModal(false);
+
+          // RESET STATE: Trở về trắng để lần sau thêm địa chỉ khác không bị dính dữ liệu cũ
+          setNewAddr({
+            recipientName: '',
+            phoneNumber: '',
+            province: '',
+            district: '',
+            ward: '',
+            specificAddress: '',
+            isDefault: false // Reset về false cho lần thêm sau
+          });
+
+          Alert.alert("Thành công", "Đã lưu địa chỉ giao hàng mới");
+        } else {
+          // Hiển thị lỗi từ Backend (Ví dụ: "Thiếu thông tin khách hàng")
+          Alert.alert("Lỗi", result.message || "Không thể lưu địa chỉ.");
+        }
+      } catch (error) {
+        console.error("Lỗi khi thêm địa chỉ:", error);
+        Alert.alert("Lỗi", "Kết nối server thất bại");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    const fetchInitialAddress = async () => {
+      if (!user?.id) return;
+      try {
+        const token = await AsyncStorage.getItem('token');
+        const res = await fetch(`${API_URL}/addresses/default/${user.id}`, {
+          headers: { 'Authorization': `Bearer ${token}` },
+        });
+
+        const data = await res.json(); // Bây giờ parse thoải mái, không bao giờ lỗi nữa!
+
+        if (res.ok && data) {
+          setCurrentAddress(data);
+        } else {
+          setCurrentAddress(null);
+        }
+      } catch (err) {
+        console.log("Lỗi tải địa chỉ:", err);
+        setCurrentAddress(null);
+      }
+    };
+
 
   // Load điểm hiện có của user
   const fetchUserPoints = async () => {
     if (!user?.id) return;
     try {
       const token = await AsyncStorage.getItem('token');
-      const res   = await fetch(`${BASE_URL}/api/profile`, {
+      const res   = await fetch(`${API_URL}/profile`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       const data = await res.json();
@@ -103,14 +186,28 @@ export default function CheckoutScreen() {
     setLoading(true);
     try {
       const token = await AsyncStorage.getItem('token');
-      const res   = await fetch(`${BASE_URL}/api/addresses/user/${user.id}`, {
-        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+      const res = await fetch(`${API_URL}/addresses/user/${user.id}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Accept': 'application/json'
+        },
       });
-      const data = await res.json();
-      setAllAddresses(Array.isArray(data) ? data : []);
-      setShowAddressModal(true);
-    } catch { Alert.alert("Lỗi", "Không thể tải danh sách địa chỉ"); }
-    finally { setLoading(false); }
+
+      const data = await res.json(); // Data này là List<ShippingAddressDTO>
+
+      if (res.ok) {
+        // Data lúc này là mảng các object gọn nhẹ (id, recipientName, phoneNumber...)
+        setAllAddresses(Array.isArray(data) ? data : []);
+        setShowAddressModal(true);
+      } else {
+        Alert.alert("Thông báo", "Không tìm thấy danh sách địa chỉ");
+      }
+    } catch (error) {
+      console.error(error);
+      Alert.alert("Lỗi", "Không thể tải danh sách địa chỉ");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const selectAddress = (addr: any) => { setCurrentAddress(addr); setShowAddressModal(false); };
@@ -118,7 +215,7 @@ export default function CheckoutScreen() {
   const openCouponSelector = async () => {
     try {
       const token = await AsyncStorage.getItem("token");
-      const res   = await fetch(`${BASE_URL}/api/coupons/available/${user.id}`, {
+      const res   = await fetch(`${API_URL}/coupons/available/${user.id}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       const data = await res.json();
@@ -181,7 +278,7 @@ export default function CheckoutScreen() {
         final_total:         displayedTotal,    // gửi luôn total đã tính
         payment_method:      paymentMethod,
       };
-      const res = await fetch(`${BASE_URL}/api/orders/create`, {
+      const res = await fetch(`${API_URL}/orders/create`, {
         method: 'POST',
         headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
@@ -218,7 +315,7 @@ export default function CheckoutScreen() {
     finally { setLoading(false); }
   };
 
-  const coverUri = (img: string) => img?.startsWith('http') ? img : `${BASE_URL}/uploads/${img}`;
+  const coverUri = (img: string) => img?.startsWith('http') ? img : `${API_URL}/uploads/${img}`;
 
   const PAYMENT_OPTIONS = [
     { key: 'COD',   label: 'Thanh toán khi nhận hàng', sub: 'Trả tiền mặt khi giao hàng', icon: 'cash-outline' },
@@ -242,28 +339,115 @@ export default function CheckoutScreen() {
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={s.scroll}>
 
         {/* ── 1. ADDRESS ───────────────────────────────────────── */}
+        {/* ── 1. ADDRESS ───────────────────────────────────────── */}
         <View style={s.card}>
-          <SectionHeader icon="location-outline" title="Địa chỉ nhận hàng" />
-          <TouchableOpacity style={[s.addressBox, !currentAddress && s.addressBoxEmpty]} onPress={openAddressSelector} activeOpacity={0.85}>
-            {currentAddress ? (
+          {/* Header có nút + để thêm địa chỉ mới mọi lúc */}
+          <View style={{
+            flexDirection: 'row',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            marginBottom: 10
+          }}>
+            <SectionHeader icon="location-outline" title="Địa chỉ nhận hàng" />
+
+            <TouchableOpacity
+              onPress={() => setShowAddModal(true)}
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                backgroundColor: C.primarySoft,
+                paddingHorizontal: 10,
+                paddingVertical: 4,
+                borderRadius: 12,
+                marginRight: 5
+              }}
+            >
+              <Ionicons name="add" size={16} color={C.primaryMid} />
+              <Text style={{ color: C.primaryMid, fontSize: 12, fontWeight: '700', marginLeft: 2 }}>Thêm mới</Text>
+            </TouchableOpacity>
+          </View>
+
+          {currentAddress ? (
+            // HIỂN THỊ KHI ĐÃ CÓ ĐỊA CHỈ
+            <TouchableOpacity
+              style={s.addressBox}
+              onPress={openAddressSelector}
+              activeOpacity={0.85}
+            >
               <View style={s.addressContent}>
-                <View style={s.addressIconWrap}><Ionicons name="location" size={18} color={C.primaryMid} /></View>
+                <View style={s.addressIconWrap}>
+                  <Ionicons name="location" size={18} color={C.primaryMid} />
+                </View>
                 <View style={{ flex: 1 }}>
-                  <Text style={s.addressName}>{currentAddress.recipient_name}<Text style={{ color: C.text3 }}>  |  </Text>{currentAddress.phone_number}</Text>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 8 }}>
+                    <Text style={s.addressName}>
+                      {currentAddress.recipientName || currentAddress.recipient_name}
+                      <Text style={{ color: C.text3, fontWeight: 'normal' }}>  |  </Text>
+                      {currentAddress.phoneNumber || currentAddress.phone_number}
+                    </Text>
+
+                    {/* HIỂN THỊ BADGE MẶC ĐỊNH NẾU LÀ TRUE */}
+                    {(currentAddress.isDefault || currentAddress.is_default === 1) && (
+                      <View style={{
+                        backgroundColor: C.primarySoft,
+                        paddingHorizontal: 6,
+                        paddingVertical: 2,
+                        borderRadius: 4,
+                        borderWidth: 0.5,
+                        borderColor: C.primaryMid
+                      }}>
+                        <Text style={{ color: C.primaryMid, fontSize: 10, fontWeight: '700' }}>Mặc định</Text>
+                      </View>
+                    )}
+                  </View>
+
                   <Text style={s.addressDetail} numberOfLines={2}>
-                    {[currentAddress.specific_address, currentAddress.ward, currentAddress.district, currentAddress.province].filter(Boolean).join(", ")}
+                    {[
+                      currentAddress.specificAddress || currentAddress.specific_address,
+                      currentAddress.ward,
+                      currentAddress.district,
+                      currentAddress.province
+                    ].filter(Boolean).join(", ")}
                   </Text>
                 </View>
-                <View style={s.changeBtn}><Text style={s.changeBtnTxt}>Đổi</Text></View>
+
+                <TouchableOpacity style={s.changeBtn} onPress={openAddressSelector}>
+                  <Text style={s.changeBtnTxt}>Đổi</Text>
+                  <Ionicons name="chevron-forward" size={14} color={C.primaryMid} />
+                </TouchableOpacity>
               </View>
-            ) : (
-              <View style={s.addressEmpty}>
-                <Ionicons name="location-outline" size={22} color={C.primaryMid} />
-                <Text style={s.addressEmptyTxt}>Chọn địa chỉ giao hàng</Text>
-                <Ionicons name="chevron-forward" size={16} color={C.text3} />
+            </TouchableOpacity>
+          ) : (
+            // HIỂN THỊ KHI CHƯA CÓ ĐỊA CHỈ (TRỐNG)
+            <TouchableOpacity
+              style={[s.addressBox, s.addressBoxEmpty, {
+                paddingVertical: 30,
+                alignItems: 'center',
+                borderStyle: 'dashed',
+                borderWidth: 1.5,
+                borderColor: C.primaryTint
+              }]}
+              onPress={() => setShowAddModal(true)}
+            >
+              <View style={{
+                backgroundColor: C.primarySoft,
+                width: 50,
+                height: 50,
+                borderRadius: 25,
+                justifyContent: 'center',
+                alignItems: 'center',
+                marginBottom: 10
+              }}>
+                <Ionicons name="add" size={30} color={C.primaryMid} />
               </View>
-            )}
-          </TouchableOpacity>
+              <Text style={{ color: C.primaryMid, fontWeight: '700', fontSize: 15 }}>
+                Chưa có địa chỉ giao hàng
+              </Text>
+              <Text style={{ color: C.text3, fontSize: 13, marginTop: 4 }}>
+                Nhấn để thêm địa chỉ nhận hàng của bạn
+              </Text>
+            </TouchableOpacity>
+          )}
         </View>
 
         {/* ── 2. PRODUCTS ──────────────────────────────────────── */}
@@ -447,23 +631,57 @@ export default function CheckoutScreen() {
             </View>
             <ScrollView showsVerticalScrollIndicator={false}>
               {allAddresses.map((addr, idx) => {
+                // Kiểm tra xem địa chỉ này có đang được chọn hay không
                 const sel = currentAddress?.id === addr.id;
+
+                // Kiểm tra trạng thái mặc định (hỗ trợ cả Boolean true và Integer 1)
+                const isDefault = addr.isDefault || addr.is_default === 1;
+
                 return (
-                  <TouchableOpacity key={addr.id}
+                  <TouchableOpacity
+                    key={addr.id}
                     style={[s.addrItem, sel && s.addrItemActive, idx === allAddresses.length - 1 && { borderBottomWidth: 0 }]}
-                    onPress={() => selectAddress(addr)} activeOpacity={0.85}>
+                    onPress={() => selectAddress(addr)}
+                    activeOpacity={0.85}
+                  >
                     <View style={[s.addrAccent, sel && { backgroundColor: C.primaryMid }]} />
+
                     <View style={s.addrBody}>
                       <View style={s.addrNameRow}>
-                        <Text style={s.addrName}>{addr.recipient_name}</Text>
-                        {addr.is_default === 1 && <View style={s.defaultBadge}><Text style={s.defaultBadgeTxt}>Mặc định</Text></View>}
+                        {/* Hiển thị tên người nhận: hỗ trợ cả 2 kiểu đặt tên biến */}
+                        <Text style={s.addrName}>
+                          {addr.recipientName || addr.recipient_name}
+                        </Text>
+
+                        {/* Nhãn Mặc định */}
+                        {isDefault && (
+                          <View style={s.defaultBadge}>
+                            <Text style={s.defaultBadgeTxt}>Mặc định</Text>
+                          </View>
+                        )}
                       </View>
-                      <Text style={s.addrPhone}>{addr.phone_number}</Text>
+
+                      {/* Số điện thoại */}
+                      <Text style={s.addrPhone}>
+                        {addr.phoneNumber || addr.phone_number}
+                      </Text>
+
+                      {/* Địa chỉ chi tiết */}
                       <Text style={s.addrDetail} numberOfLines={2}>
-                        {[addr.specific_address, addr.ward, addr.district, addr.province].filter(Boolean).join(", ")}
+                        {[
+                          addr.specificAddress || addr.specific_address,
+                          addr.ward,
+                          addr.district,
+                          addr.province
+                        ].filter(Boolean).join(", ")}
                       </Text>
                     </View>
-                    <Ionicons name={sel ? "radio-button-on" : "radio-button-off"} size={22} color={sel ? C.primaryMid : C.text3} />
+
+                    <Ionicons
+                      name={sel ? "radio-button-on" : "radio-button-off"}
+                      size={22}
+                      color={sel ? C.primaryMid : C.text3}
+                    />
                   </TouchableOpacity>
                 );
               })}
@@ -520,6 +738,153 @@ export default function CheckoutScreen() {
                 );
               })}
               <View style={{ height: 30 }} />
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
+
+      {/* ── ADD NEW ADDRESS MODAL ────────────────────────────────────── */}
+      <Modal visible={showAddModal} animationType="slide" transparent>
+        <View style={s.modalOverlay}>
+          <View style={[s.modalSheet, { height: '85%' }]}>
+            <View style={s.sheetHandle} />
+            <View style={s.sheetHeader}>
+              <Text style={s.sheetTitle}>Thêm địa chỉ mới</Text>
+              <TouchableOpacity style={s.sheetCloseBtn} onPress={() => setShowAddModal(false)}>
+                <Ionicons name="close" size={20} color={C.text2} />
+              </TouchableOpacity>
+            </View>
+
+            <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ padding: 20 }}>
+              <View style={{ gap: 15 }}>
+
+                {/* Tên người nhận */}
+                <View>
+                  <Text style={{ fontSize: 13, fontWeight: '700', color: C.text2, marginBottom: 8 }}>Người nhận *</Text>
+                  <TextInput
+                    style={s.inputField}
+                    placeholder="Nhập tên người nhận"
+                    placeholderTextColor={C.text3}
+                    value={newAddr.recipientName}
+                    onChangeText={(txt) => setNewAddr({...newAddr, recipientName: txt})}
+                  />
+                </View>
+
+                {/* Số điện thoại */}
+                <View>
+                  <Text style={{ fontSize: 13, fontWeight: '700', color: C.text2, marginBottom: 8 }}>Số điện thoại *</Text>
+                  <TextInput
+                    style={s.inputField}
+                    placeholder="Nhập số điện thoại liên lạc"
+                    placeholderTextColor={C.text3}
+                    keyboardType="phone-pad"
+                    value={newAddr.phoneNumber}
+                    onChangeText={(txt) => setNewAddr({...newAddr, phoneNumber: txt})}
+                  />
+                </View>
+
+                {/* Tỉnh / Thành phố */}
+                <View>
+                  <Text style={{ fontSize: 13, fontWeight: '700', color: C.text2, marginBottom: 8 }}>Tỉnh / Thành phố *</Text>
+                  <TextInput
+                    style={s.inputField}
+                    placeholder="Ví dụ: TP. Hồ Chí Minh"
+                    placeholderTextColor={C.text3}
+                    value={newAddr.province}
+                    onChangeText={(txt) => setNewAddr({...newAddr, province: txt})}
+                  />
+                </View>
+
+                {/* Quận / Huyện */}
+                <View>
+                  <Text style={{ fontSize: 13, fontWeight: '700', color: C.text2, marginBottom: 8 }}>Quận / Huyện *</Text>
+                  <TextInput
+                    style={s.inputField}
+                    placeholder="Ví dụ: Quận Thủ Đức"
+                    placeholderTextColor={C.text3}
+                    value={newAddr.district}
+                    onChangeText={(txt) => setNewAddr({...newAddr, district: txt})}
+                  />
+                </View>
+
+                {/* Phường / Xã */}
+                <View>
+                  <Text style={{ fontSize: 13, fontWeight: '700', color: C.text2, marginBottom: 8 }}>Phường / Xã</Text>
+                  <TextInput
+                    style={s.inputField}
+                    placeholder="Ví dụ: Phường Linh Trung"
+                    placeholderTextColor={C.text3}
+                    value={newAddr.ward}
+                    onChangeText={(txt) => setNewAddr({...newAddr, ward: txt})}
+                  />
+                </View>
+
+                {/* Địa chỉ cụ thể */}
+                <View>
+                  <Text style={{ fontSize: 13, fontWeight: '700', color: C.text2, marginBottom: 8 }}>Địa chỉ cụ thể *</Text>
+                  <TextInput
+                    style={[s.inputField, { height: 80, textAlignVertical: 'top' }]}
+                    placeholder="Số nhà, tên đường..."
+                    placeholderTextColor={C.text3}
+                    multiline
+                    value={newAddr.specificAddress}
+                    onChangeText={(txt) => setNewAddr({...newAddr, specificAddress: txt})}
+                  />
+                </View>
+                {/* Đặt làm mặc định */}
+                <TouchableOpacity
+                  style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    paddingVertical: 10,
+                    marginTop: 5
+                  }}
+                  activeOpacity={0.8}
+                  onPress={() => setNewAddr({...newAddr, isDefault: !newAddr.isDefault})}
+                >
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                    <View style={{
+                      width: 24,
+                      height: 24,
+                      borderRadius: 6,
+                      borderWidth: 2,
+                      borderColor: newAddr.isDefault ? C.primaryMid : C.border,
+                      backgroundColor: newAddr.isDefault ? C.primaryMid : 'transparent',
+                      justifyContent: 'center',
+                      alignItems: 'center'
+                    }}>
+                      {newAddr.isDefault && <Ionicons name="checkmark" size={16} color="#FFF" />}
+                    </View>
+                    <Text style={{ fontSize: 14, color: C.text1, fontWeight: '600' }}>Đặt làm địa chỉ mặc định</Text>
+                  </View>
+
+
+                </TouchableOpacity>
+
+                {/* Nút lưu */}
+                <TouchableOpacity
+                  style={[s.orderBtn, { width: '100%', marginTop: 10 }, loading && s.orderBtnDisabled]}
+                  onPress={handleAddNewAddress}
+                  disabled={loading}
+                >
+                  {loading ? <ActivityIndicator color="#FFF" /> : (
+                    <>
+                      <Ionicons name="save-outline" size={20} color="#FFF" />
+                      <Text style={s.orderBtnTxt}>LƯU ĐỊA CHỈ</Text>
+                    </>
+                  )}
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  onPress={() => setShowAddModal(false)}
+                  style={{ padding: 10, alignItems: 'center' }}
+                >
+                  <Text style={{ color: C.text3, fontWeight: '600' }}>Hủy bỏ</Text>
+                </TouchableOpacity>
+
+              </View>
+              <View style={{ height: 40 }} />
             </ScrollView>
           </View>
         </View>
