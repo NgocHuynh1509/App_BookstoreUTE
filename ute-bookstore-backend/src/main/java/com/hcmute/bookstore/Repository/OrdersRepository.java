@@ -15,6 +15,7 @@ import java.util.Optional;
 @Repository
 public interface OrdersRepository extends JpaRepository<Orders, String> {
     List<Orders> findByCustomer_CustomerIdOrderByOrderDateDesc(String customerId);
+    Optional<Orders> findByOrderIdAndCustomer_CustomerId(String orderId, String customerId);
 
 	Page<Orders> findByStatusIgnoreCase(String status, Pageable pageable);
 

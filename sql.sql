@@ -126,12 +126,11 @@ VALUES
     ('vananh', '$2a$12$o2ldvPsqcZmATybq/SM.euTy4LEqQDQXHS6H3eRf8Jd/RfriOi0L2', 'ROLE_CUSTOMER', 'Phạm Thị Vân Ánh', CURRENT_DATE, 'CU52',1,1),
     ('hoangdat', '$2a$12$o2ldvPsqcZmATybq/SM.euTy4LEqQDQXHS6H3eRf8Jd/RfriOi0L2', 'ROLE_CUSTOMER', 'Tạ Hoàng Đạt', CURRENT_DATE, 'CU53',1,1),
     ('minhduc', '$2a$12$o2ldvPsqcZmATybq/SM.euTy4LEqQDQXHS6H3eRf8Jd/RfriOi0L2', 'ROLE_CUSTOMER', 'Vũ Minh Đức', CURRENT_DATE, 'CU54',1,1);
-INSERT INTO customers (customerId, fullName, email, phone, address, dateOfBirth) VALUES
-('AD01', 'Admin', 'admin@gmail.com', '0901152521', 'TP. HCM', '2005-07-24');
+
 INSERT INTO Users
 (userName, password, role, fullName, registrationDate, customerId, enabled, email_verified)
 VALUES
-    ('admin', '$2a$10$DNnkwflHxO0prvuRJMQqIeUAkA/cZbwZtmzNbdGIf.0VrLUfSpYZy', 'ROLE_ADMIN', 'Admin', CURRENT_DATE, 'AD01',1,1);
+
 ('hoangbang', '$2a$12$2AmTP34lQ.c.z7KWTflTH.aeuEC9C3ijCfnAScz8gV1FQ1rqEBCgi', 'ROLE_CUSTOMER', 'Phan Tống Hoàng Bang', CURRENT_DATE, 'CU01',1,1),
 ('vutriet', '$2a$12$2AmTP34lQ.c.z7KWTflTH.aeuEC9C3ijCfnAScz8gV1FQ1rqEBCgi', 'ROLE_CUSTOMER', 'Nguyễn Vũ Triết', CURRENT_DATE, 'CU02',1,1),
 ('diemngoc', '$2a$12$2AmTP34lQ.c.z7KWTflTH.aeuEC9C3ijCfnAScz8gV1FQ1rqEBCgi', 'ROLE_CUSTOMER', 'Huỳnh Gia Diễm Ngọc', CURRENT_DATE, 'CU03',1,1),

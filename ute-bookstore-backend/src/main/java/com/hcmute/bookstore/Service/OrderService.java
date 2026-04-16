@@ -1,18 +1,15 @@
 package com.hcmute.bookstore.Service;
 
-import com.hcmute.bookstore.Entity.OrderDetail;
-import com.hcmute.bookstore.Entity.Orders;
-import com.hcmute.bookstore.Entity.Users;
-import com.hcmute.bookstore.Repository.OrderDetailRepository;
-import com.hcmute.bookstore.Repository.OrdersRepository;
-import com.hcmute.bookstore.Repository.UsersRepository;
-import com.hcmute.bookstore.dto.OrderDetailItemResponse;
-import com.hcmute.bookstore.dto.OrderDetailResponse;
-import com.hcmute.bookstore.dto.OrderHistoryResponse;
-import jakarta.transaction.Transactional;
+import com.hcmute.bookstore.Entity.*;
+import com.hcmute.bookstore.Repository.*;
+import com.hcmute.bookstore.dto.*;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -24,6 +21,12 @@ public class OrderService {
     private final OrdersRepository ordersRepository;
     private final UsersRepository usersRepository;
     private final OrderDetailRepository orderDetailRepository;
+    @Autowired
+    private CouponRepository couponRepo;
+    @Autowired private BooksRepository bookRepo;
+    @Autowired private ShippingAddressRepository addressRepo;
+    @Autowired private CartRepository cartRepo;
+    @Autowired private CartDetailRepository cartDetailRepo;
 
     public List<OrderHistoryResponse> getOrdersByUserId(String userIdFromClient, String emailFromToken) {
         Users user = usersRepository.findByCustomer_Email(emailFromToken)
@@ -186,6 +189,133 @@ public class OrderService {
         ordersRepository.save(order);
 
         return "Đơn hàng đã được huỷ";
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    public String createOrder(OrderRequest request) throws Exception {
+        // 1. Kiểm tra User thông qua Customer ID gửi từ Frontend (request.getUser_id())
+        Users user = usersRepository.findByCustomer_CustomerId(request.getUser_id())
+                .orElseThrow(() -> new Exception("Không tìm thấy User với Customer ID: " + request.getUser_id()));
+
+        Customers customer = user.getCustomer();
+        if (customer == null) {
+            throw new Exception("Người dùng chưa có thông tin khách hàng (Customer)");
+        }
+
+        // 2. Xử lý trừ điểm thưởng (Reward Points)
+        if (request.getDiscount_points() != null && request.getDiscount_points() > 0) {
+            if (user.getRewardPoints() < request.getDiscount_points()) {
+                throw new Exception("Không đủ điểm thưởng");
+            }
+            user.setRewardPoints(user.getRewardPoints() - request.getDiscount_points());
+            usersRepository.save(user);
+        }
+
+        // 3. Xử lý Coupon
+        if (request.getDiscount_coupon() != null && !request.getDiscount_coupon().isEmpty()) {
+            Coupon coupon = couponRepo.findByCode(request.getDiscount_coupon())
+                    .orElseThrow(() -> new Exception("Mã giảm giá không hợp lệ"));
+
+            if (coupon.getUsedCount() >= coupon.getUsageLimit()) {
+                throw new Exception("Mã giảm giá đã hết lượt sử dụng");
+            }
+
+            coupon.setUsedCount(coupon.getUsedCount() + 1);
+            couponRepo.save(coupon);
+        }
+
+        // 4. Tạo thực thể Order
+        String orderId = "ORD" + System.currentTimeMillis();
+        Orders order = new Orders();
+        order.setOrderId(orderId);
+        order.setCustomer(customer);
+        order.setPaymentMethod(request.getPayment_method());
+        order.setTotalAmount(request.getFinal_total());
+
+        // Ưu tiên lấy address string từ request, nếu không có thì để mặc định
+        String shippingAddr = request.getAddress() != null ? request.getAddress() : "Giao đến ID: " + request.getShipping_address_id();
+        order.setAddress(shippingAddr);
+
+        order.setStatus("PENDING");
+        order.setOrderDate(new Date());
+
+        // Gán shipping address entity (khóa ngoại)
+        if (request.getShipping_address_id() != null) {
+            ShippingAddress sa = addressRepo.findById(request.getShipping_address_id()).orElse(null);
+            order.setShippingAddress(sa);
+        }
+
+        ordersRepository.save(order);
+
+        // 5. Lưu OrderDetails, Cập nhật kho và Tăng số lượng đã bán
+        List<String> purchasedBookIds = new ArrayList<>();
+
+        for (CartItemDTO item : request.getItems()) {
+            // Lưu ý: Đảm bảo item.getBook_id() không bị null
+            Books book = bookRepo.findById(item.getBook_id())
+                    .orElseThrow(() -> new Exception("Sách không tồn tại: " + item.getBook_id()));
+
+            if (book.getQuantity() < item.getQuantity()) {
+                throw new Exception("Sách '" + book.getTitle() + "' không đủ số lượng!");
+            }
+
+            // Cập nhật kho
+            book.setQuantity(book.getQuantity() - item.getQuantity());
+            book.setSoldQuantity(book.getSoldQuantity() + item.getQuantity());
+            bookRepo.save(book);
+
+            // QUAN TRỌNG: Lưu OrderDetail
+            OrderDetail detail = new OrderDetail();
+            // Tạo ID phức hợp cho OrderDetail
+            OrderdetailId detailId = new OrderdetailId(order.getOrderId(), book.getBookId());
+            detail.setOrderDetailId(detailId);
+
+            detail.setOrder(order);
+            detail.setBook(book);
+            detail.setQuantity(item.getQuantity());
+            detail.setUnitPrice(item.getPrice());
+
+            // Thực hiện lưu vào database
+            orderDetailRepository.save(detail);
+
+            purchasedBookIds.add(book.getBookId());
+        }
+
+// 6. XỬ LÝ GIỎ HÀNG
+        // Dùng getter đúng (ví dụ request.isFromCart())
+        if (request.isFromCart()) {
+            Cart cart = cartRepo.findByCustomer(customer);
+            if (cart != null) {
+                // Log ra để kiểm tra nếu vẫn chưa xóa được
+                System.out.println("Đang xóa giỏ hàng cho CartId: " + cart.getCartId());
+                System.out.println("Các BookId cần xóa: " + purchasedBookIds);
+
+                cartDetailRepo.deleteByCartIdAndBookIds(cart.getCartId(), purchasedBookIds);
+                updateCartTotals(cart);
+            }
+        }
+
+        return orderId;
+    }
+
+    /**
+     * Cập nhật lại tổng tiền và số lượng của Cart sau khi xóa các CartDetail
+     */
+    private void updateCartTotals(Cart cart) {
+        // Lấy lại danh sách chi tiết giỏ hàng còn lại sau khi xóa
+        List<CartDetail> remaining = cartDetailRepo.findByCart_CartId(cart.getCartId());
+
+        int totalQty = 0;
+        BigDecimal totalAmt = BigDecimal.ZERO;
+
+        for (CartDetail cd : remaining) {
+            totalQty += cd.getQuantity();
+            totalAmt = totalAmt.add(cd.getUnitPrice().multiply(new BigDecimal(cd.getQuantity())));
+        }
+
+        cart.setQuantity(totalQty);
+        cart.setTotalAmount(totalAmt);
+        cartRepo.save(cart); // Cập nhật lại header của giỏ hàng
     }
 
 

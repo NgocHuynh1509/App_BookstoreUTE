@@ -277,8 +277,9 @@ export default function CheckoutScreen() {
         discount_coupon:     coupon,
         final_total:         displayedTotal,    // gửi luôn total đã tính
         payment_method:      paymentMethod,
+        isFromCart:          true,
       };
-      const res = await fetch(`${API_URL}/orders/create`, {
+      const res = await fetch(`${API_URL}/api/orders/create`, {
         method: 'POST',
         headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
@@ -289,21 +290,7 @@ export default function CheckoutScreen() {
         // { success, orderId, earned_points, bonus_points?, reward_coupon?, reward_coupon_percent? }
         const lines: string[] = ["Đơn hàng của bạn đã được đặt thành công! 🎉"];
 
-        // Điểm tích lũy từ đơn hàng (luôn có)
-        if (data.earned_points && data.earned_points > 0) {
-          lines.push(`⭐ Tích lũy +${data.earned_points} điểm`);
-        }
 
-        // Thưởng thêm điểm bonus (random 50%)
-        if (data.bonus_points && data.bonus_points > 0) {
-          lines.push(`🎁 May mắn! Thưởng thêm +${data.bonus_points} điểm!`);
-        }
-
-        // Thưởng coupon (random 50%)
-        if (data.reward_coupon) {
-          const pctTxt = data.reward_coupon_percent ? ` giảm ${data.reward_coupon_percent}%` : "";
-          lines.push(`🎫 Tặng mã${pctTxt}: ${data.reward_coupon} (30 ngày)`);
-        }
 
         Alert.alert("✅ Đặt hàng thành công", lines.join("\n\n"), [
           { text: "Về trang chủ", onPress: () => navigation.navigate("MainTabs") },
