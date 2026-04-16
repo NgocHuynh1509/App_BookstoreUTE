@@ -9,6 +9,7 @@ import { Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import Constants from "expo-constants";
 import { useAuth } from "../../hooks/useAuth";
+import { WebView } from 'react-native-webview'; // <--- Thêm dòng này
 
 const API_URL = Constants.expoConfig?.extra?.API_URL;
 
@@ -44,6 +45,7 @@ export default function CheckoutScreen() {
   const [showAddressModal, setShowAddressModal] = useState(false);
   const [loading, setLoading]                   = useState(false);
   const [paymentMethod, setPaymentMethod]       = useState('COD');
+  const [currentOrderId, setCurrentOrderId] = useState(null); // <--- THÊM DÒNG NÀY NÈ MÁ
 
   // ── Coupon state
   const [coupon, setCoupon]           = useState("");
@@ -259,6 +261,9 @@ export default function CheckoutScreen() {
   const discountFromPoints  = usedPoints * POINT_RATE;
   const totalDiscount       = discountFromCoupon + discountFromPoints;
   const displayedTotal      = Math.max(0, totalPrice - totalDiscount);
+  // Thêm state này vào đầu CheckoutScreen
+  const [paymentUrl, setPaymentUrl] = useState(null);
+  const [showWebView, setShowWebView] = useState(false);
 
   // ==========================
   // ĐẶT HÀNG — gửi thông tin coupon + điểm lên server
@@ -279,11 +284,9 @@ export default function CheckoutScreen() {
         ? `${API_URL}/api/orders/buy-now`
         : `${API_URL}/api/orders/create`;
 
-      // 2. Tạo Payload riêng biệt cho từng trường hợp
+      // 2. Tạo Payload riêng biệt
       let payload = {};
-
       if (isBuyNow) {
-        // PAYLOAD CHO MUA NGAY (Khớp với OrderDirectRequest DTO mới)
         payload = {
           user_id: user?.id,
           shipping_address_id: currentAddress.id,
@@ -298,25 +301,22 @@ export default function CheckoutScreen() {
           final_total: Number(displayedTotal) || 0,
           payment_method: paymentMethod,
           address: currentAddress.addressString || ""
-          // Tuyệt đối không có 'isFromCart' ở đây để tránh lỗi DTO mới
         };
       } else {
-        // PAYLOAD CHO GIỎ HÀNG (Giữ nguyên y hệt code cũ của má)
         payload = {
-          user_id:             user?.id,
+          user_id: user?.id,
           shipping_address_id: currentAddress.id,
-          items:               selectedItems, // Giữ nguyên, không động vào kiểu dữ liệu
-          total_price:         totalPrice,
-          discount_points:     usedPoints,
-          discount_coupon:     coupon,
-          final_total:         displayedTotal,
-          payment_method:      paymentMethod,
-          isFromCart:          route.params?.isFromCart ?? true, // Giữ nguyên tên biến cũ
+          items: selectedItems,
+          total_price: totalPrice,
+          discount_points: usedPoints,
+          discount_coupon: coupon,
+          final_total: displayedTotal,
+          payment_method: paymentMethod,
+          isFromCart: route.params?.isFromCart ?? true,
         };
       }
 
-      console.log("🚀 ĐANG GỌI:", endpoint);
-      console.log("📦 PAYLOAD GỬI ĐI:", JSON.stringify(payload, null, 2));
+      console.log("🚀 GỌI API:", endpoint);
 
       const res = await fetch(endpoint, {
         method: 'POST',
@@ -330,11 +330,20 @@ export default function CheckoutScreen() {
       const data = await res.json();
 
       if (res.ok && data.success) {
-        Alert.alert("✅ Đặt hàng thành công", "Đơn hàng của bạn đã được đặt thành công! 🎉", [
-          { text: "Về trang chủ", onPress: () => navigation.navigate("MainTabs") },
-        ]);
+          // LƯU LẠI ORDER ID ĐỂ TÍ NỮA DÙNG TRONG WEBVIEW
+                  setCurrentOrderId(data.orderId); // <--- THÊM DÒNG NÀY
+        // 3. Xử lý sau khi gọi API thành công
+        if (paymentMethod === 'VNPAY' && data.vnpayUrl) {
+          // Lưu URL và mở WebView (Nhớ khai báo 2 state này ở đầu Component nhen)
+          setPaymentUrl(data.vnpayUrl);
+          setShowWebView(true);
+        } else {
+          // Thanh toán COD thành công
+          Alert.alert("✅ Thành công", "Đơn hàng của bạn đã được đặt thành công!", [
+              { text: "OK", onPress: () => navigation.navigate("MainTabs") }
+          ]);
+        }
       } else {
-        // Trả về lỗi từ Backend
         Alert.alert("Thất bại", data.error || data.message || "Lỗi xử lý đơn hàng");
       }
     } catch (err) {
@@ -343,7 +352,7 @@ export default function CheckoutScreen() {
     } finally {
       setLoading(false);
     }
-  };
+  }; // <-- Má thiếu cái dấu đóng này nè!
 
   const coverUri = (img: string) => img?.startsWith('http') ? img : `${API_URL}/uploads/${img}`;
 
@@ -351,6 +360,29 @@ export default function CheckoutScreen() {
     { key: 'COD',   label: 'Thanh toán khi nhận hàng', sub: 'Trả tiền mặt khi giao hàng', icon: 'cash-outline' },
     { key: 'VNPAY', label: 'Thanh toán qua VNPAY',     sub: 'Thẻ ATM, Internet Banking',   icon: 'card-outline' },
   ];
+    const handleUpdateFailedStatus = async (orderId) => {
+      if (!orderId) return;
+
+      try {
+        // 1. Phải lấy Token ra nè má
+        const token = await AsyncStorage.getItem('token');
+
+        console.log("🚀 Đang gọi API update có Token cho:", orderId);
+
+        const response = await fetch(`${API_URL}/api/orders/update-status`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}` // <--- NHÉT TOKEN VÀO ĐÂY
+          },
+          body: JSON.stringify({ orderId: orderId, status: 'FAILED' })
+        });
+
+        console.log("Mã phản hồi từ Server:", response.status);
+      } catch (err) {
+        console.log("❌ Lỗi Fetch:", err.message);
+      }
+    };
 
   return (
     <SafeAreaView style={s.container}>
@@ -919,6 +951,59 @@ export default function CheckoutScreen() {
           </View>
         </View>
       </Modal>
+      {/* --- MODAL WEBVIEW THANH TOÁN VNPAY --- */}
+        <Modal visible={showWebView} animationType="slide">
+          <SafeAreaView style={{ flex: 1 }}>
+            <View style={{
+              height: 50,
+              flexDirection: 'row',
+              alignItems: 'center',
+              paddingHorizontal: 15,
+              borderBottomWidth: 1,
+              borderColor: '#EEE',
+              backgroundColor: '#FFF'
+            }}>
+              <TouchableOpacity onPress={() => setShowWebView(false)}>
+                <Ionicons name="close" size={25} color="#333" />
+              </TouchableOpacity>
+              <Text style={{ fontSize: 16, fontWeight: 'bold', marginLeft: 20 }}>Thanh toán VNPAY</Text>
+            </View>
+
+            <WebView
+              source={{ uri: paymentUrl }}
+              onNavigationStateChange={(navState) => {
+                // Chỉ xử lý khi thấy link return
+                if (navState.url.includes('vnpay-return')) {
+
+                  // --- CHIÊU NÀY LÀ QUAN TRỌNG NHẤT ---
+                  // Dùng Regex để móc OrderId trực tiếp từ URL của VNPAY trả về
+                  const orderIdMatch = navState.url.match(/[?&]vnp_TxnRef=([^&]+)/);
+                  const resCodeMatch = navState.url.match(/[?&]vnp_ResponseCode=([^&]+)/);
+
+                  // Nếu Regex tìm thấy thì dùng, không thì mới dùng currentOrderId làm dự phòng
+                  const orderIdFromUrl = orderIdMatch ? orderIdMatch[1] : currentOrderId;
+                  const responseCode = resCodeMatch ? resCodeMatch[1] : "99";
+
+                  setShowWebView(false);
+
+                  setTimeout(() => {
+                    if (responseCode === '00') {
+                      Alert.alert("✅ Thành công", "Đơn hàng đã thanh toán!");
+                      navigation.navigate("MainTabs");
+                    } else {
+                      // Dùng cái ID vừa móc được từ URL nè má!
+                      console.log("🚀 Gọi update FAILED cho đơn:", orderIdFromUrl);
+                      handleUpdateFailedStatus(orderIdFromUrl);
+
+                      Alert.alert("⚠️ Thông báo", "Giao dịch đã bị hủy.");
+                      navigation.navigate("MainTabs");
+                    }
+                  }, 500);
+                }
+              }}
+            />
+          </SafeAreaView>
+        </Modal>
     </SafeAreaView>
   );
 }
