@@ -15,8 +15,9 @@ import { useAuth } from "../../hooks/useAuth";
 import Constants from "expo-constants";
 import { useFocusEffect } from "@react-navigation/native";
 import { RefreshControl } from "react-native";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
-const BASE_URL = Constants.expoConfig.extra.API_URL;
+const BASE_URL = Constants.expoConfig?.extra?.API_URL;
 // ─── Palette — light blue ─────────────────────────────────────────────────────
 const C = {
   primary:     "#1565C0",   // deep blue
@@ -33,9 +34,22 @@ const C = {
   gold:        "#FFB300",
 };
 
+type StatBubbleProps = {
+  value: string | number;
+  label: string;
+  icon: string;
+};
+
+type MenuItemProps = {
+  icon: keyof typeof Ionicons.glyphMap;
+  text: string;
+  onPress?: () => void;
+  noBorder?: boolean;
+  badge?: string | number;
+};
+
 // ─── Stat bubble ──────────────────────────────────────────────────────────────
-function StatBubble({ value, label, icon }) {
-  return (
+function StatBubble({ value, label, icon }: StatBubbleProps) {  return (
     <View style={styles.statBubble}>
       <Text style={styles.statIcon}>{icon}</Text>
       <Text style={styles.statValue}>{value}</Text>
@@ -45,7 +59,13 @@ function StatBubble({ value, label, icon }) {
 }
 
 // ─── Menu item ────────────────────────────────────────────────────────────────
-function MenuItem({ icon, text, onPress, noBorder, badge }) {
+function MenuItem({
+                    icon,
+                    text,
+                    onPress,
+                    noBorder = false,
+                    badge,
+                  }: MenuItemProps) {
   return (
     <TouchableOpacity
       onPress={onPress}
@@ -75,21 +95,59 @@ export default function ProfileScreen() {
   const navigation = useNavigation<any>();
   const { user, loadUser, loadingUser, logout } = useAuth();
   const [refreshing, setRefreshing] = useState(false);
-
+  const [orderCount, setOrderCount] = useState(0);
+  const [wishlistCount, setWishlistCount] = useState(0);
 
   console.log("USER DATA FROM CONTEXT:", user);
   console.log("AVATAR URL:", `${BASE_URL}/uploads/${user?.avatar}`);
 
+  const fetchCounts = async () => {
+    if (!user?.id) return;
+
+    try {
+      const token = await AsyncStorage.getItem("token");
+
+      const [orderRes, wishlistRes] = await Promise.all([
+        fetch(`${BASE_URL}/api/orders/user/${user.id}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        }),
+        fetch(`${BASE_URL}/wishlist`, {
+          headers: { Authorization: `Bearer ${token}` },
+        }),
+      ]);
+
+      const orderData = await orderRes.json();
+      const wishlistData = await wishlistRes.json();
+
+      setOrderCount(Array.isArray(orderData) ? orderData.length : 0);
+      setWishlistCount(Array.isArray(wishlistData) ? wishlistData.length : 0);
+    } catch (error) {
+      console.error("Lỗi load counts:", error);
+      setOrderCount(0);
+      setWishlistCount(0);
+    }
+  };
+
   const onRefresh = async () => {
     setRefreshing(true);
     await loadUser();
+    await fetchCounts();
     setRefreshing(false);
   };
 
+  // useFocusEffect(
+  //   useCallback(() => {
+  //     loadUser();
+  //   }, [])
+  // );
   useFocusEffect(
-    useCallback(() => {
-      loadUser();
-    }, [])
+      useCallback(() => {
+        const loadData = async () => {
+          await loadUser();
+          await fetchCounts();
+        };
+        loadData();
+      }, [user?.id])
   );
 
   const avatarUri = user?.avatar
@@ -153,13 +211,13 @@ export default function ProfileScreen() {
 
           {/* Stats row */}
           {user?.reward_points !== undefined && (
-            <View style={styles.statsRow}>
-              <StatBubble value={user.reward_points} label="Điểm" icon="⭐" />
-              <View style={styles.statsDivider} />
-              <StatBubble value={"0"} label="Đơn hàng" icon="📦" />
-              <View style={styles.statsDivider} />
-              <StatBubble value={"0"} label="Yêu thích" icon="❤️" />
-            </View>
+              <View style={styles.statsRow}>
+                <StatBubble value={user.reward_points} label="Điểm" icon="⭐" />
+                <View style={styles.statsDivider} />
+                <StatBubble value={String(orderCount)} label="Đơn hàng" icon="📦" />
+                <View style={styles.statsDivider} />
+                <StatBubble value={String(wishlistCount)} label="Yêu thích" icon="❤️" />
+              </View>
           )}
         </View>
 

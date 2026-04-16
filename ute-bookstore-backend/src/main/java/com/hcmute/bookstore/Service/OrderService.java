@@ -68,11 +68,15 @@ public class OrderService {
 
         return switch (status.trim().toLowerCase()) {
             case "pending", "cho_xac_nhan", "chờ xác nhận" -> "pending";
-            case "processing", "dang_xu_ly", "đang xử lý", "confirmed", "da_xac_nhan", "đã xác nhận", "preparing", "dang_chuan_bi", "đang chuẩn bị" -> "processing";
+            case "confirmed", "da_xac_nhan", "đã xác nhận",
+                 "processing", "dang_xu_ly", "đang xử lý",
+                 "preparing", "dang_chuan_bi", "đang chuẩn bị" -> "confirmed";
             case "shipping", "dang_giao", "đang giao", "delivery" -> "shipping";
-            case "completed", "hoan_thanh", "hoàn thành", "success", "giao_thanh_cong" -> "completed";
+            case "completed", "hoan_thanh", "hoàn thành",
+                 "success", "giao_thanh_cong" -> "completed";
+            case "returned", "hoan_tra", "hoàn trả" -> "returned";
             case "cancelled", "da_huy", "đã hủy" -> "cancelled";
-            default -> status.toLowerCase();
+            default -> "pending";
         };
     }
 
@@ -81,10 +85,12 @@ public class OrderService {
 
         return switch (status.trim().toLowerCase()) {
             case "pending", "cho_xac_nhan", "chờ xác nhận" -> "pending";
-            case "confirmed", "da_xac_nhan", "đã xác nhận" -> "confirmed";
-            case "preparing", "dang_chuan_bi", "đang chuẩn bị", "processing", "dang_xu_ly", "đang xử lý" -> "preparing";
-            case "delivery", "shipping", "dang_giao", "đang giao" -> "delivery";
-            case "success", "completed", "hoan_thanh", "hoàn thành", "giao_thanh_cong" -> "success";
+            case "confirmed", "da_xac_nhan", "đã xác nhận",
+                 "processing", "dang_xu_ly", "đang xử lý",
+                 "preparing", "dang_chuan_bi", "đang chuẩn bị" -> "confirmed";
+            case "shipping", "delivery", "dang_giao", "đang giao" -> "shipping";
+            case "completed", "success", "hoan_thanh", "hoàn thành", "giao_thanh_cong" -> "completed";
+            case "returned", "hoan_tra", "hoàn trả" -> "returned";
             case "cancelled", "da_huy", "đã hủy" -> "cancelled";
             default -> "pending";
         };

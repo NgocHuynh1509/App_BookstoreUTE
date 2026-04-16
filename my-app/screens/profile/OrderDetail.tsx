@@ -40,11 +40,12 @@ const C = {
 
 // ─── Status steps ─────────────────────────────────────────────────────────────
 const ORDER_STATUS_STEPS = [
-  { key: "pending",   label: "Đơn hàng mới",    icon: "document-text-outline" },
-  { key: "confirmed", label: "Đã xác nhận",      icon: "checkmark-circle-outline" },
-  { key: "preparing", label: "Đang chuẩn bị",    icon: "construct-outline" },
-  { key: "delivery",  label: "Đang giao hàng",   icon: "bicycle-outline" },
-  { key: "success",   label: "Giao thành công",  icon: "bag-check-outline" },
+  { key: "pending",   label: "Chờ xác nhận", icon: "document-text-outline" },
+  { key: "confirmed", label: "Đã xác nhận",  icon: "checkmark-circle-outline" },
+  { key: "shipping",  label: "Đang giao",    icon: "bicycle-outline" },
+  { key: "completed", label: "Hoàn thành",   icon: "bag-check-outline" },
+  { key: "returned",  label: "Hoàn trả",     icon: "refresh-circle-outline" },
+  { key: "cancelled", label: "Đã hủy",       icon: "close-circle-outline" },
 ];
 
 // ─── Section header ───────────────────────────────────────────────────────────
@@ -329,7 +330,7 @@ export default function OrderDetail() {
         )}
 
         {/* ── REVIEW ───────────────────────────────────────────── */}
-        {orderData.status === "success" && (
+        {orderData.status === "completed" && (
           <View style={s.card}>
             <SectionHeader icon="star-outline" title="Đánh giá sản phẩm" />
             <View style={s.reviewList}>

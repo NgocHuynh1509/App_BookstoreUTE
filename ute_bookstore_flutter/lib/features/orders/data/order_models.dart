@@ -6,6 +6,8 @@ class OrderItem {
   final String customerId;
   final String customerEmail;
   final double totalAmount;
+  final double shippingFee;
+  final String orderDate;
 
   OrderItem({
     required this.orderId,
@@ -15,6 +17,8 @@ class OrderItem {
     required this.customerId,
     required this.customerEmail,
     required this.totalAmount,
+    required this.shippingFee,
+    required this.orderDate,
   });
 
   factory OrderItem.fromJson(Map<String, dynamic> json) {
@@ -26,7 +30,8 @@ class OrderItem {
       customerId: json['customerId']?.toString() ?? '',
       customerEmail: json['customerEmail']?.toString() ?? '',
       totalAmount: (json['totalAmount'] as num?)?.toDouble() ?? 0,
+      shippingFee: (json['shippingFee'] as num?)?.toDouble() ?? 0,
+      orderDate: json['orderDate']?.toString() ?? '',
     );
   }
 }
-
