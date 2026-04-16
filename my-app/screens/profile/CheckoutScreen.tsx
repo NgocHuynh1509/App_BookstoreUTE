@@ -264,42 +264,85 @@ export default function CheckoutScreen() {
   // ĐẶT HÀNG — gửi thông tin coupon + điểm lên server
   // ==========================
   const handleOrder = async () => {
-    if (!currentAddress) { Alert.alert("Thông báo", "Vui lòng chọn địa chỉ giao hàng"); return; }
+    if (!currentAddress) {
+      Alert.alert("Thông báo", "Vui lòng chọn địa chỉ giao hàng");
+      return;
+    }
+
     setLoading(true);
     try {
-      const token   = await AsyncStorage.getItem('token');
-      const payload = {
-        user_id:             user?.id,
-        shipping_address_id: currentAddress.id,
-        items:               selectedItems,
-        total_price:         totalPrice,
-        discount_points:     usedPoints,
-        discount_coupon:     coupon,
-        final_total:         displayedTotal,    // gửi luôn total đã tính
-        payment_method:      paymentMethod,
-        isFromCart:          true,
-      };
-      const res = await fetch(`${API_URL}/api/orders/create`, {
+      const token = await AsyncStorage.getItem('token');
+      const isBuyNow = route.params?.isBuyNow || false;
+
+      // 1. Rẽ nhánh Endpoint
+      const endpoint = isBuyNow
+        ? `${API_URL}/api/orders/buy-now`
+        : `${API_URL}/api/orders/create`;
+
+      // 2. Tạo Payload riêng biệt cho từng trường hợp
+      let payload = {};
+
+      if (isBuyNow) {
+        // PAYLOAD CHO MUA NGAY (Khớp với OrderDirectRequest DTO mới)
+        payload = {
+          user_id: user?.id,
+          shipping_address_id: currentAddress.id,
+          items: selectedItems.map(it => ({
+            book_id: it.book_id,
+            quantity: Number(it.quantity) || 1,
+            price: Number(it.price) || 0
+          })),
+          total_price: Number(totalPrice) || 0,
+          discount_points: Number(usedPoints) || 0,
+          discount_coupon: coupon || "",
+          final_total: Number(displayedTotal) || 0,
+          payment_method: paymentMethod,
+          address: currentAddress.addressString || ""
+          // Tuyệt đối không có 'isFromCart' ở đây để tránh lỗi DTO mới
+        };
+      } else {
+        // PAYLOAD CHO GIỎ HÀNG (Giữ nguyên y hệt code cũ của má)
+        payload = {
+          user_id:             user?.id,
+          shipping_address_id: currentAddress.id,
+          items:               selectedItems, // Giữ nguyên, không động vào kiểu dữ liệu
+          total_price:         totalPrice,
+          discount_points:     usedPoints,
+          discount_coupon:     coupon,
+          final_total:         displayedTotal,
+          payment_method:      paymentMethod,
+          isFromCart:          route.params?.isFromCart ?? true, // Giữ nguyên tên biến cũ
+        };
+      }
+
+      console.log("🚀 ĐANG GỌI:", endpoint);
+      console.log("📦 PAYLOAD GỬI ĐI:", JSON.stringify(payload, null, 2));
+
+      const res = await fetch(endpoint, {
         method: 'POST',
-        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
         body: JSON.stringify(payload),
       });
+
       const data = await res.json();
+
       if (res.ok && data.success) {
-        // ── Đọc field backend trả về ─────────────────────────────
-        // { success, orderId, earned_points, bonus_points?, reward_coupon?, reward_coupon_percent? }
-        const lines: string[] = ["Đơn hàng của bạn đã được đặt thành công! 🎉"];
-
-
-
-        Alert.alert("✅ Đặt hàng thành công", lines.join("\n\n"), [
+        Alert.alert("✅ Đặt hàng thành công", "Đơn hàng của bạn đã được đặt thành công! 🎉", [
           { text: "Về trang chủ", onPress: () => navigation.navigate("MainTabs") },
         ]);
       } else {
-        Alert.alert("Thất bại", data.error || "Có lỗi xảy ra khi xử lý đơn hàng");
+        // Trả về lỗi từ Backend
+        Alert.alert("Thất bại", data.error || data.message || "Lỗi xử lý đơn hàng");
       }
-    } catch { Alert.alert("Lỗi", "Kết nối server thất bại"); }
-    finally { setLoading(false); }
+    } catch (err) {
+      console.log("❌ Lỗi Fetch:", err);
+      Alert.alert("Lỗi", "Kết nối server thất bại");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const coverUri = (img: string) => img?.startsWith('http') ? img : `${API_URL}/uploads/${img}`;

@@ -359,8 +359,9 @@ export default function HomeScreen({ navigation }: any) {
   const [hasMore, setHasMore]                     = useState(true);
   const [loadingMore, setLoadingMore]             = useState(false);
   // State quản lý Modal
-  const [showQtyModal, setShowQtyModal] = useState(false);
-  const [selectedItem, setSelectedItem] = useState<any>(null);
+// Tách ra làm 2 bộ state độc lập
+const [showQtyModal, setShowQtyModal] = useState(false);
+const [showBuyQtyModal, setShowBuyQtyModal] = useState(false);  const [selectedItem, setSelectedItem] = useState<any>(null);
   const [quantity, setQuantity] = useState(1);
 
   const handleOpenModal = (item: any) => {
@@ -420,23 +421,32 @@ export default function HomeScreen({ navigation }: any) {
   };
 
   const handleBuyNow = (item: any) => {
-    if (!user?.token) {
-      Alert.alert("Thông báo", "Vui lòng đăng nhập để mua hàng");
-      navigation.navigate("Login");
-      return;
-    }
-
-    navigation.navigate("Checkout", {
-      buyNowItem: {
-        bookId: item.id,
-        quantity: 1,
-        title: item.title,
-        price: item.price,
-        cover_image: item.cover_image,
-        author_name: item.author_name,
-      },
-    });
+    console.log("Dữ liệu sách chọn:", item); // Xem trong terminal xem nó là 'quantity' hay 'stock'
+        setSelectedItem(item);
+        setQuantity(1);
+        setShowBuyQtyModal(true);
   };
+    const confirmBuyNow = () => {
+      if (!selectedItem) return;
+
+      const itemForCheckout = {
+        id: selectedItem.id, // Dùng cho Key render
+        book_id: selectedItem.id, // Backend dùng cái này
+        title: selectedItem.title,
+        price: selectedItem.price,
+        quantity: quantity,
+        cover_image: selectedItem.cover_image,
+        stock: selectedItem.stock
+      };
+
+      setShowBuyQtyModal(false);
+
+      navigation.navigate("Checkout", {
+        selectedItems: [itemForCheckout],
+        totalPrice: selectedItem.price * quantity,
+        isBuyNow: true, // Để rẽ nhánh endpoint
+      });
+    };
   // ==========================
   // DATA LOADING (all unchanged)
   // ==========================
@@ -712,6 +722,59 @@ export default function HomeScreen({ navigation }: any) {
                 </View>
               </View>
             </Modal>
+
+            <Modal visible={showBuyQtyModal} transparent animationType="slide">
+                          <View style={s.modalOverlay}>
+                            <View style={s.modalContent}>
+
+                              {/* Thông tin nhanh sản phẩm */}
+                              <View style={s.modalHeader}>
+                                <Image
+                                  source={{ uri: selectedItem?.cover_image?.startsWith('http') ? selectedItem.cover_image : `${API_URL}/uploads/${selectedItem?.cover_image}` }}
+                                  style={s.modalImage}
+                                />
+                                <View style={{ flex: 1, justifyContent: 'center' }}>
+                                  <Text style={s.modalPrice}>{Number(selectedItem?.price).toLocaleString('vi-VN')}đ</Text>
+                                  <Text style={s.modalStock}>Kho: {selectedItem?.quantity || 0}</Text>
+                                </View>
+                                <TouchableOpacity onPress={() => setShowBuyQtyModal(false)}>
+                                  <Ionicons name="close-circle" size={28} color="#CCC" />
+                                </TouchableOpacity>
+                              </View>
+
+                              {/* Bộ tăng giảm số lượng */}
+                              <View style={s.qtyRow}>
+                                <Text style={{ fontSize: 16, fontWeight: '600' }}>Số lượng</Text>
+                                <View style={s.qtyStepper}>
+                                  <TouchableOpacity
+                                    style={s.stepBtn}
+                                    onPress={() => setQuantity(Math.max(1, quantity - 1))}
+                                  >
+                                    <Text style={s.stepBtnTxt}>−</Text>
+                                  </TouchableOpacity>
+                                  <Text style={s.qtyText}>{quantity}</Text>
+                                  <TouchableOpacity
+                                    style={s.stepBtn}
+                                    // Chỗ nút bấm "+" trong React Native:
+                                    onPress={() => {
+                                        // Đổi .stock thành .quantity để khớp với Entity Books
+                                        if(quantity < selectedItem?.quantity) setQuantity(quantity + 1);
+                                        else Alert.alert("Thông báo", "Đã đạt giới hạn tồn kho");
+                                    }}
+                                  >
+                                    <Text style={s.stepBtnTxt}>+</Text>
+                                  </TouchableOpacity>
+                                </View>
+                              </View>
+
+                              {/* Nút chốt đơn */}
+                              <TouchableOpacity style={s.confirmBtn} onPress={confirmBuyNow}>
+                                <Text style={s.confirmBtnTxt}>Mua ngay</Text>
+                              </TouchableOpacity>
+
+                            </View>
+                          </View>
+                        </Modal>
     </SafeAreaView>
   );
 }

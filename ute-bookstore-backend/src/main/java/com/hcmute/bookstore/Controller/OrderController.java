@@ -2,9 +2,11 @@ package com.hcmute.bookstore.Controller;
 
 import com.hcmute.bookstore.Service.OrderService;
 import com.hcmute.bookstore.dto.OrderDetailResponse;
+import com.hcmute.bookstore.dto.OrderDirectRequest;
 import com.hcmute.bookstore.dto.OrderHistoryResponse;
 import com.hcmute.bookstore.dto.OrderRequest;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
@@ -75,4 +77,22 @@ public class OrderController {
             return ResponseEntity.badRequest().body(error);
         }
     }
+
+    @PostMapping("/buy-now")
+    public ResponseEntity<?> buyNowOrder(@RequestBody OrderDirectRequest request) {
+        try {
+            String orderId = orderService.createDirectOrder(request);
+            return ResponseEntity.ok(Map.of(
+                    "success", true,
+                    "orderId", orderId
+            ));
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of(
+                    "success", false,
+                    "error", e.getMessage()
+            ));
+        }
+    }
+
 }

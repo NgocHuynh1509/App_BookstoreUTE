@@ -318,6 +318,80 @@ public class OrderService {
         cartRepo.save(cart); // Cập nhật lại header của giỏ hàng
     }
 
+    @Transactional(rollbackFor = Exception.class)
+    public String createDirectOrder(OrderDirectRequest request) throws Exception {
+        // 1. Kiểm tra User
+        Users user = usersRepository.findByCustomer_CustomerId(request.getUser_id())
+                .orElseThrow(() -> new Exception("Không tìm thấy User: " + request.getUser_id()));
+
+        Customers customer = user.getCustomer();
+
+        // 2. Điểm thưởng (Dùng Integer giúp check null an toàn)
+        if (request.getDiscount_points() != null && request.getDiscount_points() > 0) {
+            if (user.getRewardPoints() < request.getDiscount_points()) {
+                throw new Exception("Không đủ điểm thưởng");
+            }
+            user.setRewardPoints(user.getRewardPoints() - request.getDiscount_points());
+            usersRepository.save(user);
+        }
+
+        // 3. Xử lý Coupon
+        if (request.getDiscount_coupon() != null && !request.getDiscount_coupon().isEmpty()) {
+            Coupon coupon = couponRepo.findByCode(request.getDiscount_coupon())
+                    .orElseThrow(() -> new Exception("Mã giảm giá không hợp lệ"));
+
+            if (coupon.getUsedCount() >= coupon.getUsageLimit()) {
+                throw new Exception("Mã giảm giá đã hết lượt sử dụng");
+            }
+
+            coupon.setUsedCount(coupon.getUsedCount() + 1);
+            couponRepo.save(coupon);
+        }
+
+        // 4. Tạo thực thể Order
+        String orderId = "ORD" + System.currentTimeMillis();
+        Orders order = new Orders();
+        order.setOrderId(orderId);
+        order.setCustomer(customer);
+        order.setPaymentMethod(request.getPayment_method());
+        order.setTotalAmount(request.getFinal_total());
+
+        String shippingAddr = request.getAddress() != null ? request.getAddress() : "Giao đến ID: " + request.getShipping_address_id();
+        order.setAddress(shippingAddr);
+        order.setStatus("PENDING");
+        order.setOrderDate(new Date());
+
+        if (request.getShipping_address_id() != null) {
+            ShippingAddress sa = addressRepo.findById(request.getShipping_address_id()).orElse(null);
+            order.setShippingAddress(sa);
+        }
+
+        ordersRepository.save(order);
+
+        // 5. Lưu OrderDetails (Dùng DirectItemDTO)
+        for (DirectItemDTO item : request.getItems()) {
+            Books book = bookRepo.findById(item.getBook_id())
+                    .orElseThrow(() -> new Exception("Sách không tồn tại: " + item.getBook_id()));
+
+            // Trừ kho
+            book.setQuantity(book.getQuantity() - item.getQuantity());
+            book.setSoldQuantity(book.getSoldQuantity() + item.getQuantity());
+            bookRepo.save(book);
+
+            // Lưu Detail
+            OrderDetail detail = new OrderDetail();
+            OrderdetailId detailId = new OrderdetailId(order.getOrderId(), book.getBookId());
+            detail.setOrderDetailId(detailId);
+            detail.setOrder(order);
+            detail.setBook(book);
+            detail.setQuantity(item.getQuantity());
+            detail.setUnitPrice(item.getPrice());
+            orderDetailRepository.save(detail);
+        }
+
+        return orderId;
+    }
+
 
 
 }
