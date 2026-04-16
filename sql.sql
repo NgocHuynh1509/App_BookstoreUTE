@@ -132,6 +132,67 @@ INSERT INTO Users
 (userName, password, role, fullName, registrationDate, customerId, enabled, email_verified)
 VALUES
     ('admin', '$2a$10$DNnkwflHxO0prvuRJMQqIeUAkA/cZbwZtmzNbdGIf.0VrLUfSpYZy', 'ROLE_ADMIN', 'Admin', CURRENT_DATE, 'AD01',1,1);
+('hoangbang', '$2a$12$2AmTP34lQ.c.z7KWTflTH.aeuEC9C3ijCfnAScz8gV1FQ1rqEBCgi', 'ROLE_CUSTOMER', 'Phan Tống Hoàng Bang', CURRENT_DATE, 'CU01',1,1),
+('vutriet', '$2a$12$2AmTP34lQ.c.z7KWTflTH.aeuEC9C3ijCfnAScz8gV1FQ1rqEBCgi', 'ROLE_CUSTOMER', 'Nguyễn Vũ Triết', CURRENT_DATE, 'CU02',1,1),
+('diemngoc', '$2a$12$2AmTP34lQ.c.z7KWTflTH.aeuEC9C3ijCfnAScz8gV1FQ1rqEBCgi', 'ROLE_CUSTOMER', 'Huỳnh Gia Diễm Ngọc', CURRENT_DATE, 'CU03',1,1),
+('maiquynh', '$2a$12$2AmTP34lQ.c.z7KWTflTH.aeuEC9C3ijCfnAScz8gV1FQ1rqEBCgi', 'ROLE_CUSTOMER', 'Võ Thị Mai Quỳnh', CURRENT_DATE, 'CU04',1,1),
+('nhatanh', '$2a$12$2AmTP34lQ.c.z7KWTflTH.aeuEC9C3ijCfnAScz8gV1FQ1rqEBCgi', 'ROLE_CUSTOMER', 'Đào Nguyễn Nhật Anh', CURRENT_DATE, 'CU05',1,1),
+('conganh', '$2a$12$2AmTP34lQ.c.z7KWTflTH.aeuEC9C3ijCfnAScz8gV1FQ1rqEBCgi', 'ROLE_CUSTOMER', 'Trương Công Anh', CURRENT_DATE, 'CU06',1,1),
+('thaibao', '$2a$12$2AmTP34lQ.c.z7KWTflTH.aeuEC9C3ijCfnAScz8gV1FQ1rqEBCgi', 'ROLE_CUSTOMER', 'Nguyễn Thái Bảo', CURRENT_DATE, 'CU07',1,1),
+('huyhoang', '$2a$12$2AmTP34lQ.c.z7KWTflTH.aeuEC9C3ijCfnAScz8gV1FQ1rqEBCgi', 'ROLE_CUSTOMER', 'Nguyễn Phúc Huy Hoàng', CURRENT_DATE, 'CU08',1,1),
+('quochoang', '$2a$12$2AmTP34lQ.c.z7KWTflTH.aeuEC9C3ijCfnAScz8gV1FQ1rqEBCgi', 'ROLE_CUSTOMER', 'Đoàn Quốc Huy', CURRENT_DATE, 'CU09',1,1),
+('quanghung', '$2a$12$2AmTP34lQ.c.z7KWTflTH.aeuEC9C3ijCfnAScz8gV1FQ1rqEBCgi', 'ROLE_CUSTOMER', 'Lê Quang Hưng', CURRENT_DATE, 'CU10',1,1),
+('thanhhung', '$2a$12$2AmTP34lQ.c.z7KWTflTH.aeuEC9C3ijCfnAScz8gV1FQ1rqEBCgi', 'ROLE_CUSTOMER', 'Lương Nguyễn Thành Hưng', CURRENT_DATE, 'CU11',1,1),
+('ngocmanh', '$2a$12$2AmTP34lQ.c.z7KWTflTH.aeuEC9C3ijCfnAScz8gV1FQ1rqEBCgi', 'ROLE_CUSTOMER', 'Đoàn Ngọc Mạnh', CURRENT_DATE, 'CU12',1,1),
+('trungnam', '$2a$12$2AmTP34lQ.c.z7KWTflTH.aeuEC9C3ijCfnAScz8gV1FQ1rqEBCgi', 'ROLE_CUSTOMER', 'Dương Trung Nam', CURRENT_DATE, 'CU13',1,1),
+('hoangphuc', '$2a$12$2AmTP34lQ.c.z7KWTflTH.aeuEC9C3ijCfnAScz8gV1FQ1rqEBCgi', 'ROLE_CUSTOMER', 'Nguyễn Hoàng Phúc', CURRENT_DATE, 'CU14',1,1),
+('hoangquân', '$2a$12$2AmTP34lQ.c.z7KWTflTH.aeuEC9C3ijCfnAScz8gV1FQ1rqEBCgi', 'ROLE_CUSTOMER', 'Trần Hoàng Phúc Quân', CURRENT_DATE, 'CU15',1,1),
+('tantai', '$2a$12$2AmTP34lQ.c.z7KWTflTH.aeuEC9C3ijCfnAScz8gV1FQ1rqEBCgi', 'ROLE_CUSTOMER', 'Võ Tấn Tài', CURRENT_DATE, 'CU16',1,1),
+('minhtrong', '$2a$12$2AmTP34lQ.c.z7KWTflTH.aeuEC9C3ijCfnAScz8gV1FQ1rqEBCgi', 'ROLE_CUSTOMER', 'Châu Minh Trọng', CURRENT_DATE, 'CU17',1,1),
+('congtruong', '$2a$12$2AmTP34lQ.c.z7KWTflTH.aeuEC9C3ijCfnAScz8gV1FQ1rqEBCgi', 'ROLE_CUSTOMER', 'Phạm Công Trường', CURRENT_DATE, 'CU18',1,1),
+('thanhtu', '$2a$12$2AmTP34lQ.c.z7KWTflTH.aeuEC9C3ijCfnAScz8gV1FQ1rqEBCgi', 'ROLE_CUSTOMER', 'Hoàng Thanh Tú', CURRENT_DATE, 'CU19',1,1),
+('anhtu', '$2a$12$2AmTP34lQ.c.z7KWTflTH.aeuEC9C3ijCfnAScz8gV1FQ1rqEBCgi', 'ROLE_CUSTOMER', 'Phạm Lê Anh Tú', CURRENT_DATE, 'CU20',1,1),
+('truongvi', '$2a$12$2AmTP34lQ.c.z7KWTflTH.aeuEC9C3ijCfnAScz8gV1FQ1rqEBCgi', 'ROLE_CUSTOMER', 'Nguyễn Đoàn Trường Vĩ', CURRENT_DATE, 'CU21',1,1),
+('thanhphuc', '$2a$12$2AmTP34lQ.c.z7KWTflTH.aeuEC9C3ijCfnAScz8gV1FQ1rqEBCgi', 'ROLE_CUSTOMER', 'Nguyễn Thanh Phúc', CURRENT_DATE, 'CU22',1,1),
+('khanduy', '$2a$12$2AmTP34lQ.c.z7KWTflTH.aeuEC9C3ijCfnAScz8gV1FQ1rqEBCgi', 'ROLE_CUSTOMER', 'Lâm Khánh Duy', CURRENT_DATE, 'CU23',1,1),
+('quangduy', '$2a$12$2AmTP34lQ.c.z7KWTflTH.aeuEC9C3ijCfnAScz8gV1FQ1rqEBCgi', 'ROLE_CUSTOMER', 'Nguyễn Văn Quang Duy', CURRENT_DATE, 'CU24',1,1),
+('vandong', '$2a$12$2AmTP34lQ.c.z7KWTflTH.aeuEC9C3ijCfnAScz8gV1FQ1rqEBCgi', 'ROLE_CUSTOMER', 'Hoàng Văn Đông', CURRENT_DATE, 'CU25',1,1),
+('hoanggiap', '$2a$12$o2ldvPsqcZmATybq/SM.euTy4LEqQDQXHS6H3eRf8Jd/RfriOi0L2', 'ROLE_CUSTOMER', 'Nguyễn Hoàng Giáp', CURRENT_DATE, 'CU26',1,1),
+('giahuy', '$2a$12$o2ldvPsqcZmATybq/SM.euTy4LEqQDQXHS6H3eRf8Jd/RfriOi0L2', 'ROLE_CUSTOMER', 'Đặng Gia Huy', CURRENT_DATE, 'CU27',1,1),
+('truongminh', '$2a$12$o2ldvPsqcZmATybq/SM.euTy4LEqQDQXHS6H3eRf8Jd/RfriOi0L2', 'ROLE_CUSTOMER', 'Nguyễn Trường Minh', CURRENT_DATE, 'CU28',1,1),
+('hoangnghia', '$2a$12$o2ldvPsqcZmATybq/SM.euTy4LEqQDQXHS6H3eRf8Jd/RfriOi0L2', 'ROLE_CUSTOMER', 'Đặng Quang Hoàng Nghĩa', CURRENT_DATE, 'CU29',1,1),
+('anhnguyen', '$2a$12$o2ldvPsqcZmATybq/SM.euTy4LEqQDQXHS6H3eRf8Jd/RfriOi0L2', 'ROLE_CUSTOMER', 'Huỳnh Anh Nguyên', CURRENT_DATE, 'CU30',1,1),
+('trongnhan', '$2a$12$o2ldvPsqcZmATybq/SM.euTy4LEqQDQXHS6H3eRf8Jd/RfriOi0L2', 'ROLE_CUSTOMER', 'Trần Minh Trọng Nhân', CURRENT_DATE, 'CU31',1,1),
+('tanphat', '$2a$12$o2ldvPsqcZmATybq/SM.euTy4LEqQDQXHS6H3eRf8Jd/RfriOi0L2', 'ROLE_CUSTOMER', 'Nguyễn Tấn Phát', CURRENT_DATE, 'CU32',1,1),
+('hongphuc', '$2a$12$o2ldvPsqcZmATybq/SM.euTy4LEqQDQXHS6H3eRf8Jd/RfriOi0L2', 'ROLE_CUSTOMER', 'Phan Hồng Phúc', CURRENT_DATE, 'CU33',1,1),
+('nhatthien', '$2a$12$o2ldvPsqcZmATybq/SM.euTy4LEqQDQXHS6H3eRf8Jd/RfriOi0L2', 'ROLE_CUSTOMER', 'Nguyễn Nhật Thiên', CURRENT_DATE, 'CU34',1,1),
+('ductue', '$2a$12$o2ldvPsqcZmATybq/SM.euTy4LEqQDQXHS6H3eRf8Jd/RfriOi0L2', 'ROLE_CUSTOMER', 'Nguyễn Lê Đức Tuệ', CURRENT_DATE, 'CU35',1,1),
+('thanhvinh', '$2a$12$o2ldvPsqcZmATybq/SM.euTy4LEqQDQXHS6H3eRf8Jd/RfriOi0L2', 'ROLE_CUSTOMER', 'Nguyễn Thành Vinh', CURRENT_DATE, 'CU36',1,1),
+('vubao', '$2a$12$o2ldvPsqcZmATybq/SM.euTy4LEqQDQXHS6H3eRf8Jd/RfriOi0L2', 'ROLE_CUSTOMER', 'Nguyễn Vũ Bảo', CURRENT_DATE, 'CU37',1,1),
+('hoangdanh', '$2a$12$o2ldvPsqcZmATybq/SM.euTy4LEqQDQXHS6H3eRf8Jd/RfriOi0L2', 'ROLE_CUSTOMER', 'Đinh Lê Hoàng Danh', CURRENT_DATE, 'CU38',1,1),
+('giadhinh', '$2a$12$o2ldvPsqcZmATybq/SM.euTy4LEqQDQXHS6H3eRf8Jd/RfriOi0L2', 'ROLE_CUSTOMER', 'Huỳnh Gia Định', CURRENT_DATE, 'CU39',1,1),
+('nhathuy', '$2a$12$o2ldvPsqcZmATybq/SM.euTy4LEqQDQXHS6H3eRf8Jd/RfriOi0L2', 'ROLE_CUSTOMER', 'Nguyễn Nhật Huy', CURRENT_DATE, 'CU40',1,1),
+('quockhanh', '$2a$12$o2ldvPsqcZmATybq/SM.euTy4LEqQDQXHS6H3eRf8Jd/RfriOi0L2', 'ROLE_CUSTOMER', 'Nguyễn Minh Quốc Khánh', CURRENT_DATE, 'CU41',1,1),
+('minhkhanh', '$2a$12$o2ldvPsqcZmATybq/SM.euTy4LEqQDQXHS6H3eRf8Jd/RfriOi0L2', 'ROLE_CUSTOMER', 'Phạm Minh Khánh', CURRENT_DATE, 'CU42',1,1),
+('dangkhoa', '$2a$12$o2ldvPsqcZmATybq/SM.euTy4LEqQDQXHS6H3eRf8Jd/RfriOi0L2', 'ROLE_CUSTOMER', 'Trần Đăng Khoa', CURRENT_DATE, 'CU43',1,1),
+('camlong', '$2a$12$o2ldvPsqcZmATybq/SM.euTy4LEqQDQXHS6H3eRf8Jd/RfriOi0L2', 'ROLE_CUSTOMER', 'Trần Cẩm Long', CURRENT_DATE, 'CU44',1,1),
+('hungnguyen', '$2a$12$o2ldvPsqcZmATybq/SM.euTy4LEqQDQXHS6H3eRf8Jd/RfriOi0L2', 'ROLE_CUSTOMER', 'Nguyễn Hưng Nguyên', CURRENT_DATE, 'CU45',1,1),
+('duythien', '$2a$12$o2ldvPsqcZmATybq/SM.euTy4LEqQDQXHS6H3eRf8Jd/RfriOi0L2', 'ROLE_CUSTOMER', 'Ô Duy Hoàng Thiện', CURRENT_DATE, 'CU46',1,1),
+('quangtienl', '$2a$12$o2ldvPsqcZmATybq/SM.euTy4LEqQDQXHS6H3eRf8Jd/RfriOi0L2', 'ROLE_CUSTOMER', 'Lưu Quang Tiến', CURRENT_DATE, 'CU47',1,1),
+('quangtient', '$2a$12$o2ldvPsqcZmATybq/SM.euTy4LEqQDQXHS6H3eRf8Jd/RfriOi0L2', 'ROLE_CUSTOMER', 'Trần Quang Tiến', CURRENT_DATE, 'CU48',1,1),
+('quantoan', '$2a$12$o2ldvPsqcZmATybq/SM.euTy4LEqQDQXHS6H3eRf8Jd/RfriOi0L2', 'ROLE_CUSTOMER', 'Trần Quang Toản', CURRENT_DATE, 'CU49',1,1),
+('vantuong', '$2a$12$o2ldvPsqcZmATybq/SM.euTy4LEqQDQXHS6H3eRf8Jd/RfriOi0L2', 'ROLE_CUSTOMER', 'Trần Văn Tưởng', CURRENT_DATE, 'CU50',1,1),
+('quocvi', '$2a$12$o2ldvPsqcZmATybq/SM.euTy4LEqQDQXHS6H3eRf8Jd/RfriOi0L2', 'ROLE_CUSTOMER', 'Nguyễn Quốc Vĩ', CURRENT_DATE, 'CU51',1,1),
+('vananh', '$2a$12$o2ldvPsqcZmATybq/SM.euTy4LEqQDQXHS6H3eRf8Jd/RfriOi0L2', 'ROLE_CUSTOMER', 'Phạm Thị Vân Ánh', CURRENT_DATE, 'CU52',1,1),
+('hoangdat', '$2a$12$o2ldvPsqcZmATybq/SM.euTy4LEqQDQXHS6H3eRf8Jd/RfriOi0L2', 'ROLE_CUSTOMER', 'Tạ Hoàng Đạt', CURRENT_DATE, 'CU53',1,1),
+('minhduc', '$2a$12$o2ldvPsqcZmATybq/SM.euTy4LEqQDQXHS6H3eRf8Jd/RfriOi0L2', 'ROLE_CUSTOMER', 'Vũ Minh Đức', CURRENT_DATE, 'CU54',1,1);
+USE bookdb;
+-- INSERT INTO customers (customerId, fullName, email, phone, address, dateOfBirth) VALUES
+-- ('AD01', 'Admin', 'admin@gmail.com', '0901152521', 'TP. HCM', '2005-07-24');
+INSERT INTO Users 
+(userName, password, role, fullName, registrationDate, customerId, enabled, email_verified)
+VALUES
+('admin', '$2a$12$o2ldvPsqcZmATybq/SM.euTy4LEqQDQXHS6H3eRf8Jd/RfriOi0L2', 'ROLE_ADMIN', 'Admin', CURRENT_DATE, NULL,1,1);
 
 INSERT INTO cart (cartId, quantity, totalAmount, customerId) VALUES
                                                                  ('CA01', 4, 546620.00, 'CU01'),

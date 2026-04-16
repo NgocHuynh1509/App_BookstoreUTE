@@ -16,7 +16,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import Constants from "expo-constants";
 import { Ionicons } from "@expo/vector-icons";
 
-const BASE_URL = Constants.expoConfig?.extra?.BASE_URL;
+const BASE_URL = Constants.expoConfig?.extra?.API_URL;
 
 // ─── Palette ──────────────────────────────────────────────────────────────────
 const C = {

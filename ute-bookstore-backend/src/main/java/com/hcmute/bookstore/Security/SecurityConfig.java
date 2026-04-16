@@ -55,13 +55,18 @@ public class SecurityConfig {
                                 "/auth/reset-password",
                                 "/books/**",
                                 "/categories/**",
-                                "/reviews/book/**"
+                                "/reviews/book/**",
+                                "/uploads/**"
                         ).permitAll()
                         .requestMatchers(
                                 "/wishlist/**",
                                 "/cart/**",
                                 "/profile",
-                                "/auth/me"
+                                "/auth/me",
+                                "/profile/**",
+                                "/addresses/**",
+                                "/api/orders/**",
+                                "/reviews"
                         ).authenticated()
                         .anyRequest().authenticated()
                 )

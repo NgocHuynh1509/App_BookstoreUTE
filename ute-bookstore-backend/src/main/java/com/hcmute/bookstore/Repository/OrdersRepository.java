@@ -8,10 +8,13 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
 import java.util.Date;
+import java.util.List;
+import java.util.Optional;
 
 
 @Repository
 public interface OrdersRepository extends JpaRepository<Orders, String> {
+    List<Orders> findByCustomer_CustomerIdOrderByOrderDateDesc(String customerId);
 
 	Page<Orders> findByStatusIgnoreCase(String status, Pageable pageable);
 
