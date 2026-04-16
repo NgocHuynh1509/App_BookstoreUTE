@@ -45,8 +45,14 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable())
                 .sessionManagement(sess -> sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
+                        .requestMatchers("/admin/**", "/products/**", "/orders/**").hasAnyRole("ADMIN", "STAFF")
                         .requestMatchers(
-                                "/auth/**",
+                                "/auth/login",
+                                "/auth/register",
+                                "/auth/verify-register-otp",
+                                "/auth/resend-otp",
+                                "/auth/forgot-password",
+                                "/auth/reset-password",
                                 "/books/**",
                                 "/categories/**",
                                 "/reviews/book/**",
@@ -56,6 +62,7 @@ public class SecurityConfig {
                                 "/wishlist/**",
                                 "/cart/**",
                                 "/profile",
+                                "/auth/me",
                                 "/profile/**",
                                 "/addresses/**",
                                 "/api/orders/**",

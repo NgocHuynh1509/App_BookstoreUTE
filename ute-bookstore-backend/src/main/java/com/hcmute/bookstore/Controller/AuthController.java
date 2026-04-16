@@ -45,4 +45,9 @@ public class AuthController {
     public Map<String, String> resetPassword(@Valid @RequestBody ResetPasswordRequest request) {
         return Map.of("message", authService.resetPassword(request));
     }
+
+    @GetMapping("/me")
+    public AuthResponse me(java.security.Principal principal) {
+        return authService.me(principal.getName());
+    }
 }

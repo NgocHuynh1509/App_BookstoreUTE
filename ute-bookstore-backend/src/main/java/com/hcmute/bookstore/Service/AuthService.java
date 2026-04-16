@@ -191,6 +191,20 @@ public class AuthService {
                 "Login thành công"
         );
     }
+
+    public AuthResponse me(String email) {
+        Users user = appUserRepository.findByCustomer_Email(email)
+                .orElseThrow(() -> new RuntimeException("Email không tồn tại"));
+
+        return new AuthResponse(
+                "",
+                user.getCustomer().getCustomerId(),
+                user.getUserName(),
+                user.getRole(),
+                "OK"
+        );
+    }
+
     private void validateOtp(EmailOtp emailOtp, String otp) {
         if (Boolean.TRUE.equals(emailOtp.getVerified())) {
             throw new RuntimeException("OTP đã được sử dụng");
@@ -232,3 +246,4 @@ public class AuthService {
         return String.format("CU%02d", count);
     }
 }
+
