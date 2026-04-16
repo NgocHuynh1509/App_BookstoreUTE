@@ -248,14 +248,48 @@ export default function BookDetail() {
   };
 
   const handleAddToCart = async () => {
-    if (!book || book.stock <= 0) { Alert.alert("Thông báo", "Sản phẩm hiện đã hết hàng."); return; }
+    // 1. Kiểm tra hàng tồn kho trước khi làm bất cứ việc gì
+    if (!book || book.stock <= 0) {
+      Alert.alert("Thông báo", "Sản phẩm hiện đã hết hàng.");
+      return;
+    }
+
     try {
-      await api.post("/cart/add", {
+      // 2. Lấy token để xác thực
+      const token = await AsyncStorage.getItem("token");
+      if (!token) {
+        Alert.alert("Lỗi", "Bạn cần đăng nhập để thực hiện thao tác này");
+        return;
+      }
+
+      const payload = {
         bookId: book.id,
-        quantity,
+        quantity: quantity,
+      };
+
+      console.log("Đang gửi payload (AddToCart):", payload);
+
+      // 3. Gọi API (Sử dụng axios hoặc fetch tùy theo cái 'api' của má là gì)
+      // Con giả định má dùng axios/api giống bên kia
+      const response = await api.post("/cart/add", payload, {
+        headers: { Authorization: `Bearer ${token}` },
       });
-      Alert.alert("✓ Thành công", "Đã thêm vào giỏ hàng!");
-    } catch (error: any) { Alert.alert("Lỗi", error.response?.data?.message || "Có lỗi xảy ra"); }
+
+      // 4. Kiểm tra phản hồi thành công
+      if (response.status === 200 || response.status === 201) {
+        Alert.alert("✓ Thành công", "Đã thêm vào giỏ hàng!");
+      }
+
+    } catch (error: any) {
+      // 5. Xử lý lỗi chi tiết y hệt bên kia
+      console.log("Chi tiết lỗi API (AddToCart):", error.response?.data);
+
+      const errorMsg = error.response?.data?.error ||
+                       error.response?.data?.message ||
+                       "Có lỗi xảy ra khi thêm vào giỏ hàng";
+
+      Alert.alert("Lỗi", errorMsg);
+    }
   };
 
   if (loading) return (
@@ -274,26 +308,42 @@ export default function BookDetail() {
   );
 
   const handleBuyNow = () => {
+    // 1. Kiểm tra tồn kho (Dùng biến 'quantity' hiện tại má đang có)
     if (!book || book.stock <= 0) {
       Alert.alert("Thông báo", "Sản phẩm hiện đã hết hàng.");
       return;
     }
 
+    if (quantity > book.stock) {
+      Alert.alert("Thông báo", `Số lượng vượt quá tồn kho (Còn lại: ${book.stock})`);
+      return;
+    }
+
+    // 2. Kiểm tra đăng nhập
     if (!user?.token) {
       Alert.alert("Thông báo", "Vui lòng đăng nhập để mua hàng");
       navigation.navigate("Login");
       return;
     }
 
+    // 3. Gom hàng và bay thẳng sang Checkout
+    const itemForCheckout = {
+      id: book.id,           // Key cho giao diện
+      book_id: book.id,      // ID cho Backend
+      title: book.title,
+      price: book.price,
+      quantity: quantity,     // Lấy đúng cái 'quantity' má đang có ở trang chi tiết
+      cover_image: book.cover_image,
+      stock: book.stock
+    };
+
+    console.log("🚀 Mua ngay với số lượng:", quantity);
+
     navigation.navigate("Checkout", {
-      buyNowItem: {
-        bookId: book.id,
-        quantity,
-        title: book.title,
-        price: book.price,
-        cover_image: book.cover_image,
-        author_name: book.author_name,
-      },
+      selectedItems: [itemForCheckout],
+      totalPrice: book.price * quantity,
+      isBuyNow: true,    // Flag để handleOrder gọi /buy-now
+      fromCart: false    // Flag để không xóa giỏ hàng
     });
   };
 
