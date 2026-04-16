@@ -23,4 +23,5 @@ public interface OrdersRepository extends JpaRepository<Orders, String> {
 	@Query("select coalesce(sum(o.totalAmount), 0) from Orders o where o.orderDate >= ?1 and o.orderDate < ?2")
 	java.math.BigDecimal sumTotalAmountBetween(Date from, Date to);
 
+	Optional<Orders> findByOrderIdAndCustomer_CustomerId(String orderId, String customerId);
 }
