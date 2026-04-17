@@ -86,8 +86,8 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Dashboard', style: GoogleFonts.poppins(fontWeight: FontWeight.w600)),
-            Text('Overview today', style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey.shade600)),
+            Text('Bảng điều khiển', style: GoogleFonts.beVietnamPro(fontWeight: FontWeight.w600)),
+            Text('Tổng quan hôm nay', style: GoogleFonts.beVietnamPro(fontSize: 12, color: Colors.grey.shade600)),
           ],
         ),
         actions: [
@@ -129,7 +129,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                 const SizedBox(height: 12),
                 AnimatedEntry(
                   delay: const Duration(milliseconds: 80),
-                  child: const SectionHeader(title: 'Revenue', subtitle: 'Last period'),
+                  child: const SectionHeader(title: 'Doanh thu', subtitle: 'Giai đoạn gần nhất'),
                 ),
                 const SizedBox(height: 8),
                 AnimatedEntry(
@@ -166,7 +166,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                 const SizedBox(height: 16),
                 AnimatedEntry(
                   delay: const Duration(milliseconds: 240),
-                  child: const SectionHeader(title: 'Highlights', subtitle: 'Quick insights'),
+                  child: const SectionHeader(title: 'Nổi bật', subtitle: 'Thông tin nhanh'),
                 ),
                 const SizedBox(height: 8),
                 AnimatedEntry(
@@ -183,7 +183,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                 const SizedBox(height: 16),
                 AnimatedEntry(
                   delay: const Duration(milliseconds: 320),
-                  child: const SectionHeader(title: 'More charts', subtitle: 'Orders and stock'),
+                  child: const SectionHeader(title: 'Biểu đồ khác', subtitle: 'Đơn hàng và tồn kho'),
                 ),
                 const SizedBox(height: 8),
                 AnimatedEntry(
@@ -259,13 +259,13 @@ extension DashboardRangeX on DashboardRange {
   String get label {
     switch (this) {
       case DashboardRange.week:
-        return '7D';
+        return '7N';
       case DashboardRange.month:
-        return '30D';
+        return '30N';
       case DashboardRange.year:
-        return '1Y';
+        return '1N';
       case DashboardRange.all:
-        return 'All';
+        return 'Tất cả';
     }
   }
 
@@ -285,7 +285,7 @@ class FilterChips extends StatelessWidget {
       children: DashboardRange.values
           .map(
             (range) => ChoiceChip(
-              label: Text(range.label, style: GoogleFonts.poppins(fontSize: 12)),
+              label: Text(range.label, style: GoogleFonts.beVietnamPro(fontSize: 12)),
               selected: selected == range,
               onSelected: (_) => onChanged(range),
               materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
@@ -309,9 +309,9 @@ class SectionHeader extends StatelessWidget {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.end,
       children: [
-        Text(title, style: GoogleFonts.poppins(fontWeight: FontWeight.w600, fontSize: 16)),
+        Text(title, style: GoogleFonts.beVietnamPro(fontWeight: FontWeight.w600, fontSize: 16)),
         const SizedBox(width: 8),
-        Text(subtitle, style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey.shade600)),
+        Text(subtitle, style: GoogleFonts.beVietnamPro(fontSize: 12, color: Colors.grey.shade600)),
       ],
     );
   }
@@ -326,21 +326,21 @@ class QuickStatsGrid extends StatelessWidget {
   Widget build(BuildContext context) {
     final items = [
       CompactStatCard(
-        title: 'Books',
+        title: 'Sách',
         value: summary.totalBooks.toDouble(),
         icon: Icons.menu_book,
         gradient: const LinearGradient(colors: [Color(0xFFEEF2FF), Color(0xFFE0E7FF)]),
         iconColor: const Color(0xFF4C6FFF),
       ),
       CompactStatCard(
-        title: 'Orders',
+        title: 'Đơn hàng',
         value: summary.totalOrders.toDouble(),
         icon: Icons.receipt_long,
         gradient: const LinearGradient(colors: [Color(0xFFE8FFF9), Color(0xFFDFF7F1)]),
         iconColor: const Color(0xFF00A884),
       ),
       CompactStatCard(
-        title: 'Revenue',
+        title: 'Doanh thu',
         value: summary.revenueDay,
         icon: Icons.payments,
         gradient: const LinearGradient(colors: [Color(0xFFFFF4E6), Color(0xFFFFE7CC)]),
@@ -348,7 +348,7 @@ class QuickStatsGrid extends StatelessWidget {
         isMoney: true,
       ),
       CompactStatCard(
-        title: 'Users',
+        title: 'Người dùng',
         value: summary.totalUsers.toDouble(),
         icon: Icons.people,
         gradient: const LinearGradient(colors: [Color(0xFFFBE7FF), Color(0xFFF3D6FF)]),
@@ -409,11 +409,11 @@ class CompactStatCard extends StatelessWidget {
             child: Icon(icon, color: iconColor, size: 18),
           ),
           const Spacer(),
-          Text(title, style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey.shade700)),
+          Text(title, style: GoogleFonts.beVietnamPro(fontSize: 12, color: Colors.grey.shade700)),
           AnimatedCountText(
             value: value,
             isMoney: isMoney,
-            style: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.w600),
+            style: GoogleFonts.beVietnamPro(fontSize: 16, fontWeight: FontWeight.w600),
           ),
         ],
       ),
@@ -443,7 +443,7 @@ class RevenueSummaryCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text('Total revenue'),
+                const Text('Tổng doanh thu'),
                 AnimatedCountText(
                   value: revenue.total,
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
@@ -490,7 +490,7 @@ class OrdersSummaryCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text('Orders in range'),
+                const Text('Đơn hàng trong khoảng'),
                 AnimatedCountText(
                   value: orders.totalOrders.toDouble(),
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
@@ -523,10 +523,10 @@ class RevenueLineChart extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (points.isEmpty) {
-      return const _EmptyStateCard(message: 'No revenue data yet');
+      return const _EmptyStateCard(message: 'Chưa có dữ liệu doanh thu');
     }
     return _SectionCard(
-      title: 'Revenue trend',
+      title: 'Xu hướng doanh thu',
       child: SizedBox(
         height: 180,
         child: LineChart(
@@ -569,10 +569,10 @@ class BooksSoldBarChart extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (points.isEmpty) {
-      return const _EmptyStateCard(message: 'No sales data yet');
+      return const _EmptyStateCard(message: 'Chưa có dữ liệu bán hàng');
     }
     return _SectionCard(
-      title: 'Books sold',
+      title: 'Sách đã bán',
       child: SizedBox(
         height: 150,
         child: BarChart(
@@ -603,7 +603,7 @@ class OrderStatusPieChart extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return _PieChartCard(title: 'Order status', items: items, colors: _chartPalette);
+    return _PieChartCard(title: 'Trạng thái đơn hàng', items: items, colors: _chartPalette);
   }
 }
 
@@ -621,7 +621,7 @@ class _PieChartCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (items.isEmpty) {
-      return const _EmptyStateCard(message: 'No data');
+      return const _EmptyStateCard(message: 'Không có dữ liệu');
     }
     final total = items.fold<int>(0, (sum, item) => sum + item.count);
     return _SectionCard(
@@ -663,7 +663,7 @@ class InsightRow extends StatelessWidget {
       children: [
         Expanded(
           child: InsightCard(
-            title: 'Today revenue',
+            title: 'Doanh thu hôm nay',
             value: summary.revenueDay.toStringAsFixed(0),
             subtitle: '${revenueChange.toStringAsFixed(1)}%',
             icon: Icons.trending_up,
@@ -673,9 +673,9 @@ class InsightRow extends StatelessWidget {
         const SizedBox(width: 12),
         Expanded(
           child: InsightCard(
-            title: 'Low stock',
+            title: 'Tồn kho thấp',
             value: summary.lowStockBooks.toString(),
-            subtitle: 'Need restock',
+            subtitle: 'Cần nhập thêm',
             icon: Icons.warning_amber_rounded,
             color: const Color(0xFFFFB020),
           ),
@@ -683,9 +683,9 @@ class InsightRow extends StatelessWidget {
         const SizedBox(width: 12),
         Expanded(
           child: InsightCard(
-            title: 'Pending',
+            title: 'Đang chờ xử lý',
             value: summary.pendingOrders.toString(),
-            subtitle: 'Orders',
+            subtitle: 'Đơn hàng',
             icon: Icons.pending_actions,
             color: const Color(0xFF4C6FFF),
           ),
@@ -725,9 +725,9 @@ class InsightCard extends StatelessWidget {
             child: Icon(icon, color: color, size: 16),
           ),
           const SizedBox(height: 8),
-          Text(title, style: GoogleFonts.poppins(fontSize: 11, color: Colors.grey.shade600)),
-          Text(value, style: GoogleFonts.poppins(fontWeight: FontWeight.w600)),
-          Text(subtitle, style: GoogleFonts.poppins(fontSize: 10, color: Colors.grey.shade500)),
+          Text(title, style: GoogleFonts.beVietnamPro(fontSize: 11, color: Colors.grey.shade600)),
+          Text(value, style: GoogleFonts.beVietnamPro(fontWeight: FontWeight.w600)),
+          Text(subtitle, style: GoogleFonts.beVietnamPro(fontSize: 10, color: Colors.grey.shade500)),
         ],
       ),
     );
@@ -745,7 +745,7 @@ class BooksOverviewRow extends StatelessWidget {
       children: [
         Expanded(
           child: MiniStatCard(
-            title: 'Sold',
+            title: 'Đã bán',
             value: books.soldBooks.toDouble(),
             icon: Icons.local_fire_department,
             color: const Color(0xFFE85C6C),
@@ -754,7 +754,7 @@ class BooksOverviewRow extends StatelessWidget {
         const SizedBox(width: 12),
         Expanded(
           child: MiniStatCard(
-            title: 'In stock',
+            title: 'Tồn kho',
             value: books.stockBooks.toDouble(),
             icon: Icons.inventory_2,
             color: const Color(0xFF00C2A8),
@@ -763,7 +763,7 @@ class BooksOverviewRow extends StatelessWidget {
         const SizedBox(width: 12),
         Expanded(
           child: MiniStatCard(
-            title: 'Low',
+            title: 'Cảnh báo',
             value: books.lowStockBooks.toDouble(),
             icon: Icons.warning_amber_rounded,
             color: const Color(0xFFFFB020),
@@ -802,10 +802,10 @@ class MiniStatCard extends StatelessWidget {
             child: Icon(icon, color: color, size: 16),
           ),
           const SizedBox(height: 8),
-          Text(title, style: GoogleFonts.poppins(fontSize: 11, color: Colors.grey.shade600)),
+          Text(title, style: GoogleFonts.beVietnamPro(fontSize: 11, color: Colors.grey.shade600)),
           AnimatedCountText(
             value: value,
-            style: GoogleFonts.poppins(fontWeight: FontWeight.w600),
+            style: GoogleFonts.beVietnamPro(fontWeight: FontWeight.w600),
           ),
         ],
       ),
@@ -871,7 +871,7 @@ class _SectionCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(title, style: GoogleFonts.poppins(fontWeight: FontWeight.w600, fontSize: 12)),
+          Text(title, style: GoogleFonts.beVietnamPro(fontWeight: FontWeight.w600, fontSize: 12)),
           const SizedBox(height: 8),
           child,
         ],
@@ -949,12 +949,12 @@ class _ErrorCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Error: $message', style: const TextStyle(color: Colors.redAccent)),
+          Text('Lỗi: $message', style: const TextStyle(color: Colors.redAccent)),
           const SizedBox(height: 8),
           TextButton.icon(
             onPressed: onRetry,
             icon: const Icon(Icons.refresh),
-            label: const Text('Retry'),
+            label: const Text('Thử lại'),
           ),
         ],
       ),

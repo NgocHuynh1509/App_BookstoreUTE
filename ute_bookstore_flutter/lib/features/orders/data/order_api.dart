@@ -1,5 +1,6 @@
 import '../../../core/api_client.dart';
 import 'order_models.dart';
+import 'order_detail_model.dart';
 
 class OrderApi {
   OrderApi(this._client);
@@ -28,6 +29,11 @@ class OrderApi {
       data: {'status': status},
     );
     return OrderItem.fromJson(response.data as Map<String, dynamic>);
+  }
+
+  Future<OrderDetailModel> fetchOrderDetail(String orderId) async {
+    final response = await _client.dio.get('/admin/orders/$orderId');
+    return OrderDetailModel.fromJson(response.data as Map<String, dynamic>);
   }
 }
 

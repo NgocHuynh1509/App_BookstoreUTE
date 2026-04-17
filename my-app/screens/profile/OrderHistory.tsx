@@ -16,7 +16,7 @@ import { useAuth } from "../../hooks/useAuth";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import Constants from "expo-constants";
 import { Ionicons } from "@expo/vector-icons";
-import { Order } from "../../types/order";
+// import { Order } from "../../types/order";
 
 const BASE_URL = Constants.expoConfig?.extra?.API_URL;
 
@@ -46,13 +46,19 @@ const C = {
 // ─── Status config ────────────────────────────────────────────────────────────
 function getStatusConfig(status: string) {
   const map: Record<string, { label: string; color: string; bg: string; icon: string }> = {
-    pending:    { label: "Chờ xác nhận", color: C.orange,  bg: C.orangeBg,  icon: "time-outline" },
-    processing: { label: "Đang xử lý",   color: C.primaryMid, bg: C.primarySoft, icon: "sync-outline" },
-    shipping:   { label: "Đang giao",    color: C.purple,  bg: C.purpleBg,  icon: "bicycle-outline" },
-    completed:  { label: "Hoàn thành",   color: C.green,   bg: C.greenBg,   icon: "checkmark-circle-outline" },
-    cancelled:  { label: "Đã hủy",       color: C.sale,    bg: "#FFF1EE",   icon: "close-circle-outline" },
+    pending:   { label: "Chờ xác nhận", color: C.orange,  bg: C.orangeBg,  icon: "time-outline" },
+    confirmed: { label: "Đã xác nhận",  color: C.primaryMid, bg: C.primarySoft, icon: "checkmark-circle-outline" },
+    shipping:  { label: "Đang giao",    color: C.purple,  bg: C.purpleBg,  icon: "bicycle-outline" },
+    completed: { label: "Hoàn thành",   color: C.green,   bg: C.greenBg,   icon: "checkmark-done-outline" },
+    returned:  { label: "Hoàn trả",     color: "#00897B", bg: "#E0F2F1",   icon: "refresh-circle-outline" },
+    cancelled: { label: "Đã hủy",       color: C.sale,    bg: "#FFF1EE",   icon: "close-circle-outline" },
   };
-  return map[status] ?? { label: status.toUpperCase(), color: C.grey, bg: C.greyBg, icon: "ellipse-outline" };
+  return map[status] ?? {
+    label: status.toUpperCase(),
+    color: C.grey,
+    bg: C.greyBg,
+    icon: "ellipse-outline"
+  };
 }
 
 // ─── Status badge ─────────────────────────────────────────────────────────────
@@ -70,8 +76,10 @@ function StatusBadge({ status }: { status: string }) {
 const TABS = [
   { key: null,        label: "Tất cả" },
   { key: "pending",   label: "Chờ xác nhận" },
+  { key: "confirmed", label: "Đã xác nhận" },
   { key: "shipping",  label: "Đang giao" },
   { key: "completed", label: "Hoàn thành" },
+  { key: "returned",  label: "Hoàn trả" },
   { key: "cancelled", label: "Đã hủy" },
 ];
 
@@ -162,7 +170,9 @@ export default function OrderHistory() {
 
   // ─── Stats ───────────────────────────────────────────────────────────────
   const completedCount  = orders.filter(o => o.status === "completed").length;
-  const pendingCount    = orders.filter(o => o.status === "pending" || o.status === "shipping").length;
+  const pendingCount   = orders.filter(o => o.status === "pending").length;
+  const confirmedCount = orders.filter(o => o.status === "confirmed").length;
+  const shippingCount  = orders.filter(o => o.status === "shipping").length;
   const totalSpent      = orders
     .filter(o => o.status === "completed")
     .reduce((s, o) => s + Number(o.total), 0);

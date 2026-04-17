@@ -7,6 +7,7 @@ import '../features/auth/data/auth_repository.dart';
 import '../features/dashboard/data/dashboard_api.dart';
 import '../features/orders/data/order_api.dart';
 import '../features/products/data/product_api.dart';
+import '../features/customers/data/customer_api.dart';
 
 final sessionStorageProvider = Provider<SessionStorage>((ref) {
   throw UnimplementedError('SessionStorage override required');
@@ -32,3 +33,7 @@ final productApiProvider = Provider<ProductApi>((ref) {
 final orderApiProvider = Provider<OrderApi>((ref) {
   return OrderApi(ref.read(apiClientProvider));
 });
+
+final customerApiProvider = Provider<CustomerApi>(
+      (ref) => CustomerApi(ref.read(apiClientProvider)),
+);

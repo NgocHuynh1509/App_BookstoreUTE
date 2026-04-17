@@ -9,6 +9,7 @@ import { Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import Constants from "expo-constants";
 import { useAuth } from "../../hooks/useAuth";
+import { WebView } from 'react-native-webview'; // <--- Thêm dòng này
 
 const API_URL = Constants.expoConfig?.extra?.API_URL;
 
@@ -44,6 +45,7 @@ export default function CheckoutScreen() {
   const [showAddressModal, setShowAddressModal] = useState(false);
   const [loading, setLoading]                   = useState(false);
   const [paymentMethod, setPaymentMethod]       = useState('COD');
+  const [currentOrderId, setCurrentOrderId] = useState(null); // <--- THÊM DÒNG NÀY NÈ MÁ
 
   // ── Coupon state
   const [coupon, setCoupon]           = useState("");
@@ -215,7 +217,7 @@ export default function CheckoutScreen() {
   const openCouponSelector = async () => {
     try {
       const token = await AsyncStorage.getItem("token");
-      const res   = await fetch(`${API_URL}/coupons/available/${user.id}`, {
+      const res   = await fetch(`${API_URL}/api/coupons/available/${user.id}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       const data = await res.json();
@@ -259,61 +261,106 @@ export default function CheckoutScreen() {
   const discountFromPoints  = usedPoints * POINT_RATE;
   const totalDiscount       = discountFromCoupon + discountFromPoints;
   const displayedTotal      = Math.max(0, totalPrice - totalDiscount);
+  // Thêm state này vào đầu CheckoutScreen
+  const [paymentUrl, setPaymentUrl] = useState(null);
+  const [showWebView, setShowWebView] = useState(false);
 
   // ==========================
   // ĐẶT HÀNG — gửi thông tin coupon + điểm lên server
   // ==========================
   const handleOrder = async () => {
-    if (!currentAddress) { Alert.alert("Thông báo", "Vui lòng chọn địa chỉ giao hàng"); return; }
+    if (!currentAddress) {
+      Alert.alert("Thông báo", "Vui lòng chọn địa chỉ giao hàng");
+      return;
+    }
+
     setLoading(true);
     try {
-      const token   = await AsyncStorage.getItem('token');
-      const payload = {
-        user_id:             user?.id,
-        shipping_address_id: currentAddress.id,
-        items:               selectedItems,
-        total_price:         totalPrice,
-        discount_points:     usedPoints,
-        discount_coupon:     coupon,
-        final_total:         displayedTotal,    // gửi luôn total đã tính
-        payment_method:      paymentMethod,
-      };
-      const res = await fetch(`${API_URL}/orders/create`, {
+      const token = await AsyncStorage.getItem('token');
+      const isBuyNow = route.params?.isBuyNow || false;
+
+      // 1. Rẽ nhánh Endpoint
+      const endpoint = isBuyNow
+        ? `${API_URL}/api/orders/buy-now`
+        : `${API_URL}/api/orders/create`;
+
+      // 2. Tạo Payload riêng biệt
+      let payload = {};
+      if (isBuyNow) {
+        payload = {
+          user_id: user?.id,
+          shipping_address_id: currentAddress.id,
+          items: selectedItems.map(it => ({
+            book_id: it.book_id,
+            quantity: Number(it.quantity) || 1,
+            price: Number(it.price) || 0
+          })),
+            // --- BỔ SUNG CÁC CỘT TIỀN MỚI ---
+                    shipping_fee: 0, // Hiện tại má đang để Free ship
+                    voucher_discount: Number(discountFromCoupon) || 0,
+                    points_discount_amount: Number(discountFromPoints) || 0,
+          total_price: Number(totalPrice) || 0,
+          discount_points: Number(usedPoints) || 0,
+          discount_coupon: coupon || "",
+          final_total: Number(displayedTotal) || 0,
+          payment_method: paymentMethod,
+          address: currentAddress.addressString || ""
+        };
+      } else {
+        payload = {
+            // --- BỔ SUNG CÁC CỘT TIỀN MỚI ---
+                    shipping_fee: 0, // Hiện tại má đang để Free ship
+                    voucher_discount: Number(discountFromCoupon) || 0,
+                    points_discount_amount: Number(discountFromPoints) || 0,
+          user_id: user?.id,
+          shipping_address_id: currentAddress.id,
+          items: selectedItems,
+          total_price: totalPrice,
+          discount_points: usedPoints,
+          discount_coupon: coupon,
+          final_total: displayedTotal,
+          payment_method: paymentMethod,
+          isFromCart: route.params?.isFromCart ?? true,
+        };
+      }
+
+      console.log("🚀 GỌI API:", endpoint);
+
+      const res = await fetch(endpoint, {
         method: 'POST',
-        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
         body: JSON.stringify(payload),
       });
+
       const data = await res.json();
+
       if (res.ok && data.success) {
-        // ── Đọc field backend trả về ─────────────────────────────
-        // { success, orderId, earned_points, bonus_points?, reward_coupon?, reward_coupon_percent? }
-        const lines: string[] = ["Đơn hàng của bạn đã được đặt thành công! 🎉"];
-
-        // Điểm tích lũy từ đơn hàng (luôn có)
-        if (data.earned_points && data.earned_points > 0) {
-          lines.push(`⭐ Tích lũy +${data.earned_points} điểm`);
+          // LƯU LẠI ORDER ID ĐỂ TÍ NỮA DÙNG TRONG WEBVIEW
+                  setCurrentOrderId(data.orderId); // <--- THÊM DÒNG NÀY
+        // 3. Xử lý sau khi gọi API thành công
+        if (paymentMethod === 'VNPAY' && data.vnpayUrl) {
+          // Lưu URL và mở WebView (Nhớ khai báo 2 state này ở đầu Component nhen)
+          setPaymentUrl(data.vnpayUrl);
+          setShowWebView(true);
+        } else {
+          // Thanh toán COD thành công
+          Alert.alert("✅ Thành công", "Đơn hàng của bạn đã được đặt thành công!", [
+              { text: "OK", onPress: () => navigation.navigate("MainTabs") }
+          ]);
         }
-
-        // Thưởng thêm điểm bonus (random 50%)
-        if (data.bonus_points && data.bonus_points > 0) {
-          lines.push(`🎁 May mắn! Thưởng thêm +${data.bonus_points} điểm!`);
-        }
-
-        // Thưởng coupon (random 50%)
-        if (data.reward_coupon) {
-          const pctTxt = data.reward_coupon_percent ? ` giảm ${data.reward_coupon_percent}%` : "";
-          lines.push(`🎫 Tặng mã${pctTxt}: ${data.reward_coupon} (30 ngày)`);
-        }
-
-        Alert.alert("✅ Đặt hàng thành công", lines.join("\n\n"), [
-          { text: "Về trang chủ", onPress: () => navigation.navigate("MainTabs") },
-        ]);
       } else {
-        Alert.alert("Thất bại", data.error || "Có lỗi xảy ra khi xử lý đơn hàng");
+        Alert.alert("Thất bại", data.error || data.message || "Lỗi xử lý đơn hàng");
       }
-    } catch { Alert.alert("Lỗi", "Kết nối server thất bại"); }
-    finally { setLoading(false); }
-  };
+    } catch (err) {
+      console.log("❌ Lỗi Fetch:", err);
+      Alert.alert("Lỗi", "Kết nối server thất bại");
+    } finally {
+      setLoading(false);
+    }
+  }; // <-- Má thiếu cái dấu đóng này nè!
 
   const coverUri = (img: string) => img?.startsWith('http') ? img : `${API_URL}/uploads/${img}`;
 
@@ -321,6 +368,29 @@ export default function CheckoutScreen() {
     { key: 'COD',   label: 'Thanh toán khi nhận hàng', sub: 'Trả tiền mặt khi giao hàng', icon: 'cash-outline' },
     { key: 'VNPAY', label: 'Thanh toán qua VNPAY',     sub: 'Thẻ ATM, Internet Banking',   icon: 'card-outline' },
   ];
+    const handleUpdateFailedStatus = async (orderId) => {
+      if (!orderId) return;
+
+      try {
+        // 1. Phải lấy Token ra nè má
+        const token = await AsyncStorage.getItem('token');
+
+        console.log("🚀 Đang gọi API update có Token cho:", orderId);
+
+        const response = await fetch(`${API_URL}/api/orders/update-status`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}` // <--- NHÉT TOKEN VÀO ĐÂY
+          },
+          body: JSON.stringify({ orderId: orderId, status: 'FAILED' })
+        });
+
+        console.log("Mã phản hồi từ Server:", response.status);
+      } catch (err) {
+        console.log("❌ Lỗi Fetch:", err.message);
+      }
+    };
 
   return (
     <SafeAreaView style={s.container}>
@@ -889,6 +959,59 @@ export default function CheckoutScreen() {
           </View>
         </View>
       </Modal>
+      {/* --- MODAL WEBVIEW THANH TOÁN VNPAY --- */}
+        <Modal visible={showWebView} animationType="slide">
+          <SafeAreaView style={{ flex: 1 }}>
+            <View style={{
+              height: 50,
+              flexDirection: 'row',
+              alignItems: 'center',
+              paddingHorizontal: 15,
+              borderBottomWidth: 1,
+              borderColor: '#EEE',
+              backgroundColor: '#FFF'
+            }}>
+              <TouchableOpacity onPress={() => setShowWebView(false)}>
+                <Ionicons name="close" size={25} color="#333" />
+              </TouchableOpacity>
+              <Text style={{ fontSize: 16, fontWeight: 'bold', marginLeft: 20 }}>Thanh toán VNPAY</Text>
+            </View>
+
+            <WebView
+              source={{ uri: paymentUrl }}
+              onNavigationStateChange={(navState) => {
+                // Chỉ xử lý khi thấy link return
+                if (navState.url.includes('vnpay-return')) {
+
+                  // --- CHIÊU NÀY LÀ QUAN TRỌNG NHẤT ---
+                  // Dùng Regex để móc OrderId trực tiếp từ URL của VNPAY trả về
+                  const orderIdMatch = navState.url.match(/[?&]vnp_TxnRef=([^&]+)/);
+                  const resCodeMatch = navState.url.match(/[?&]vnp_ResponseCode=([^&]+)/);
+
+                  // Nếu Regex tìm thấy thì dùng, không thì mới dùng currentOrderId làm dự phòng
+                  const orderIdFromUrl = orderIdMatch ? orderIdMatch[1] : currentOrderId;
+                  const responseCode = resCodeMatch ? resCodeMatch[1] : "99";
+
+                  setShowWebView(false);
+
+                  setTimeout(() => {
+                    if (responseCode === '00') {
+                      Alert.alert("✅ Thành công", "Đơn hàng đã thanh toán!");
+                      navigation.navigate("MainTabs");
+                    } else {
+                      // Dùng cái ID vừa móc được từ URL nè má!
+                      console.log("🚀 Gọi update FAILED cho đơn:", orderIdFromUrl);
+                      handleUpdateFailedStatus(orderIdFromUrl);
+
+                      Alert.alert("⚠️ Thông báo", "Giao dịch đã bị hủy.");
+                      navigation.navigate("MainTabs");
+                    }
+                  }, 500);
+                }
+              }}
+            />
+          </SafeAreaView>
+        </Modal>
     </SafeAreaView>
   );
 }

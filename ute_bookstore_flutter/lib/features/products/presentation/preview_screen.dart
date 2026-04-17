@@ -50,7 +50,7 @@ class _PreviewScreenState extends State<PreviewScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Doc thu'),
+        title: const Text('Đọc thử'),
       ),
       body: _errorMessage != null
           ? _PreviewError(message: _errorMessage!, onRetry: _loadPdf)
@@ -82,7 +82,7 @@ class _PreviewError extends StatelessWidget {
             const Icon(Icons.picture_as_pdf_outlined, size: 48, color: Colors.redAccent),
             const SizedBox(height: 12),
             Text(
-              'Khong the tai file PDF',
+              'Không thể tải file PDF',
               style: Theme.of(context).textTheme.titleMedium,
               textAlign: TextAlign.center,
             ),
@@ -96,7 +96,7 @@ class _PreviewError extends StatelessWidget {
             OutlinedButton.icon(
               onPressed: onRetry,
               icon: const Icon(Icons.refresh),
-              label: const Text('Thu lai'),
+              label: const Text('Thử lại'),
             ),
           ],
         ),
@@ -104,4 +104,3 @@ class _PreviewError extends StatelessWidget {
     );
   }
 }
-

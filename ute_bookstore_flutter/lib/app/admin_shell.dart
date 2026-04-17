@@ -22,34 +22,71 @@ class _AdminShellState extends State<AdminShell> {
     ManagementScreen(),
   ];
 
+  final _destinations = const [
+    _NavDestination(label: 'Bảng điều khiển', icon: Icons.dashboard_rounded),
+    _NavDestination(label: 'Sản phẩm', icon: Icons.inventory_2_rounded),
+    _NavDestination(label: 'Đơn hàng', icon: Icons.receipt_long_rounded),
+    _NavDestination(label: 'Khác', icon: Icons.more_horiz_rounded),
+  ];
+
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: _pages[_index],
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: _index,
-        onTap: (value) => setState(() => _index = value),
-        type: BottomNavigationBarType.fixed,
-        items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.dashboard_rounded),
-            label: 'Dashboard',
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final useRail = constraints.maxWidth >= 900;
+
+        if (useRail) {
+          return Scaffold(
+            body: Row(
+              children: [
+                NavigationRail(
+                  selectedIndex: _index,
+                  onDestinationSelected: (value) => setState(() => _index = value),
+                  labelType: NavigationRailLabelType.all,
+                  leading: const Padding(
+                    padding: EdgeInsets.only(top: 12),
+                    child: Icon(Icons.storefront_rounded, size: 32),
+                  ),
+                  destinations: _destinations
+                      .map(
+                        (item) => NavigationRailDestination(
+                          icon: Icon(item.icon),
+                          label: Text(item.label),
+                        ),
+                      )
+                      .toList(),
+                ),
+                const VerticalDivider(width: 1),
+                Expanded(child: _pages[_index]),
+              ],
+            ),
+          );
+        }
+
+        return Scaffold(
+          body: _pages[_index],
+          bottomNavigationBar: BottomNavigationBar(
+            currentIndex: _index,
+            onTap: (value) => setState(() => _index = value),
+            type: BottomNavigationBarType.fixed,
+            items: _destinations
+                .map(
+                  (item) => BottomNavigationBarItem(
+                    icon: Icon(item.icon),
+                    label: item.label,
+                  ),
+                )
+                .toList(),
           ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.inventory_2_rounded),
-            label: 'Sản phẩm',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.receipt_long_rounded),
-            label: 'Đơn hàng',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.more_horiz_rounded),
-            label: 'Khác',
-          ),
-        ],
-      ),
+        );
+      },
     );
   }
 }
 
+class _NavDestination {
+  final String label;
+  final IconData icon;
+
+  const _NavDestination({required this.label, required this.icon});
+}

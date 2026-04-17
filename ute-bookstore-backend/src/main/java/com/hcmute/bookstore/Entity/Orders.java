@@ -29,6 +29,13 @@ public class Orders {
     @NotNull
     @DecimalMin(value = "0", inclusive = true)
     private BigDecimal totalAmount = BigDecimal.ZERO;
+    // --- BỔ SUNG MỚI: GIẢM GIÁ ---
+    @Column(name = "voucher_discount", precision = 12, scale = 0)
+    private BigDecimal voucherDiscount = BigDecimal.ZERO; // Tiền giảm từ mã Voucher
+
+    @Column(name = "points_discount", precision = 12, scale = 0)
+    private BigDecimal pointsDiscount = BigDecimal.ZERO; // Tiền giảm từ việc đổi điểm thưởng
+    // ----------------------------
 
     // --- BỔ SUNG MỚI ---
     @Column(name = "shipping_fee", precision = 10, scale = 2)
@@ -109,4 +116,20 @@ public class Orders {
     public void setCustomer(Customers customer) { this.customer = customer; }
     public Payment getPayment() { return payment; }
     public void setPayment(Payment payment) { this.payment = payment; }
+    // --- GETTERS VÀ SETTERS MỚI ---
+    public BigDecimal getVoucherDiscount() {
+        return voucherDiscount;
+    }
+
+    public void setVoucherDiscount(BigDecimal voucherDiscount) {
+        this.voucherDiscount = voucherDiscount;
+    }
+
+    public BigDecimal getPointsDiscount() {
+        return pointsDiscount;
+    }
+
+    public void setPointsDiscount(BigDecimal pointsDiscount) {
+        this.pointsDiscount = pointsDiscount;
+    }
 }

@@ -5,6 +5,8 @@ import java.util.Date;
 
 public class AdminOrderResponse {
 
+    private String fullName;
+    private String phone;
     private String orderId;
     private String status;
     private Date orderDate;
@@ -14,6 +16,22 @@ public class AdminOrderResponse {
     private String address;
     private String customerId;
     private String customerEmail;
+
+    public String getFullName() {
+        return fullName;
+    }
+
+    public void setFullName(String fullName) {
+        this.fullName = fullName;
+    }
+
+    public String getPhone() {
+        return phone;
+    }
+
+    public void setPhone(String phone) {
+        this.phone = phone;
+    }
 
     public String getOrderId() {
         return orderId;
@@ -86,5 +104,7 @@ public class AdminOrderResponse {
     public void setCustomerEmail(String customerEmail) {
         this.customerEmail = customerEmail;
     }
+
+
 }
 
