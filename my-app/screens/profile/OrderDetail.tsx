@@ -131,6 +131,38 @@ export default function OrderDetail() {
     return diff <= 30;
   };
 
+  const handleConfirmReceived = async () => {
+    try {
+      const token = await AsyncStorage.getItem("token");
+
+      const res = await fetch(
+          `${BASE_URL}/api/orders/confirm-delivered/${orderId}`,
+          {
+            method: "PUT",
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
+            },
+          }
+      );
+
+      const data = await res.json();
+
+      console.log("STATUS:", res.status);
+      console.log("DATA:", data);
+
+      if (res.ok) {
+        Alert.alert("Thành công", "Đơn hàng đã hoàn thành");
+        fetchDetail();
+      } else {
+        Alert.alert("Lỗi", data.error || data.message || "Không thể cập nhật");
+      }
+    } catch (e) {
+      console.log("NETWORK ERROR:", e);
+      Alert.alert("Lỗi", "Không kết nối được server");
+    }
+  };
+
   const handleCancelOrder = async () => {
     Alert.alert("Xác nhận huỷ đơn", "Bạn có chắc chắn muốn huỷ đơn hàng này?", [
       { text: "Không", style: "cancel" },
@@ -159,77 +191,154 @@ export default function OrderDetail() {
   };
 
   // ─── Status stepper ──────────────────────────────────────────────────────
+  // const renderStatusStepper = () => {
+  //   if (orderData.status === "cancelled") {
+  //     return (
+  //       <View style={s.cancelledBox}>
+  //         <View style={s.cancelledIconWrap}>
+  //           <Ionicons name="close-circle-outline" size={32} color={C.sale} />
+  //         </View>
+  //         <Text style={s.cancelledTitle}>Đơn hàng đã bị huỷ</Text>
+  //         <Text style={s.cancelledSub}>Đơn hàng này đã được huỷ thành công.</Text>
+  //       </View>
+  //     );
+  //   }
+  //
+  //   const currentIndex = ORDER_STATUS_STEPS.findIndex(s => s.key === orderData.status);
+  //
+  //   return (
+  //     <View style={s.stepper}>
+  //       {ORDER_STATUS_STEPS.map((step, index) => {
+  //         const done    = index < currentIndex;
+  //         const active  = index === currentIndex;
+  //         const isLast  = index === ORDER_STATUS_STEPS.length - 1;
+  //
+  //         return (
+  //           <View key={step.key} style={s.stepRow}>
+  //             {/* Left column: dot + line */}
+  //             <View style={s.stepLeft}>
+  //               <View style={[
+  //                 s.stepDot,
+  //                 done   && s.stepDotDone,
+  //                 active && s.stepDotActive,
+  //               ]}>
+  //                 {done ? (
+  //                   <Ionicons name="checkmark" size={10} color="#FFF" />
+  //                 ) : active ? (
+  //                   <View style={s.stepDotInner} />
+  //                 ) : null}
+  //               </View>
+  //               {!isLast && (
+  //                 <View style={[s.stepLine, (done || active) && s.stepLineDone]} />
+  //               )}
+  //             </View>
+  //
+  //             {/* Right column: label */}
+  //             <View style={s.stepRight}>
+  //               <View style={[s.stepLabelWrap, active && s.stepLabelWrapActive]}>
+  //                 <Ionicons
+  //                   name={step.icon as any}
+  //                   size={15}
+  //                   color={active ? C.primaryMid : done ? C.green : C.text3}
+  //                 />
+  //                 <Text style={[
+  //                   s.stepLabel,
+  //                   done   && s.stepLabelDone,
+  //                   active && s.stepLabelActive,
+  //                 ]}>
+  //                   {step.label}
+  //                 </Text>
+  //                 {active && (
+  //                   <View style={s.stepActiveBadge}>
+  //                     <Text style={s.stepActiveBadgeTxt}>Hiện tại</Text>
+  //                   </View>
+  //                 )}
+  //               </View>
+  //             </View>
+  //           </View>
+  //         );
+  //       })}
+  //     </View>
+  //   );
+  // };
+
   const renderStatusStepper = () => {
-    if (orderData.status === "cancelled") {
+    const status = (orderData.status || "").toLowerCase();
+
+    const FLOW = ["pending", "confirmed", "shipping", "completed"];
+
+    const isCancelled = status === "cancelled";
+    const isReturned  = status === "returned";
+
+    // ❌ Cancel → show riêng
+    if (isCancelled) {
       return (
-        <View style={s.cancelledBox}>
-          <View style={s.cancelledIconWrap}>
+          <View style={s.cancelledBox}>
             <Ionicons name="close-circle-outline" size={32} color={C.sale} />
+            <Text style={s.cancelledTitle}>Đơn hàng đã bị huỷ</Text>
           </View>
-          <Text style={s.cancelledTitle}>Đơn hàng đã bị huỷ</Text>
-          <Text style={s.cancelledSub}>Đơn hàng này đã được huỷ thành công.</Text>
-        </View>
       );
     }
 
-    const currentIndex = ORDER_STATUS_STEPS.findIndex(s => s.key === orderData.status);
+    // 🔥 Lấy các step tới hiện tại
+    let visibleSteps: string[] = [];
+
+    if (isReturned) {
+      // returned = full flow + returned
+      visibleSteps = [...FLOW, "returned"];
+    } else {
+      const currentIndex = FLOW.indexOf(status);
+      visibleSteps = FLOW.slice(0, currentIndex + 1);
+    }
 
     return (
-      <View style={s.stepper}>
-        {ORDER_STATUS_STEPS.map((step, index) => {
-          const done    = index < currentIndex;
-          const active  = index === currentIndex;
-          const isLast  = index === ORDER_STATUS_STEPS.length - 1;
+        <View style={s.stepper}>
+          {visibleSteps.map((step, index) => {
+            const isLast = index === visibleSteps.length - 1;
 
-          return (
-            <View key={step.key} style={s.stepRow}>
-              {/* Left column: dot + line */}
-              <View style={s.stepLeft}>
-                <View style={[
-                  s.stepDot,
-                  done   && s.stepDotDone,
-                  active && s.stepDotActive,
-                ]}>
-                  {done ? (
-                    <Ionicons name="checkmark" size={10} color="#FFF" />
-                  ) : active ? (
-                    <View style={s.stepDotInner} />
-                  ) : null}
-                </View>
-                {!isLast && (
-                  <View style={[s.stepLine, (done || active) && s.stepLineDone]} />
-                )}
-              </View>
+            const stepInfo = ORDER_STATUS_STEPS.find(s => s.key === step)!;
 
-              {/* Right column: label */}
-              <View style={s.stepRight}>
-                <View style={[s.stepLabelWrap, active && s.stepLabelWrapActive]}>
-                  <Ionicons
-                    name={step.icon as any}
-                    size={15}
-                    color={active ? C.primaryMid : done ? C.green : C.text3}
-                  />
-                  <Text style={[
-                    s.stepLabel,
-                    done   && s.stepLabelDone,
-                    active && s.stepLabelActive,
-                  ]}>
-                    {step.label}
-                  </Text>
-                  {active && (
-                    <View style={s.stepActiveBadge}>
-                      <Text style={s.stepActiveBadgeTxt}>Hiện tại</Text>
+            const isReturnedStep = step === "returned";
+
+            return (
+                <View key={step} style={s.stepRow}>
+                  {/* LEFT */}
+                  <View style={s.stepLeft}>
+                    <View style={[
+                      s.stepDot,
+                      isReturnedStep
+                          ? { backgroundColor: C.orange, borderColor: C.orange }
+                          : s.stepDotDone
+                    ]}>
+                      {isReturnedStep ? (
+                          <Ionicons name="refresh" size={10} color="#FFF" />
+                      ) : (
+                          <Ionicons name="checkmark" size={10} color="#FFF" />
+                      )}
                     </View>
-                  )}
+
+                    {!isLast && (
+                        <View style={[s.stepLine, s.stepLineDone]} />
+                    )}
+                  </View>
+
+                  {/* RIGHT */}
+                  <View style={s.stepRight}>
+                    <Text style={[
+                      s.stepLabel,
+                      isReturnedStep
+                          ? { color: C.orange, fontWeight: "700" }
+                          : s.stepLabelDone
+                    ]}>
+                      {stepInfo.label}
+                    </Text>
+                  </View>
                 </View>
-              </View>
-            </View>
-          );
-        })}
-      </View>
+            );
+          })}
+        </View>
     );
   };
-
   // ─── Loading / error ──────────────────────────────────────────────────────
   if (loading) return (
     <View style={[s.container, { justifyContent: "center", alignItems: "center" }]}>
@@ -432,6 +541,17 @@ export default function OrderDetail() {
             <Ionicons name="information-circle-outline" size={16} color={C.text3} />
             <Text style={s.cancelNoteTxt}>Đã quá 30 phút — không thể huỷ đơn hàng</Text>
           </View>
+        )}
+
+        {orderData.status === "shipping" && (
+            <TouchableOpacity
+                style={s.completeBtn}
+                onPress={handleConfirmReceived}
+                activeOpacity={0.85}
+            >
+              <Ionicons name="checkmark-circle-outline" size={18} color="#FFF" />
+              <Text style={s.completeBtnTxt}>Đã nhận hàng</Text>
+            </TouchableOpacity>
         )}
 
         {/* ── REVIEW ───────────────────────────────────────────── */}
@@ -711,4 +831,39 @@ const s = StyleSheet.create({
     shadowOpacity: 0.2, shadowRadius: 8,
   },
   rePayBtnTxt: { color: "#FFF", fontWeight: "800", fontSize: 16 },
+  methodBadge: {
+    backgroundColor: C.primarySoft,
+    borderRadius: 12,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    alignSelf: "flex-start",
+  },
+
+  methodVal: {
+    fontSize: 13,
+    fontWeight: "700",
+    color: C.primaryMid,
+  },
+
+  completeBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+    backgroundColor: "#00AB56",
+    borderRadius: 16,
+    paddingVertical: 15,
+    marginBottom: 10,
+    elevation: 3,
+    shadowColor: "#00AB56",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+  },
+
+  completeBtnTxt: {
+    color: "#FFF",
+    fontWeight: "800",
+    fontSize: 16,
+  },
 });

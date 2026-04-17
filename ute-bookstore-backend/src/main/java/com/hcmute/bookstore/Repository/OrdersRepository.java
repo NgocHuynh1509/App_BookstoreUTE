@@ -31,4 +31,6 @@ public interface OrdersRepository extends JpaRepository<Orders, String> {
             "AND o.orderDate < :expiryDate")
     List<Orders> findExpiredVnpayOrders(@Param("expiryDate") Date expiryDate);
 
+    Optional<Orders> findById(String orderId);
+
 }

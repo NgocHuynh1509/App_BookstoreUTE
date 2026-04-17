@@ -441,6 +441,16 @@ public class OrderService {
         return orderId;
     }
 
+    public void confirmDelivered(String orderId) {
+        Orders order = ordersRepository.findById(orderId)
+                .orElseThrow(() -> new RuntimeException("Order not found"));
 
+        if (!order.getStatus().equals("Shipping")) {
+            throw new RuntimeException("Chỉ đơn đang giao mới được xác nhận");
+        }
+
+        order.setStatus("Completed");
+        ordersRepository.save(order);
+    }
 
 }

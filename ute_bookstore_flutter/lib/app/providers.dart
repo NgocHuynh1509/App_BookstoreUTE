@@ -10,6 +10,7 @@ import '../features/products/data/product_api.dart';
 import '../chat/data/chat_api.dart';
 import '../chat/data/socket_service.dart';
 import '../chat/data/chat_repository.dart';
+import '../features/customers/data/customer_api.dart';
 
 final sessionStorageProvider = Provider<SessionStorage>((ref) {
   throw UnimplementedError('SessionStorage override required');
@@ -51,3 +52,6 @@ final chatRepositoryProvider = Provider<ChatRepository>((ref) {
   final socket = ref.watch(socketServiceProvider);
   return ChatRepository(api, socket);
 });
+final customerApiProvider = Provider<CustomerApi>(
+      (ref) => CustomerApi(ref.read(apiClientProvider)),
+);
