@@ -7,6 +7,7 @@ import org.springframework.security.authentication.dao.DaoAuthenticationProvider
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configuration.WebSecurityCustomizer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.*;
@@ -51,6 +52,7 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable())
                 .sessionManagement(sess -> sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
+                        .requestMatchers("/ws-bookstore/**").permitAll()
                         .requestMatchers("/admin/**", "/products/**", "/orders/**").hasAnyRole("ADMIN", "STAFF")
                         .requestMatchers(
                                 "/auth/login",
@@ -62,7 +64,8 @@ public class SecurityConfig {
                                 "/books/**",
                                 "/categories/**",
                                 "/reviews/book/**",
-                                "/uploads/**"
+                                "/uploads/**",
+                                "/chat/media/**"
                         ).permitAll()
                         .requestMatchers(
                                 "/wishlist/**",
@@ -72,10 +75,15 @@ public class SecurityConfig {
                                 "/profile/**",
                                 "/addresses/**",
                                 "/api/orders/**",
-                                "/reviews"
+                                "/reviews",
+                                "/chat.sendMessage",
+                                "/chat.react",
+                                "/chat/**"
+
                         ).authenticated()
                         .anyRequest().authenticated()
                 )
+
                 .authenticationProvider(authenticationProvider())
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
@@ -86,10 +94,11 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
 
-        configuration.setAllowedOriginPatterns(List.of(
-                "http://localhost:*",
-                "http://127.0.0.1:*"
-        ));
+//        configuration.setAllowedOriginPatterns(List.of(
+//                "http://localhost:*",
+//                "http://127.0.0.1:*"
+//        ));
+        configuration.setAllowedOriginPatterns(List.of("*"));
 
         configuration.setAllowedMethods(List.of(
                 "GET", "POST", "PUT", "DELETE", "OPTIONS"
@@ -101,5 +110,10 @@ public class SecurityConfig {
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
         return source;
+    }
+
+    @Bean
+    public WebSecurityCustomizer webSecurityCustomizer() {
+        return (web) -> web.ignoring().requestMatchers("/ws-bookstore/**");
     }
 }
