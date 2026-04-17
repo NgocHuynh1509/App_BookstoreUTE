@@ -23,11 +23,12 @@ public class OrderCleanupService {
     private final PaymentRepository paymentRepository;
     private final BooksRepository booksRepository; // Inject thêm repository của Books
 
-    @Scheduled(fixedRate = 86400)
+    @Scheduled(fixedRate = 1800000) // 5 phút quét 1 lần (5 * 60 * 1000)
     @Transactional
     public void autoCancelExpiredVnpayOrders() {
-        long fiveMinutesAgoMillis = System.currentTimeMillis() - (5 * 60 * 1000);
-        Date expiryDate = new Date(fiveMinutesAgoMillis);
+        // 1 ngày = 24 giờ * 60 phút * 60 giây * 1000 ms = 86,400,000
+        long oneDayAgoMillis = System.currentTimeMillis() - (24 * 60 * 60 * 1000);
+        Date expiryDate = new Date(oneDayAgoMillis);
 
         List<Orders> expiredOrders = ordersRepository.findExpiredVnpayOrders(expiryDate);
 

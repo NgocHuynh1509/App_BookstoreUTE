@@ -9,16 +9,20 @@ public class OrderDirectRequest {
     private String user_id;
     private String shipping_address_id;
 
-    // Dùng DTO item riêng hoặc dùng lại CartItemDTO nhưng đảm bảo kiểu dữ liệu chuẩn
+    // Danh sách sản phẩm mua ngay (thường chỉ có 1 nhưng để List cho linh hoạt)
     private List<DirectItemDTO> items;
 
-    private BigDecimal total_price;
-    private Integer discount_points; // Integer thay vì int để nhận được null/0
-    private String discount_coupon;
-    private BigDecimal final_total;
+    private BigDecimal total_price;      // Giá gốc của các món hàng
+
+    // --- BỔ SUNG ĐỂ KHỚP VỚI ENTITY VÀ ORDER_REQUEST ---
+    private BigDecimal shipping_fee;           // Phí vận chuyển
+    private BigDecimal voucher_discount;       // Số tiền giảm từ Voucher
+    private BigDecimal points_discount_amount; // Số tiền quy đổi từ điểm thưởng
+    // --------------------------------------------------
+
+    private Integer discount_points;     // Số điểm thưởng khách chọn dùng
+    private String discount_coupon;      // Mã code voucher
+    private BigDecimal final_total;      // Tổng cuối: Total + Ship - Voucher - Points
     private String payment_method;
     private String address;
-
-
 }
-

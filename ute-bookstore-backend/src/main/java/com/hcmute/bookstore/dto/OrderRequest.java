@@ -17,6 +17,11 @@ public class OrderRequest {
     private String payment_method;    // Phương thức thanh toán (COD, VNPAY,...)
     private String address;           // Địa chỉ dạng chuỗi (nếu cần lưu text trực tiếp)
     private boolean fromCart;
+    // --- BỔ SUNG MỚI ---
+    private BigDecimal shipping_fee;     // Phí vận chuyển từ App gửi lên
+    private BigDecimal voucher_discount; // Số tiền được giảm từ Voucher (Ví dụ: 20000)
+    private BigDecimal points_discount_amount; // Số tiền quy đổi từ điểm thưởng (Ví dụ: 10000)
+    // -------------------
 
     // --- Constructors ---
     public OrderRequest() {
@@ -103,5 +108,30 @@ public class OrderRequest {
 
     public void setFromCart(boolean fromCart) {
         this.fromCart = fromCart;
+    }
+    // --- Getters và Setters cho các trường bổ sung ---
+
+    public BigDecimal getShipping_fee() {
+        return shipping_fee;
+    }
+
+    public void setShipping_fee(BigDecimal shipping_fee) {
+        this.shipping_fee = shipping_fee;
+    }
+
+    public BigDecimal getVoucher_discount() {
+        return voucher_discount;
+    }
+
+    public void setVoucher_discount(BigDecimal voucher_discount) {
+        this.voucher_discount = voucher_discount;
+    }
+
+    public BigDecimal getPoints_discount_amount() {
+        return points_discount_amount;
+    }
+
+    public void setPoints_discount_amount(BigDecimal points_discount_amount) {
+        this.points_discount_amount = points_discount_amount;
     }
 }

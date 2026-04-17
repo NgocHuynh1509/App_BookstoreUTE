@@ -295,6 +295,10 @@ export default function CheckoutScreen() {
             quantity: Number(it.quantity) || 1,
             price: Number(it.price) || 0
           })),
+            // --- BỔ SUNG CÁC CỘT TIỀN MỚI ---
+                    shipping_fee: 0, // Hiện tại má đang để Free ship
+                    voucher_discount: Number(discountFromCoupon) || 0,
+                    points_discount_amount: Number(discountFromPoints) || 0,
           total_price: Number(totalPrice) || 0,
           discount_points: Number(usedPoints) || 0,
           discount_coupon: coupon || "",
@@ -304,6 +308,10 @@ export default function CheckoutScreen() {
         };
       } else {
         payload = {
+            // --- BỔ SUNG CÁC CỘT TIỀN MỚI ---
+                    shipping_fee: 0, // Hiện tại má đang để Free ship
+                    voucher_discount: Number(discountFromCoupon) || 0,
+                    points_discount_amount: Number(discountFromPoints) || 0,
           user_id: user?.id,
           shipping_address_id: currentAddress.id,
           items: selectedItems,

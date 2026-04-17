@@ -201,4 +201,79 @@ public class OrderController {
         }
     }
 
+    @GetMapping("/re-payment/{orderId}")
+    public ResponseEntity<?> rePayment(@PathVariable String orderId, HttpServletRequest httpRequest) {
+        try {
+            Orders order = ordersRepository.findById(orderId)
+                    .orElseThrow(() -> new Exception("Không tìm thấy đơn hàng"));
+
+            // Kiểm tra 1: Phải là phương thức VNPAY
+            if (!"VNPAY".equals(order.getPaymentMethod())) {
+                return ResponseEntity.badRequest().body(Map.of("error", "Đơn hàng này không sử dụng phương thức VNPAY"));
+            }
+
+            // Kiểm tra 2: Trạng thái đơn hàng phải là PENDING
+            // (Nếu má để PENDING là chữ thường hay hoa thì sửa lại cho khớp nhen)
+            if (!"PENDING".equalsIgnoreCase(order.getStatus())) {
+                return ResponseEntity.badRequest().body(Map.of("error", "Đơn hàng không ở trạng thái chờ thanh toán hoặc đã được xử lý"));
+            }
+
+            // Kiểm tra 3 (Nâng cao): Check bảng Payment xem status có phải SUCCESS chưa (phòng hờ)
+            if (order.getPayment() != null && "SUCCESS".equalsIgnoreCase(order.getPayment().getStatus())) {
+                return ResponseEntity.badRequest().body(Map.of("error", "Đơn hàng này đã thanh toán thành công rồi"));
+            }
+
+            // Nếu vượt qua hết thì tạo link
+            PaymentDTO paymentDTO = new PaymentDTO();
+            paymentDTO.setOrderId(orderId);
+            // Lưu ý: VNPAY yêu cầu số tiền nhân 100, nếu vnPayService của má chưa làm thì má nhân ở đây
+            paymentDTO.setAmount(order.getTotalAmount().longValue());
+            paymentDTO.setOrderInfo("Thanh toan lai cho don hang " + orderId);
+
+            String vnpayUrl = vnPayService.createPaymentUrl(paymentDTO, httpRequest);
+
+            return ResponseEntity.ok(Map.of("success", true, "vnpayUrl", vnpayUrl));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("error", "Lỗi hệ thống: " + e.getMessage()));
+        }
+    }
+
+    @Transactional
+    @PostMapping("/confirm-success")
+    public ResponseEntity<?> confirmPaymentSuccess(@RequestBody Map<String, String> request) {
+        String orderId = request.get("orderId");
+        // Ép cứng status luôn vì hàm này chỉ gọi khi THÀNH CÔNG
+        String paymentStatus = "SUCCESS";
+        String orderStatus = "CONFIRMED";
+
+        System.out.println("-----> XÁC NHẬN THÀNH CÔNG CHO ĐƠN: " + orderId);
+        try {
+            // 1. Tìm Payment theo OrderId
+            Payment payment = paymentRepository.findByOrder_OrderId(orderId);
+
+            if (payment != null) {
+                // 2. Cập nhật Payment sang SUCCESS
+                payment.setStatus(paymentStatus);
+                paymentRepository.save(payment);
+
+                // 3. Cập nhật Order sang CONFIRMED
+                Orders order = payment.getOrder();
+                if (order != null) {
+                    order.setStatus(orderStatus);
+                    ordersRepository.save(order);
+
+                    // (Tùy chọn) Nếu má có logic trừ tồn kho thì viết ở đây luôn má nhen
+                }
+
+                System.out.println("✅ CHỐT ĐƠN THÀNH CÔNG: Order " + orderId + " đã sang CONFIRMED");
+                return ResponseEntity.ok(Map.of("success", true, "message", "Đã xác nhận đơn hàng thành công"));
+            }
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Không tìm thấy dữ liệu thanh toán cho đơn này");
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Lỗi: " + e.getMessage());
+        }
+    }
+
 }

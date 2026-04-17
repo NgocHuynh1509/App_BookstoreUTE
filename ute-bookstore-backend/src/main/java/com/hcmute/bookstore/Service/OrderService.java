@@ -164,6 +164,10 @@ public class OrderService {
                 address,
                 customerName,
                 phone,
+                order.getPaymentMethod(), // <--- Bổ sung lôi từ Entity ra đây
+                order.getShippingFee(),
+                order.getVoucherDiscount() != null ? order.getVoucherDiscount() : BigDecimal.ZERO,
+                order.getPointsDiscount() != null ? order.getPointsDiscount() : BigDecimal.ZERO,
                 items
         );
     }
@@ -244,6 +248,16 @@ public class OrderService {
 
         order.setStatus("PENDING");
         order.setOrderDate(new Date());
+        // --- MÁ CHÈN THÊM MẤY DÒNG NÀY VÀO ĐÂY ---
+        order.setShippingFee(request.getShipping_fee() != null ? request.getShipping_fee() : BigDecimal.ZERO);
+        order.setVoucherDiscount(request.getVoucher_discount() != null ? request.getVoucher_discount() : BigDecimal.ZERO);
+        order.setPointsDiscount(request.getPoints_discount_amount() != null ? request.getPoints_discount_amount() : BigDecimal.ZERO);
+
+// Ghi chú tự động dựa trên mã giảm giá (tùy chọn)
+        String autoNote = "Đơn hàng mới";
+        if (request.getDiscount_coupon() != null) autoNote += " | Voucher: " + request.getDiscount_coupon();
+        order.setNote(autoNote);
+// -----------------------------------------
 
         // Gán shipping address entity (khóa ngoại)
         if (request.getShipping_address_id() != null) {
@@ -366,6 +380,16 @@ public class OrderService {
         order.setAddress(shippingAddr);
         order.setStatus("PENDING");
         order.setOrderDate(new Date());
+        // --- MÁ CHÈN THÊM MẤY DÒNG NÀY VÀO ĐÂY ---
+        order.setShippingFee(request.getShipping_fee() != null ? request.getShipping_fee() : BigDecimal.ZERO);
+        order.setVoucherDiscount(request.getVoucher_discount() != null ? request.getVoucher_discount() : BigDecimal.ZERO);
+        order.setPointsDiscount(request.getPoints_discount_amount() != null ? request.getPoints_discount_amount() : BigDecimal.ZERO);
+
+// Ghi chú tự động dựa trên mã giảm giá (tùy chọn)
+        String autoNote = "Đơn hàng mới";
+        if (request.getDiscount_coupon() != null) autoNote += " | Voucher: " + request.getDiscount_coupon();
+        order.setNote(autoNote);
+// -----------------------------------------
 
         if (request.getShipping_address_id() != null) {
             ShippingAddress sa = addressRepo.findById(request.getShipping_address_id()).orElse(null);

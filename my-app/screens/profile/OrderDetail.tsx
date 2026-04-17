@@ -10,11 +10,13 @@ import {
   Alert,
   StatusBar,
   Platform,
+  Modal,
 } from "react-native";
 import { useRoute, useNavigation } from "@react-navigation/native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import Constants from "expo-constants";
 import { Ionicons } from "@expo/vector-icons";
+import { WebView } from "react-native-webview"; // Thêm cái này
 
 const BASE_URL = Constants.expoConfig?.extra?.API_URL;
 
@@ -78,6 +80,29 @@ export default function OrderDetail() {
 
   const [orderData, setOrderData] = useState<any>(null);
   const [loading, setLoading]     = useState(true);
+  const [showWebView, setShowWebView] = useState(false);
+  const [paymentUrl, setPaymentUrl] = useState("");
+
+  const handleRePayment = async () => {
+    try {
+      setLoading(true);
+      const token = await AsyncStorage.getItem("token");
+      const res = await fetch(`${BASE_URL}/api/orders/re-payment/${orderId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = await res.json();
+      if (res.ok && data.vnpayUrl) {
+        setPaymentUrl(data.vnpayUrl);
+        setShowWebView(true);
+      } else {
+        Alert.alert("Lỗi", data.error || "Không thể tạo liên kết thanh toán");
+      }
+    } catch (error) {
+      Alert.alert("Lỗi", "Kết nối server thất bại");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // ==========================
   // API LOGIC (unchanged)
@@ -298,21 +323,101 @@ export default function OrderDetail() {
         <View style={s.card}>
           <SectionHeader icon="calculator-outline" title="Tóm tắt thanh toán" />
           <View style={s.summaryBody}>
+            {/* Phương thức thanh toán */}
             <View style={s.summaryRow}>
-              <Text style={s.summaryLabel}>Tạm tính</Text>
-              <Text style={s.summaryVal}>{Number(orderData.total).toLocaleString("vi-VN")}đ</Text>
+              <Text style={s.summaryLabel}>Thanh toán qua</Text>
+              {/* Thêm style để đảm bảo icon và chữ nằm ngang */}
+              <View style={[s.methodBadge, { flexDirection: 'row', alignItems: 'center' }]}>
+                <Ionicons
+                  name={orderData.payment_method === "VNPAY" ? "card-outline" : "cash-outline"}
+                  size={14}
+                  color={C.primaryMid}
+                  style={{ marginRight: 4 }} // Khoảng cách giữa icon và chữ
+                />
+                <Text style={s.methodVal}>
+                  {orderData.payment_method === "VNPAY" ? "Ví VNPAY" : "Tiền mặt (COD)"}
+                </Text>
+              </View>
             </View>
+
+            {/* Ngày đặt hàng */}
+            <View style={s.summaryRow}>
+              <Text style={s.summaryLabel}>Ngày đặt hàng</Text>
+              <Text style={s.summaryVal}>
+                {orderData.created_at ? new Date(orderData.created_at).toLocaleDateString("vi-VN", {
+                  day: '2-digit',
+                  month: '2-digit',
+                  year: 'numeric',
+                  hour: '2-digit',
+                  minute: '2-digit'
+                }) : "---"}
+              </Text>
+            </View>
+
+            <View style={s.summaryDivider} />
+
+            <View style={s.summaryRow}>
+                  <Text style={s.summaryLabel}>Tạm tính</Text>
+                  <Text style={s.summaryVal}>
+                    {orderData.items?.reduce((sum: number, item: any) =>
+                      sum + (Number(item.price) * Number(item.quantity)), 0
+                    ).toLocaleString("vi-VN")}đ
+                  </Text>
+                </View>
+
+            {/* Phí vận chuyển */}
             <View style={s.summaryRow}>
               <Text style={s.summaryLabel}>Phí vận chuyển</Text>
-              <Text style={[s.summaryVal, { color: C.green }]}>Miễn phí</Text>
+              <Text style={[
+                s.summaryVal,
+                { color: orderData.shipping_fee > 0 ? C.text1 : C.green }
+              ]}>
+                {orderData.shipping_fee > 0
+                  ? `${Number(orderData.shipping_fee).toLocaleString("vi-VN")}đ`
+                  : "Miễn phí"}
+              </Text>
             </View>
+            {/* --- BỔ SUNG: GIẢM GIÁ VOUCHER --- */}
+                {orderData.voucher_discount > 0 && (
+                  <View style={s.summaryRow}>
+                    <Text style={s.summaryLabel}>Voucher giảm giá</Text>
+                    <Text style={[s.summaryVal, { color: C.sale }]}>
+                      -{Number(orderData.voucher_discount).toLocaleString("vi-VN")}đ
+                    </Text>
+                  </View>
+                )}
+
+                {/* --- BỔ SUNG: GIẢM GIÁ ĐIỂM THƯỞNG --- */}
+                {orderData.points_discount > 0 && (
+                  <View style={s.summaryRow}>
+                    <Text style={s.summaryLabel}>Dùng điểm thưởng</Text>
+                    <Text style={[s.summaryVal, { color: C.sale }]}>
+                      -{Number(orderData.points_discount).toLocaleString("vi-VN")}đ
+                    </Text>
+                  </View>
+                )}
+
             <View style={s.summaryDivider} />
+
+            {/* Tổng thanh toán */}
             <View style={s.summaryRow}>
               <Text style={s.summaryTotalLabel}>Tổng thanh toán</Text>
               <Text style={s.summaryTotalVal}>{Number(orderData.total).toLocaleString("vi-VN")}đ</Text>
             </View>
           </View>
         </View>
+
+        {/* Check logic: Status là PENDING (chấp hết hoa thường) và Method là VNPAY */}
+        {orderData?.status?.toUpperCase() === "PENDING" && orderData?.payment_method === "VNPAY" && (
+          <TouchableOpacity
+            style={s.rePayBtn}
+            onPress={handleRePayment}
+            activeOpacity={0.85}
+          >
+            <Ionicons name="card-outline" size={20} color="#FFF" />
+            <Text style={s.rePayBtnTxt}>Thanh toán ngay qua VNPAY</Text>
+          </TouchableOpacity>
+        )}
 
         {/* ── CANCEL ───────────────────────────────────────────── */}
         {canCancel && (
@@ -358,6 +463,73 @@ export default function OrderDetail() {
 
         <View style={{ height: 20 }} />
       </ScrollView>
+      {/* ── MODAL VNPAY WEBVIEW ────────────────────────────────── */}
+            <Modal
+              visible={showWebView}
+              animationType="slide"
+              onRequestClose={() => setShowWebView(false)}
+            >
+              <SafeAreaView style={{ flex: 1, backgroundColor: "#fff" }}>
+                {/* Header của Modal */}
+                <View style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  padding: 15,
+                  borderBottomWidth: 1,
+                  borderBottomColor: '#eee'
+                }}>
+                  <TouchableOpacity onPress={() => setShowWebView(false)}>
+                    <Ionicons name="close" size={28} color={C.text1} />
+                  </TouchableOpacity>
+                  <Text style={{ fontWeight: '800', fontSize: 16 }}>Thanh toán VNPAY</Text>
+                  <View style={{ width: 28 }} />
+                </View>
+
+                {/* WebView phải chứa các thuộc tính bên trong nó */}
+                <WebView
+                  source={{ uri: paymentUrl }}
+                  startInLoadingState={true}
+                  renderLoading={() => (
+                    <ActivityIndicator
+                      size="large"
+                      color={C.primaryMid}
+                      style={{ position: 'absolute', top: '50%', left: '45%' }}
+                    />
+                  )}
+                  onNavigationStateChange={async (navState) => {
+                    if (navState.url.includes("vnp_ResponseCode")) {
+                      if (navState.url.includes("vnp_ResponseCode=00")) {
+                        setShowWebView(false);
+                        setLoading(true);
+                        try {
+                          const token = await AsyncStorage.getItem("token");
+                          const res = await fetch(`${BASE_URL}/api/orders/confirm-success`, {
+                            method: "POST",
+                            headers: {
+                              Authorization: `Bearer ${token}`,
+                              "Content-Type": "application/json"
+                            },
+                            body: JSON.stringify({ orderId: orderId })
+                          });
+                          if (res.ok) {
+                            Alert.alert("Thành công", "Đơn hàng của bạn đã được xác nhận!");
+                            fetchDetail();
+                          }
+                        } catch (error) {
+                          Alert.alert("Lỗi", "Không thể cập nhật trạng thái đơn hàng");
+                        } finally {
+                          setLoading(false);
+                        }
+                      } else {
+                        setShowWebView(false);
+                        Alert.alert("Thanh toán chưa hoàn tất", "Giao dịch đã bị hủy hoặc gặp lỗi.");
+                      }
+                    }
+                  }}
+                />
+              </SafeAreaView>
+            </Modal>
     </SafeAreaView>
   );
 }
@@ -527,4 +699,16 @@ const s = StyleSheet.create({
     borderWidth: 1, borderColor: C.primaryTint,
   },
   reviewBtnTxt: { flex: 1, fontSize: 14, color: C.primaryMid, fontWeight: "600" },
+
+  rePayBtn: {
+    flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8,
+    backgroundColor: C.green, // Màu xanh lá cho nó uy tín
+    borderRadius: 16,
+    paddingVertical: 15,
+    marginBottom: 10, // Cách nút Huỷ ra một tí
+    elevation: 3,
+    shadowColor: C.green, shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2, shadowRadius: 8,
+  },
+  rePayBtnTxt: { color: "#FFF", fontWeight: "800", fontSize: 16 },
 });
