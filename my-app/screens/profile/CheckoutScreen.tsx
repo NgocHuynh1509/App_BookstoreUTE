@@ -10,6 +10,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import Constants from "expo-constants";
 import { useAuth } from "../../hooks/useAuth";
 import { WebView } from 'react-native-webview'; // <--- Thêm dòng này
+import { Dropdown } from 'react-native-element-dropdown';
 
 const API_URL = Constants.expoConfig?.extra?.API_URL;
 
@@ -57,6 +58,43 @@ export default function CheckoutScreen() {
   const [userPoints, setUserPoints]   = useState(0);
   const [usedPoints, setUsedPoints]   = useState(0);
   const [pointsInput, setPointsInput] = useState("");
+  const [isFocus, setIsFocus] = useState(false);
+  const provinceData = [
+    { label: 'Thành phố Hà Nội', value: 'Hà Nội' },
+    { label: 'Thành phố Hồ Chí Minh', value: 'Hồ Chí Minh' },
+    { label: 'Thành phố Hải Phòng', value: 'Hải Phòng' },
+    { label: 'Thành phố Đà Nẵng', value: 'Đà Nẵng' },
+    { label: 'Thành phố Cần Thơ', value: 'Cần Thơ' },
+    { label: 'Thành phố Huế', value: 'Huế' },
+    { label: 'Tỉnh Tuyên Quang', value: 'Tuyên Quang' },
+    { label: 'Tỉnh Lào Cai', value: 'Lào Cai' },
+    { label: 'Tỉnh Thái Nguyên', value: 'Thái Nguyên' },
+    { label: 'Tỉnh Phú Thọ', value: 'Phú Thọ' },
+    { label: 'Tỉnh Bắc Ninh', value: 'Bắc Ninh' },
+    { label: 'Tỉnh Hưng Yên', value: 'Hưng Yên' },
+    { label: 'Tỉnh Ninh Bình', value: 'Ninh Bình' },
+    { label: 'Tỉnh Quảng Trị', value: 'Quảng Trị' },
+    { label: 'Tỉnh Quảng Ngãi', value: 'Quảng Ngãi' },
+    { label: 'Tỉnh Gia Lai', value: 'Gia Lai' },
+    { label: 'Tỉnh Khánh Hòa', value: 'Khánh Hòa' },
+    { label: 'Tỉnh Lâm Đồng', value: 'Lâm Đồng' },
+    { label: 'Tỉnh Đắk Lắk', value: 'Đắk Lắk' },
+    { label: 'Tỉnh Đồng Nai', value: 'Đồng Nai' },
+    { label: 'Tỉnh Tây Ninh', value: 'Tây Ninh' },
+    { label: 'Tỉnh Vĩnh Long', value: 'Vĩnh Long' },
+    { label: 'Tỉnh Đồng Tháp', value: 'Đồng Tháp' },
+    { label: 'Tỉnh Cà Mau', value: 'Cà Mau' },
+    { label: 'Tỉnh An Giang', value: 'An Giang' },
+    { label: 'Tỉnh Lai Châu', value: 'Lai Châu' },
+    { label: 'Tỉnh Điện Biên', value: 'Điện Biên' },
+    { label: 'Tỉnh Sơn La', value: 'Sơn La' },
+    { label: 'Tỉnh Lạng Sơn', value: 'Lạng Sơn' },
+    { label: 'Tỉnh Quảng Ninh', value: 'Quảng Ninh' },
+    { label: 'Tỉnh Thanh Hóa', value: 'Thanh Hóa' },
+    { label: 'Tỉnh Nghệ An', value: 'Nghệ An' },
+    { label: 'Tỉnh Hà Tĩnh', value: 'Hà Tĩnh' },
+    { label: 'Tỉnh Cao Bằng', value: 'Cao Bằng' },
+  ];
   // State cho form địa chỉ mới
   function SectionHeader({ icon, title }: { icon: string; title: string }) {
       return (
@@ -167,6 +205,41 @@ export default function CheckoutScreen() {
       }
     };
 
+    // ─── Tính Phí Vận Chuyển ────────────────────────────
+    const shippingFee = (() => {
+      if (!currentAddress) return 0;
+
+      const province = (currentAddress.province || "").toLowerCase();
+
+      // 1. Tính tổng số lượng quyển sách
+      // Thêm dấu ? và giá trị mặc định để không bị crash nếu selectedItems rỗng
+      const totalQuantity = (selectedItems || []).reduce((sum, item) => {
+        return sum + (Number(item.quantity) || 0);
+      }, 0);
+
+      // 2. Xác định phí ship cơ bản theo khu vực
+      let baseFee = 0;
+      const group20k = ["đồng nai", "tây ninh", "lâm đồng", "đồng tháp", "bình dương"];
+
+      if (province.includes("hồ chí minh") || province.includes("tphcm")) {
+        baseFee = 10000;
+      } else if (group20k.some(p => province.includes(p))) {
+        baseFee = 20000;
+      } else {
+        baseFee = 30000;
+      }
+
+      // 3. Cộng thêm phí dựa trên số lượng quyển sách
+      let extraFee = 0;
+      if (totalQuantity > 10) {
+        extraFee = 15000; // Trên 10 quyển thêm 15k
+      } else if (totalQuantity > 5) {
+        extraFee = 10000; // Trên 5 quyển thêm 10k
+      }
+
+      return baseFee + extraFee;
+    })();
+
 
   // Load điểm hiện có của user
   const fetchUserPoints = async () => {
@@ -260,7 +333,7 @@ export default function CheckoutScreen() {
 
   const discountFromPoints  = usedPoints * POINT_RATE;
   const totalDiscount       = discountFromCoupon + discountFromPoints;
-  const displayedTotal      = Math.max(0, totalPrice - totalDiscount);
+  const displayedTotal = Math.max(0, totalPrice - totalDiscount) + shippingFee;
   // Thêm state này vào đầu CheckoutScreen
   const [paymentUrl, setPaymentUrl] = useState(null);
   const [showWebView, setShowWebView] = useState(false);
@@ -296,7 +369,7 @@ export default function CheckoutScreen() {
             price: Number(it.price) || 0
           })),
             // --- BỔ SUNG CÁC CỘT TIỀN MỚI ---
-                    shipping_fee: 0, // Hiện tại má đang để Free ship
+                    shipping_fee: shippingFee, // Hiện tại má đang để Free ship
                     voucher_discount: Number(discountFromCoupon) || 0,
                     points_discount_amount: Number(discountFromPoints) || 0,
           total_price: Number(totalPrice) || 0,
@@ -309,7 +382,7 @@ export default function CheckoutScreen() {
       } else {
         payload = {
             // --- BỔ SUNG CÁC CỘT TIỀN MỚI ---
-                    shipping_fee: 0, // Hiện tại má đang để Free ship
+                    shipping_fee: shippingFee, // Hiện tại má đang để Free ship
                     voucher_discount: Number(discountFromCoupon) || 0,
                     points_discount_amount: Number(discountFromPoints) || 0,
           user_id: user?.id,
@@ -637,7 +710,9 @@ export default function CheckoutScreen() {
             </View>
             <View style={s.summaryRow}>
               <Text style={s.summaryLabel}>Phí vận chuyển</Text>
-              <Text style={[s.summaryVal, { color: C.green }]}>Miễn phí</Text>
+              <Text style={[s.summaryVal, { color: C.text1 }]}>
+                {shippingFee === 0 ? "Chưa chọn địa chỉ" : `${shippingFee.toLocaleString("vi-VN")}đ`}
+              </Text>
             </View>
             {discountFromCoupon > 0 && (
               <View style={s.summaryRow}>
@@ -853,41 +928,50 @@ export default function CheckoutScreen() {
                   />
                 </View>
 
-                {/* Tỉnh / Thành phố */}
                 <View>
-                  <Text style={{ fontSize: 13, fontWeight: '700', color: C.text2, marginBottom: 8 }}>Tỉnh / Thành phố *</Text>
-                  <TextInput
-                    style={s.inputField}
-                    placeholder="Ví dụ: TP. Hồ Chí Minh"
-                    placeholderTextColor={C.text3}
-                    value={newAddr.province}
-                    onChangeText={(txt) => setNewAddr({...newAddr, province: txt})}
-                  />
-                </View>
+                    <Text style={{ fontSize: 13, fontWeight: '700', color: C.text2, marginBottom: 8 }}>
+                      Tỉnh / Thành phố *
+                    </Text>
+
+                    <Dropdown
+                      style={[
+                        s.inputField, // Giữ style cũ của bạn để đồng bộ giao diện
+                        { height: 50, paddingHorizontal: 12 },
+                        isFocus && { borderColor: 'blue' }
+                      ]}
+                      placeholderStyle={{ fontSize: 14, color: C.text3 }}
+                      selectedTextStyle={{ fontSize: 14, color: C.text2 }}
+                      inputSearchStyle={{ height: 40, fontSize: 14 }}
+                      data={provinceData}
+                      search // Hiện ô tìm kiếm cho người dùng gõ tên tỉnh nhanh hơn
+                      maxHeight={300}
+                      labelField="label"
+                      valueField="value"
+                      placeholder="-- Chọn Tỉnh / Thành phố --"
+                      searchPlaceholder="Tìm tên tỉnh..."
+                      value={newAddr.province}
+                      onFocus={() => setIsFocus(true)}
+                      onBlur={() => setIsFocus(false)}
+                      onChange={item => {
+                        setNewAddr({...newAddr, province: item.value}); // Cập nhật vào state cũ của bạn
+                        setIsFocus(false);
+                      }}
+                    />
+                  </View>
 
                 {/* Quận / Huyện */}
                 <View>
-                  <Text style={{ fontSize: 13, fontWeight: '700', color: C.text2, marginBottom: 8 }}>Quận / Huyện *</Text>
+                  <Text style={{ fontSize: 13, fontWeight: '700', color: C.text2, marginBottom: 8 }}>Phường / Xã *</Text>
                   <TextInput
                     style={s.inputField}
-                    placeholder="Ví dụ: Quận Thủ Đức"
+                    placeholder="Ví dụ: Phường Tam Bình"
                     placeholderTextColor={C.text3}
                     value={newAddr.district}
                     onChangeText={(txt) => setNewAddr({...newAddr, district: txt})}
                   />
                 </View>
 
-                {/* Phường / Xã */}
-                <View>
-                  <Text style={{ fontSize: 13, fontWeight: '700', color: C.text2, marginBottom: 8 }}>Phường / Xã</Text>
-                  <TextInput
-                    style={s.inputField}
-                    placeholder="Ví dụ: Phường Linh Trung"
-                    placeholderTextColor={C.text3}
-                    value={newAddr.ward}
-                    onChangeText={(txt) => setNewAddr({...newAddr, ward: txt})}
-                  />
-                </View>
+
 
                 {/* Địa chỉ cụ thể */}
                 <View>

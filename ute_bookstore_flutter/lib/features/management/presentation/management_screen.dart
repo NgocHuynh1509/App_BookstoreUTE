@@ -1,21 +1,40 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import 'package:ute_bookstore_flutter/app/providers.dart';
+import 'package:ute_bookstore_flutter/chat/presentation/chat_list_screen.dart';
 import '../../customers/presentation/customers_screen.dart';
 
-class ManagementScreen extends StatelessWidget {
+class ManagementScreen extends ConsumerWidget {
   const ManagementScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final chatRepo = ref.watch(chatRepositoryProvider);
+
     final items = [
       _MenuItem(
-        'Quản lý người dùng',
-        Icons.people_outline,
-        screen: const CustomersScreen(),
+        title: 'Quản lý người dùng',
+        icon: Icons.people_outline,
+        builder: (_) => const CustomersScreen(),
       ),
-      _MenuItem('Khuyến mãi', Icons.local_offer_outlined),
-      _MenuItem('Doanh thu', Icons.insights_outlined),
-      _MenuItem('Dòng tiền', Icons.account_balance_wallet_outlined),
-      _MenuItem('Tin nhắn / hỗ trợ', Icons.chat_bubble_outline),
+      _MenuItem(
+        title: 'Khuyến mãi',
+        icon: Icons.local_offer_outlined,
+      ),
+      _MenuItem(
+        title: 'Doanh thu',
+        icon: Icons.insights_outlined,
+      ),
+      _MenuItem(
+        title: 'Dòng tiền',
+        icon: Icons.account_balance_wallet_outlined,
+      ),
+      _MenuItem(
+        title: 'Tin nhắn / hỗ trợ',
+        icon: Icons.chat_bubble_outline,
+        builder: (_) => ChatListScreen(repository: chatRepo),
+      ),
     ];
 
     return Scaffold(
@@ -45,11 +64,15 @@ class ManagementScreen extends StatelessWidget {
             ),
             trailing: const Icon(Icons.chevron_right),
             onTap: () {
-              if (item.screen != null) {
+              if (item.builder != null) {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (_) => item.screen!),
+                  MaterialPageRoute(
+                    builder: item.builder!,
+                  ),
                 );
+              } else {
+                debugPrint("Chưa có màn cho: ${item.title}");
               }
             },
           );
@@ -62,7 +85,11 @@ class ManagementScreen extends StatelessWidget {
 class _MenuItem {
   final String title;
   final IconData icon;
-  final Widget? screen;
+  final WidgetBuilder? builder;
 
-  _MenuItem(this.title, this.icon, {this.screen});
+  _MenuItem({
+    required this.title,
+    required this.icon,
+    this.builder,
+  });
 }
