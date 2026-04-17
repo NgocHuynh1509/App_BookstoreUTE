@@ -191,14 +191,33 @@ public class OrderService {
         long diffMillis = now.getTime() - order.getOrderDate().getTime();
         long diffMinutes = TimeUnit.MILLISECONDS.toMinutes(diffMillis);
 
-        if (diffMinutes > 30) {
-            throw new RuntimeException("Đã quá 30 phút, không thể huỷ đơn hàng");
+        if (diffMinutes > 60) {
+            throw new RuntimeException("Đã quá 60 phút, không thể huỷ đơn hàng");
         }
 
+        // --- LOGIC QUAN TRỌNG: HOÀN KHO & TRỪ ĐÃ BÁN ---
+        List<OrderDetail> details = order.getOrderDetail_Order();
+        for (OrderDetail detail : details) {
+            Books book = detail.getBook();
+            int quantityToReturn = detail.getQuantity();
+
+            // 1. Cộng lại vào kho (quantity)
+            book.setQuantity(book.getQuantity() + quantityToReturn);
+
+            // 2. Trừ bớt số lượng đã bán (soldQuantity)
+            // Lưu ý: Phải check để không bị âm (đề phòng lỗi logic)
+            int newSoldQuantity = Math.max(0, book.getSoldQuantity() - quantityToReturn);
+            book.setSoldQuantity(newSoldQuantity);
+
+            // Lưu cập nhật cho từng cuốn sách
+            bookRepo.save(book);
+        }
+
+        // Cập nhật trạng thái đơn hàng
         order.setStatus("cancelled");
         ordersRepository.save(order);
 
-        return "Đơn hàng đã được huỷ";
+        return "Đơn hàng đã được huỷ thành công.";
     }
 
     @Transactional(rollbackFor = Exception.class)
