@@ -64,6 +64,12 @@ public class OrderController {
         return Map.of("message", orderService.cancelOrder(orderId, email));
     }
 
+    @PutMapping("/confirm-delivered/{orderId}")
+    public ResponseEntity<?> confirmDelivered(@PathVariable String orderId) {
+        orderService.confirmDelivered(orderId);
+        return ResponseEntity.ok(Map.of("message", "Đơn hàng đã hoàn thành"));
+    }
+
     @PostMapping("/create")
     public ResponseEntity<?> createOrder(@RequestBody OrderRequest request, HttpServletRequest httpRequest) {
         try {

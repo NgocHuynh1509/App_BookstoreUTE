@@ -1,17 +1,33 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
+import 'order_detail_screen.dart';
 
 import '../../../app/providers.dart';
 import '../data/order_models.dart';
 
+String formatDate(String dateStr) {
+  try {
+    final date = DateTime.parse(dateStr).toLocal();
+    return DateFormat('dd/MM/yyyy HH:mm').format(date);
+  } catch (e) {
+    return dateStr;
+  }
+}
+
+String formatCurrency(num value) {
+  final formatter = NumberFormat('#,###', 'vi_VN');
+  return '${formatter.format(value).replaceAll(',', '.')}đ';
+}
+
 const List<_OrderTabItem> _orderTabs = [
   _OrderTabItem(label: 'Tất cả', status: null),
-  _OrderTabItem(label: 'Chờ xác nhận', status: 'PENDING'),
-  _OrderTabItem(label: 'Đã xác nhận', status: 'CONFIRMED'),
-  _OrderTabItem(label: 'Đang giao', status: 'SHIPPING'),
-  _OrderTabItem(label: 'Hoàn thành', status: 'COMPLETED'),
-  _OrderTabItem(label: 'Hoàn trả', status: 'RETURNED'),
-  _OrderTabItem(label: 'Đã hủy', status: 'CANCELLED'),
+  _OrderTabItem(label: 'Chờ xác nhận', status: 'Pending'),
+  _OrderTabItem(label: 'Đã xác nhận', status: 'Confirmed'),
+  _OrderTabItem(label: 'Đang giao', status: 'Shipping'),
+  _OrderTabItem(label: 'Hoàn thành', status: 'Completed'),
+  _OrderTabItem(label: 'Hoàn trả', status: 'Returned'),
+  _OrderTabItem(label: 'Đã hủy', status: 'Cancelled'),
 ];
 
 final ordersProvider =
@@ -21,6 +37,8 @@ FutureProvider.family<List<OrderItem>, String?>((ref, status) async {
   final content = (data['content'] as List<dynamic>? ?? [])
       .map((e) => OrderItem.fromJson(e as Map<String, dynamic>))
       .toList();
+  content.sort((a, b) =>
+      DateTime.parse(b.orderDate).compareTo(DateTime.parse(a.orderDate)));
   return content;
 });
 
@@ -202,17 +220,17 @@ class _OrderCard extends ConsumerWidget {
 
   Color _statusColor(String status) {
     switch (status.toUpperCase()) {
-      case 'PENDING':
+      case 'Pending':
         return Colors.orange;
-      case 'CONFIRMED':
+      case 'Confirmed':
         return Colors.blue;
-      case 'SHIPPING':
+      case 'Shipping':
         return Colors.deepPurple;
-      case 'COMPLETED':
+      case 'Completed':
         return Colors.green;
-      case 'RETURNED':
+      case 'Returned':
         return Colors.teal;
-      case 'CANCELLED':
+      case 'Cancelled':
         return Colors.red;
       default:
         return Colors.grey;
@@ -221,17 +239,17 @@ class _OrderCard extends ConsumerWidget {
 
   String _statusLabel(String status) {
     switch (status.toUpperCase()) {
-      case 'PENDING':
+      case 'Pending':
         return 'Chờ xác nhận';
-      case 'CONFIRMED':
+      case 'Confirmed':
         return 'Đã xác nhận';
-      case 'SHIPPING':
+      case 'Shipping':
         return 'Đang giao';
-      case 'COMPLETED':
+      case 'Completed':
         return 'Hoàn thành';
-      case 'RETURNED':
+      case 'Returned':
         return 'Hoàn trả';
-      case 'CANCELLED':
+      case 'Cancelled':
         return 'Đã hủy';
       default:
         return status;
@@ -260,35 +278,43 @@ class _OrderCard extends ConsumerWidget {
     }
 
     switch (order.status.toUpperCase()) {
-      case 'PENDING':
-        buttons.addAll([
+      case 'Pending':
+        final paymentMethod = order.paymentMethod.trim().toUpperCase();
+        final isVNPay = paymentMethod.contains('VNPAY');
+
+        buttons.add(
           OutlinedButton(
-            onPressed: () => updateTo('CANCELLED'),
+            onPressed: () => updateTo('Cancelled'),
             child: const Text('Hủy đơn'),
           ),
-          ElevatedButton(
-            onPressed: () => updateTo('CONFIRMED'),
-            child: const Text('Xác nhận'),
-          ),
-        ]);
+        );
+
+        if (!isVNPay) {
+          buttons.add(
+            ElevatedButton(
+              onPressed: () => updateTo('Confirmed'),
+              child: const Text('Xác nhận'),
+            ),
+          );
+        }
         break;
 
-      case 'CONFIRMED':
+      case 'Confirmed':
         buttons.add(
           ElevatedButton(
-            onPressed: () => updateTo('SHIPPING'),
+            onPressed: () => updateTo('Shipping'),
             child: const Text('Bắt đầu giao'),
           ),
         );
         break;
 
-      case 'SHIPPING':
+      case 'Shipping':
 
-      case 'COMPLETED':
+      case 'Completed':
 
-      case 'CANCELLED':
+      case 'Cancelled':
 
-      case 'RETURNED':
+      case 'Returned':
 
       default:
         buttons.add(
@@ -303,108 +329,139 @@ class _OrderCard extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final statusColor = _statusColor(order.status);
 
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 16,
-            offset: const Offset(0, 8),
+    return InkWell(
+      borderRadius: BorderRadius.circular(18),
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => OrderDetailScreen(orderId: order.orderId),
           ),
-        ],
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          children: [
-            Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    'Đơn #${order.orderId}',
-                    style: const TextStyle(
-                      fontWeight: FontWeight.w700,
-                      fontSize: 16,
-                    ),
-                  ),
-                ),
-                Container(
-                  padding:
-                  const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                  decoration: BoxDecoration(
-                    color: statusColor.withOpacity(0.12),
-                    borderRadius: BorderRadius.circular(999),
-                  ),
-                  child: Text(
-                    _statusLabel(order.status),
-                    style: TextStyle(
-                      color: statusColor,
-                      fontWeight: FontWeight.w700,
-                      fontSize: 12,
-                    ),
-                  ),
-                ),
-              ],
+        );
+      },
+      child: Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(18),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 16,
+              offset: const Offset(0, 8),
             ),
-            const SizedBox(height: 14),
-            _InfoRow(
-              icon: Icons.person_outline,
-              label: 'Khách hàng',
-              value: order.customerEmail,
-            ),
-            const SizedBox(height: 8),
-            _InfoRow(
-              icon: Icons.location_on_outlined,
-              label: 'Địa chỉ',
-              value: order.address,
-            ),
-            const SizedBox(height: 8),
-            _InfoRow(
-              icon: Icons.payments_outlined,
-              label: 'Thanh toán',
-              value: order.paymentMethod,
-            ),
-            const SizedBox(height: 12),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-              decoration: BoxDecoration(
-                color: const Color(0xFFF7F9FC),
-                borderRadius: BorderRadius.circular(14),
-              ),
-              child: Row(
+          ],
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            children: [
+              Row(
                 children: [
-                  const Icon(Icons.attach_money_rounded, size: 20),
-                  const SizedBox(width: 8),
-                  const Expanded(
-                    child: Text(
-                      'Tổng thanh toán',
-                      style: TextStyle(fontWeight: FontWeight.w600),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Đơn #${order.orderId}',
+                          style: const TextStyle(
+                            fontWeight: FontWeight.w700,
+                            fontSize: 16,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          formatDate(order.orderDate),
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.grey.shade600,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                  Text(
-                    '${order.totalAmount.toStringAsFixed(0)} đ',
-                    style: const TextStyle(
-                      fontWeight: FontWeight.w800,
-                      fontSize: 16,
+                  Container(
+                    padding:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: statusColor.withOpacity(0.12),
+                      borderRadius: BorderRadius.circular(999),
+                    ),
+                    child: Text(
+                      _statusLabel(order.status),
+                      style: TextStyle(
+                        color: statusColor,
+                        fontWeight: FontWeight.w700,
+                        fontSize: 12,
+                      ),
                     ),
                   ),
                 ],
               ),
-            ),
-            const SizedBox(height: 14),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: _buildActionButtons(context, ref),
+              const SizedBox(height: 14),
+              _InfoRow(
+                icon: Icons.person_outline,
+                label: 'Khách hàng',
+                value: order.fullName,
+              ),
+              const SizedBox(height: 8),
+              _InfoRow(
+                icon: Icons.phone_outlined,
+                label: 'SĐT',
+                value: order.phone,
+              ),
+              const SizedBox(height: 8),
+              _InfoRow(
+                icon: Icons.location_on_outlined,
+                label: 'Địa chỉ',
+                value: order.address,
+              ),
+              const SizedBox(height: 8),
+              _InfoRow(
+                icon: Icons.payments_outlined,
+                label: 'Thanh toán',
+                value: order.paymentMethod,
+              ),
+              const SizedBox(height: 12),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF7F9FC),
+                  borderRadius: BorderRadius.circular(14),
                 ),
-              ],
-            ),
-          ],
+                child: Row(
+                  children: [
+                    const Icon(Icons.attach_money_rounded, size: 20),
+                    const SizedBox(width: 8),
+                    const Expanded(
+                      child: Text(
+                        'Tổng thanh toán',
+                        style: TextStyle(fontWeight: FontWeight.w600),
+                      ),
+                    ),
+                    Text(
+                      formatCurrency(order.totalAmount),
+                      style: const TextStyle(
+                        color: Colors.red,
+                        fontWeight: FontWeight.w800,
+                        fontSize: 16,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 14),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: _buildActionButtons(context, ref),
+                  ),
+                ],
+              ),
+            ],
+          ),
         ),
       ),
     );

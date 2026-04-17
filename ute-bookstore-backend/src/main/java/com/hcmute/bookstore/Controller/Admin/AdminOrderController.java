@@ -10,7 +10,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
-
+import com.hcmute.bookstore.dto.admin.AdminOrderDetailResponse;
 @RestController
 @RequestMapping({"/admin/orders", "/orders"})
 @RequiredArgsConstructor
@@ -37,5 +37,10 @@ public class AdminOrderController {
             @Valid @RequestBody UpdateOrderStatusRequest request
     ) {
         return adminOrderService.updateStatus(orderId, request);
+    }
+
+    @GetMapping("/{orderId}")
+    public AdminOrderDetailResponse getOrderDetail(@PathVariable String orderId) {
+        return adminOrderService.getOrderDetail(orderId);
     }
 }
