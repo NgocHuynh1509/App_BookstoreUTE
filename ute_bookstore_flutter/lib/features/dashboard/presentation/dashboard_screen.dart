@@ -7,6 +7,8 @@ import 'package:shimmer/shimmer.dart';
 import '../../../app/providers.dart';
 import '../../../core/widgets/badge_icon.dart';
 import '../data/dashboard_models.dart';
+import '../prediction/prediction_provider.dart';
+import '../prediction/prediction_screen.dart';
 
 final dashboardSummaryProvider = FutureProvider<DashboardSummary>((ref) async {
   final api = ref.read(dashboardApiProvider);
@@ -112,6 +114,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
               ref.invalidate(dashboardBooksProvider(range));
               ref.invalidate(dashboardOrdersProvider(range));
               ref.invalidate(dashboardChartsProvider(range));
+              ref.invalidate(predictionProvider);
             },
             child: ListView(
               padding: const EdgeInsets.fromLTRB(16, 8, 16, 20),
@@ -162,6 +165,16 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                       onRetry: () => ref.invalidate(dashboardChartsProvider(range)),
                     ),
                   ),
+                ),
+                const SizedBox(height: 16),
+                AnimatedEntry(
+                  delay: const Duration(milliseconds: 220),
+                  child: const SectionHeader(title: 'Dự đoán doanh thu', subtitle: 'Tháng tới'),
+                ),
+                const SizedBox(height: 8),
+                AnimatedEntry(
+                  delay: const Duration(milliseconds: 240),
+                  child: const PredictionSection(),
                 ),
                 const SizedBox(height: 16),
                 AnimatedEntry(

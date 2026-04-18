@@ -8,6 +8,8 @@ public class DashboardRevenueResponse {
     private String range;
     private BigDecimal total;
     private BigDecimal previousTotal;
+    private String totalFormatted;
+    private String previousTotalFormatted;
     private double changePercent;
     private List<DashboardSeriesPoint> series = new ArrayList<>();
 
@@ -35,6 +37,22 @@ public class DashboardRevenueResponse {
         this.previousTotal = previousTotal;
     }
 
+    public String getTotalFormatted() {
+        return totalFormatted;
+    }
+
+    public void setTotalFormatted(String totalFormatted) {
+        this.totalFormatted = totalFormatted;
+    }
+
+    public String getPreviousTotalFormatted() {
+        return previousTotalFormatted;
+    }
+
+    public void setPreviousTotalFormatted(String previousTotalFormatted) {
+        this.previousTotalFormatted = previousTotalFormatted;
+    }
+
     public double getChangePercent() {
         return changePercent;
     }
@@ -51,4 +69,3 @@ public class DashboardRevenueResponse {
         this.series = series;
     }
 }
-

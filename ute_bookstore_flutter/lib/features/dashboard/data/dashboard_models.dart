@@ -194,3 +194,52 @@ class DashboardChartsResponse {
   }
 }
 
+class DashboardRevenuePredictionResponse {
+  final double predictedAmount;
+  final double currentMonthTotal;
+  final double changePercent;
+  final double confidence;
+  final double mae;
+  final double mse;
+  final double rmse;
+  final double r2;
+  final String suggestion;
+  final String predictedLabel;
+  final int forecastIndex;
+  final List<DashboardSeriesPoint> series;
+
+  DashboardRevenuePredictionResponse({
+    required this.predictedAmount,
+    required this.currentMonthTotal,
+    required this.changePercent,
+    required this.confidence,
+    required this.mae,
+    required this.mse,
+    required this.rmse,
+    required this.r2,
+    required this.suggestion,
+    required this.predictedLabel,
+    required this.forecastIndex,
+    required this.series,
+  });
+
+  factory DashboardRevenuePredictionResponse.fromJson(Map<String, dynamic> json) {
+    final rawSeries = (json['series'] as List<dynamic>? ?? []);
+    return DashboardRevenuePredictionResponse(
+      predictedAmount: (json['predictedAmount'] as num?)?.toDouble() ?? 0,
+      currentMonthTotal: (json['currentMonthTotal'] as num?)?.toDouble() ?? 0,
+      changePercent: (json['changePercent'] as num?)?.toDouble() ?? 0,
+      confidence: (json['confidence'] as num?)?.toDouble() ?? 0,
+      mae: (json['mae'] as num?)?.toDouble() ?? 0,
+      mse: (json['mse'] as num?)?.toDouble() ?? 0,
+      rmse: (json['rmse'] as num?)?.toDouble() ?? 0,
+      r2: (json['r2'] as num?)?.toDouble() ?? 0,
+      suggestion: json['suggestion']?.toString() ?? '',
+      predictedLabel: json['predictedLabel']?.toString() ?? '',
+      forecastIndex: (json['forecastIndex'] as num?)?.toInt() ?? 0,
+      series: rawSeries
+          .map((item) => DashboardSeriesPoint.fromJson(item as Map<String, dynamic>))
+          .toList(),
+    );
+  }
+}

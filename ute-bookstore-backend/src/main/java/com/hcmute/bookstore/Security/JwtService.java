@@ -17,10 +17,10 @@ import java.util.Map;
 @Service
 public class JwtService {
 
-    @Value("${app.jwt.secret}")
+    @Value("${app.jwt.secret:4fd3e8831223ca55359f58a17996d3a9057f8f09a259fa7453da6011d4bf0596}")
     private String secretKey;
 
-    @Value("${app.jwt.expiration}")
+    @Value("${app.jwt.expiration:86400000}")
     private long jwtExpiration;
 
     public String extractUsername(String token) {

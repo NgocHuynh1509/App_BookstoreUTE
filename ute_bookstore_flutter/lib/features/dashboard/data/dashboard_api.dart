@@ -42,5 +42,9 @@ class DashboardApi {
     );
     return DashboardChartsResponse.fromJson(response.data as Map<String, dynamic>);
   }
-}
 
+  Future<DashboardRevenuePredictionResponse> fetchRevenuePrediction() async {
+    final response = await _client.dio.get('/admin/dashboard/revenue-prediction');
+    return DashboardRevenuePredictionResponse.fromJson(response.data as Map<String, dynamic>);
+  }
+}
