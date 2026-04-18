@@ -11,6 +11,8 @@ import Constants from "expo-constants";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import SockJS from 'sockjs-client';
 import { useHeaderHeight } from '@react-navigation/elements';
+import { Animated } from "react-native";
+
 
 interface Message {
     id: string;
@@ -47,6 +49,8 @@ const ChatScreen: React.FC = () => {
     const [hasMore, setHasMore] = useState(true);
     const [loadingMore, setLoadingMore] = useState(false);
     const [showTimeId, setShowTimeId] = useState<string | null>(null);
+    const reactionAnim = useRef<{[key: string]: Animated.Value}>({});
+
 
     const formatTime = (dateStr: string) => {
         const date = new Date(dateStr);
@@ -220,6 +224,20 @@ const ChatScreen: React.FC = () => {
                         : msg
                 )
             );
+
+            if (!reactionAnim.current[selectedMessage.id]) {
+                reactionAnim.current[selectedMessage.id] = new Animated.Value(0);
+            }
+
+            // reset trước khi chạy lại
+            reactionAnim.current[selectedMessage.id].setValue(0);
+
+            Animated.spring(reactionAnim.current[selectedMessage.id], {
+                toValue: 1,
+                    friction: 3,
+                    tension: 200,
+                    useNativeDriver: true,
+            }).start();
 
         setReactionModalVisible(false);
     };
@@ -409,6 +427,7 @@ const ChatScreen: React.FC = () => {
                                                     }}
 
                                                     onLongPress={() => {
+                                                        if (item.senderRole === "USER") return; // 🚫 chặn tự react
                                                         setSelectedMessage(item);
                                                         setReactionModalVisible(true);
                                                     }}
@@ -455,23 +474,40 @@ const ChatScreen: React.FC = () => {
 
                                                     </View>
                                                             {item.reaction && (
-                                                            <View style={{
-                                                                position: 'absolute',
-                                                                bottom: -10,
-                                                                right: isMe ? undefined : -5,
-                                                                left: isMe ? -5 : undefined,
-                                                                backgroundColor: '#FFF',
-                                                                borderRadius: 12,
-                                                                paddingHorizontal: 6,
-                                                                paddingVertical: 2,
-                                                                borderWidth: 1,
-                                                                borderColor: '#EEE'
-                                                            }}>
-                                                                <Text style={{ fontSize: 12, lineHeight: 14 }}>
-                                                                    {REACTIONS.find(r => r.type === item.reaction)?.emoji}
-                                                                </Text>
-                                                            </View>
-                                                        )}
+                                                                <Animated.View
+                                                                    style={[
+                                                                        {
+                                                                            position: 'absolute',
+                                                                            bottom: -10,
+                                                                            left: isMe ? -5 : undefined,
+                                                                            right: isMe ? undefined : -5,
+                                                                            backgroundColor: '#FFF',
+                                                                            borderRadius: 12,
+                                                                            paddingHorizontal: 6,
+                                                                            paddingVertical: 2,
+                                                                            borderWidth: 1,
+                                                                            borderColor: '#EEE',
+                                                                        },
+                                                                        {
+                                                                            transform: [
+                                                                                {
+                                                                                    scale: reactionAnim.current[item.id]
+                                                                                        ? reactionAnim.current[item.id].interpolate({
+                                                                                            inputRange: [0, 1],
+                                                                                            outputRange: [0.2, 1.2], // pop to lớn rồi về
+                                                                                        })
+                                                                                        : 1,
+                                                                                },
+                                                                            ],
+                                                                            opacity: reactionAnim.current[item.id] || 1,
+                                                                        },
+                                                                    ]}
+                                                                >
+                                                                    <Text style={{ fontSize: 12 }}>
+                                                                        {REACTIONS.find(r => r.type === item.reaction)?.emoji}
+                                                                    </Text>
+                                                                </Animated.View>
+                                                            )}
 
                                                 </View>
                                                 </TouchableOpacity>

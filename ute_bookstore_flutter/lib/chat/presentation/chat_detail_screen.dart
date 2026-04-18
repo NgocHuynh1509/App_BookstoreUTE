@@ -47,30 +47,53 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
       print("❌ Lỗi load history: $e");
     }
   }
+  // 👇 ĐẶT Ở ĐÂY
+    String formatDate(DateTime date) {
+      return "${date.day}/${date.month}/${date.year} "
+          "${date.hour}:${date.minute.toString().padLeft(2, '0')}";
+    }
+
+  bool _shouldShowDate(int index) {
+    if (index == _messages.length - 1) return true;
+
+    final current = _messages[index].createdAt;
+    final next = _messages[index + 1].createdAt;
+
+    return current.difference(next).inMinutes.abs() > 30;
+  }
 
   void _initSocketListener() {
-      // Đừng gọi startSocketConnection ở đây nữa vì nó sẽ kết nối lại.
-      // Chỉ cập nhật callback cho kết nối ĐANG CÓ.
-      widget.repository.updateMessageCallback((payload) {
-      print("🔔 ĐÃ NHẬN TÍN HIỆU REALTIME: $payload"); // <--- Thêm dòng này để debug
-        if (mounted) {
-          final newMessage = ChatMessage.fromMap(payload);
 
-          // Kiểm tra xem tin nhắn có thuộc về hội thoại này không
-          bool isRelevant = (newMessage.userName == widget.customerUsername) ||
-                            (newMessage.receiverName == widget.customerUsername);
+        widget.repository.updateCallbacks(
+          onMessage: (payload) {
+            final newMessage = ChatMessage.fromMap(payload);
 
-          if (isRelevant) {
+            bool isRelevant =
+                (newMessage.userName == widget.customerUsername) ||
+                (newMessage.receiverName == widget.customerUsername);
+
+            if (!isRelevant) return;
+
             setState(() {
-              // Xóa tin nhắn tạm (Optimistic) nếu nội dung trùng khớp
-              _messages.removeWhere((m) => m.id!.startsWith('temp_') && m.content == newMessage.content);
+              _messages.removeWhere((m) =>
+                  m.id!.startsWith('temp_') &&
+                  m.content == newMessage.content);
 
-              // Chèn tin nhắn thật từ Socket vào
               _messages.insert(0, newMessage);
             });
-          }
-        }
-      });
+          },
+
+          onReaction: (payload) {
+            final updated = ChatMessage.fromMap(payload);
+
+            setState(() {
+              final index = _messages.indexWhere((m) => m.id == updated.id);
+              if (index != -1) {
+                _messages[index] = updated;
+              }
+            });
+          },
+        );
     }
     void _onPickImage() async {
         try {
@@ -111,6 +134,16 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
     _controller.clear();
   }
 
+  void _sendReaction(ChatMessage message, String reaction) {
+    if (message.id == null) return;
+
+    widget.repository.socket.sendReaction(
+      messageId: message.id!,
+      reaction: reaction,
+      partnerName: widget.customerUsername,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -121,7 +154,63 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
             child: ListView.builder(
               reverse: true, // Tin nhắn mới nhất nằm dưới cùng
               itemCount: _messages.length,
-              itemBuilder: (context, index) => MessageBubble(message: _messages[index]),
+              itemBuilder: (context, index) {
+                final msg = _messages[index];
+
+                return Column(
+                  children: [
+                    // ✅ HIỂN THỊ NGÀY (Messenger style)
+                    if (_shouldShowDate(index))
+                      Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 10),
+                        child: Text(
+                          formatDate(msg.createdAt),
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.grey[600],
+                          ),
+                        ),
+                      ),
+
+                    IntrinsicHeight(
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            mainAxisAlignment: msg.senderRole == SenderRole.ADMIN
+                                ? MainAxisAlignment.end
+                                : MainAxisAlignment.start,
+                            children: [
+                        // 👤 USER AVATAR
+                        if (msg.senderRole != SenderRole.ADMIN)
+                          Padding(
+                            padding: const EdgeInsets.only(left: 8, right: 4),
+                            child: Align(
+                              alignment: Alignment.topCenter,
+                              child: CircleAvatar(
+                                radius: 14,
+                                backgroundImage: NetworkImage(
+                                  "/uploads/avt.jpg",
+                                ),
+                              ),
+                            ),
+                          ),
+                        MessageBubble(
+                          message: msg,
+                          isMe: msg.senderRole == SenderRole.ADMIN,
+                          onReact: (reaction) {
+                            _sendReaction(msg, reaction);
+                          },
+                        ),
+
+                        // 👤 ADMIN spacing
+                        if (msg.senderRole == SenderRole.ADMIN)
+                          const SizedBox(width: 8),
+                      ],
+                      ),
+                    ),
+                  ],
+
+                );
+              }
             ),
           ),
           _buildInputBar(),

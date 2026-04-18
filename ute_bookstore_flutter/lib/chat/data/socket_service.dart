@@ -10,8 +10,9 @@ class SocketService {
 
   void connect({
     required String token,
-    required Function(Map<String, dynamic>) onGlobalMessage,
-    String? manualUrl,
+      required Function(Map<String, dynamic>) onMessage,
+      required Function(Map<String, dynamic>) onReaction,
+      String? manualUrl,
   }) {
     try {
       print("🚀 [Socket] Bắt đầu khởi chạy hàm connect...");
@@ -59,20 +60,21 @@ class SocketService {
             // SUBSCRIBE: Khớp với convertAndSendToUser của Backend
             _client?.subscribe(
               destination: '/user/queue/messages',
-              callback: (StompFrame frame) {
+              callback: (frame) {
                 if (frame.body != null) {
                   print("📩 [Socket] Nhận tin nhắn riêng: ${frame.body}");
-                  onGlobalMessage(json.decode(frame.body!));
+                  onMessage(json.decode(frame.body!));
                 }
               },
             );
 
-            // SUBSCRIBE: Nhận Reaction
+            // reaction
             _client?.subscribe(
-              destination: '/user/admin/queue/reactions',
-              callback: (StompFrame frame) {
+              destination: '/user/queue/reactions',
+              callback: (frame) {
                 if (frame.body != null) {
-                  print("📩 [Socket] Nhận cảm xúc: ${frame.body}");
+                    print("📩 [Socket] Nhận reaction riêng: ${frame.body}");
+                  onReaction(json.decode(frame.body!));
                 }
               },
             );
@@ -138,6 +140,26 @@ class SocketService {
         print("⚠️ [Socket] Chưa kết nối, không thể gửi tin!");
       }
     }
+  void sendReaction({
+    required String messageId,
+    required String reaction,
+    required String partnerName,
+  }) {
+    if (_client != null && _client!.connected) {
+      final payload = {
+        'messageId': messageId,
+        'reaction': reaction,
+        'partnerName': partnerName,
+      };
+
+      _client!.send(
+        destination: '/app/chat.react',
+        body: json.encode(payload),
+      );
+
+      print("📤 [Socket] Gửi reaction: $payload");
+    }
+  }
 
   void disconnect() {
     _client?.deactivate();

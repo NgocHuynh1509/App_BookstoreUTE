@@ -10,7 +10,7 @@ class ChatMessage {
   final DateTime createdAt;
   final String? userName; // Người gửi
   final String? receiverName; // Người nhận
-  final String? reaction; 
+  final String? reaction;
 
   ChatMessage({
     this.id,
@@ -21,6 +21,7 @@ class ChatMessage {
     required this.createdAt,
     this.userName,
     this.receiverName,
+    this.reaction, // ✅ THÊM
   });
 
   // Chuyển từ JSON (Map) sang Object
@@ -43,6 +44,7 @@ class ChatMessage {
           : DateTime.now(),
       userName: map['userName'],
       receiverName: map['receiverName'],
+      reaction: map['reaction'], // ✅ THÊM
     );
   }
 

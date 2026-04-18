@@ -7,9 +7,11 @@ import 'socket_service.dart';
 class ChatRepository {
   final ChatApi _api;
   final SocketService _socket;
+  SocketService get socket => _socket;
 
   // Biến lưu trữ callback hiện tại
   Function(Map<String, dynamic>)? _onMessageReceived;
+  Function(Map<String, dynamic>)? _onReactionReceived;
 
   ChatRepository(this._api, this._socket);
 
@@ -38,22 +40,49 @@ class ChatRepository {
 
   // --- CÁC HÀM XỬ LÝ REALTIME ---
 
-  void startSocketConnection(String token, Function(Map<String, dynamic>) onNewMessage) {
-    _onMessageReceived = onNewMessage;
-    _socket.connect(
-      token: token,
-      onGlobalMessage: (data) {
-        if (_onMessageReceived != null) {
-          _onMessageReceived!(data);
-        }
-      },
-    );
-  }
+//   void startSocketConnection(String token, Function(Map<String, dynamic>) onNewMessage) {
+//     _onMessageReceived = onNewMessage;
+//     _socket.connect(
+//       token: token,
+//       onGlobalMessage: (data) {
+//         if (_onMessageReceived != null) {
+//           _onMessageReceived!(data);
+//         }
+//       },
+//     );
+//   }
+    void startSocketConnection(
+      String token,
+      Function(Map<String, dynamic>) onNewMessage,
+      Function(Map<String, dynamic>) onReaction,
+    ) {
+      _onMessageReceived = onNewMessage;
+      _onReactionReceived = onReaction;
+
+      _socket.connect(
+        token: token,
+        onMessage: (data) {
+          _onMessageReceived?.call(data);
+        },
+        onReaction: (data) {
+          _onReactionReceived?.call(data);
+        },
+      );
+    }
 
   // MỚI: Cập nhật callback khi đổi màn hình (ví dụ vào ChatDetail)
-  void updateMessageCallback(Function(Map<String, dynamic>) newCallback) {
-    _onMessageReceived = newCallback;
-    print("🔄 [Repository] Đã cập nhật callback nhận tin nhắn mới.");
+  void updateCallbacks({
+    Function(Map<String, dynamic>)? onMessage,
+    Function(Map<String, dynamic>)? onReaction,
+  }) {
+    if (onMessage != null) {
+      _onMessageReceived = onMessage;
+    }
+    if (onReaction != null) {
+      _onReactionReceived = onReaction;
+    }
+
+    print("🔄 [Repository] Updated callbacks");
   }
 
   void dispose() {

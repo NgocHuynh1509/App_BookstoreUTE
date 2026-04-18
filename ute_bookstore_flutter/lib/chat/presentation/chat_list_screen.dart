@@ -38,9 +38,15 @@ class _ChatListScreenState extends State<ChatListScreen> {
         print("🔑 [UI] Đã lấy được Token thật: ${token.substring(0, 10)}...");
 
         // 3. Truyền token thật vào để kết nối
-        widget.repository.startSocketConnection(token, (newMessage) {
-          _loadThreads(); // Load lại danh sách khi có tin nhắn mới
-        });
+        widget.repository.startSocketConnection(
+          token,
+          (newMessage) {
+            _loadThreads();
+          },
+          (reaction) {
+            // không cần làm gì ở list
+          },
+        );
       } else {
         print("❌ [UI] LỖI: Không tìm thấy Token trong storage. Vui lòng đăng nhập lại!");
         // Có thể điều hướng về trang Login ở đây
