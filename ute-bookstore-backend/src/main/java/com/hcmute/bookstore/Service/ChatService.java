@@ -30,7 +30,10 @@ public class ChatService {
                 .createdAt(entity.getCreatedAt());
 
         if (entity.getReplyTo() != null) {
+            builder.replyToId(entity.getReplyTo().getId());
             builder.replyToContent(entity.getReplyTo().getContent());
+            builder.replyToMediaUrl(entity.getReplyTo().getContent());
+            builder.replyToSender(entity.getReplyTo().getMediaUrl());
         }
 
         if (entity.getAttachedBook() != null) {

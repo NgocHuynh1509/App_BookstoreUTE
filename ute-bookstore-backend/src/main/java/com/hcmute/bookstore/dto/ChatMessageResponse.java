@@ -22,7 +22,11 @@ public class ChatMessageResponse {
     private String reaction;
 
     // Thông tin Reply
+    private String replyToId;
     private String replyToContent;
+    private String replyToSender;
+    private String replyToMediaUrl;
+
 
     // Thông tin Product đính kèm
     private String bookId;

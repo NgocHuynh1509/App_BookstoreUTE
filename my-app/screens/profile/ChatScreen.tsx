@@ -23,6 +23,7 @@ interface Message {
     createdAt: string;
     // ✅ THÊM
         reaction?: string;
+
 }
 
 const BASE_URL = Constants.expoConfig?.extra?.API_URL || "http://192.168.1.22:8080";
@@ -50,6 +51,7 @@ const ChatScreen: React.FC = () => {
     const [loadingMore, setLoadingMore] = useState(false);
     const [showTimeId, setShowTimeId] = useState<string | null>(null);
     const reactionAnim = useRef<{[key: string]: Animated.Value}>({});
+    const [replyMessage, setReplyMessage] = useState<Message | null>(null);
 
 
     const formatTime = (dateStr: string) => {
@@ -176,6 +178,8 @@ const ChatScreen: React.FC = () => {
             senderRole: "USER",
             content: inputText.trim(),
             messageType: "TEXT",
+ // ✅ ADD REPLY
+            replyToId: replyMessage?.id || null,
         };
 
         stompClient.current.publish({
@@ -189,11 +193,14 @@ const ChatScreen: React.FC = () => {
             content: inputText.trim(),
             senderRole: 'USER',
             messageType: 'TEXT',
-            createdAt: new Date().toISOString()
+            createdAt: new Date().toISOString(),
+            // (optional UI preview)
+                    ...(replyMessage ? { replyToContent: replyMessage.content } : {})
         };
 
         setMessages(prev => [localMsg, ...prev]);
         setInputText("");
+        setReplyMessage(null); // ✅ reset sau khi gửi
     };
     const sendReaction = (type: string) => {
         if (!selectedMessage || !stompClient.current?.connected || !userData) return;
@@ -427,13 +434,38 @@ const ChatScreen: React.FC = () => {
                                                     }}
 
                                                     onLongPress={() => {
-                                                        if (item.senderRole === "USER") return; // 🚫 chặn tự react
+                                                        if (item.senderRole === "USER") return;
                                                         setSelectedMessage(item);
                                                         setReactionModalVisible(true);
                                                     }}
                                                     activeOpacity={0.8}
                                                 >
                                                 <View style={[styles.messageWrapper, isMe ? styles.myMsg : styles.otherMsg]}>
+                                                {item.replyToContent && (
+                                                    <View
+                                                        style={{
+                                                        borderLeftWidth: 3,
+                                                        borderLeftColor: "#4C9AFF", // xanh sáng hơn
+                                                        paddingLeft: 8,
+                                                         marginBottom: 6,
+                                                         backgroundColor: "rgba(76,154,255,0.08)", // nền xanh nhạt
+                                                         borderRadius: 6,
+                                                         paddingVertical: 4,
+                                                         paddingRight: 6,
+                                                         }}
+                                                           >
+                                                            <Text
+                                                              style={{
+                                                              fontSize: 12,
+                                                              color: "#1E1E1E", // đậm hơn
+                                                              fontWeight: "500",
+                                                             }}
+                                                             numberOfLines={1}
+                                                              >
+                                                             {item.replyToContent}
+                                                        </Text>
+                                                     </View>
+                                                    )}
                                                     <View style={[
                                                         styles.messageBubble,
                                                         isMe ? styles.myBubble : styles.otherBubble,
@@ -471,8 +503,12 @@ const ChatScreen: React.FC = () => {
 
 
 
+                                                        </View>
 
-                                                    </View>
+
+
+
+
                                                             {item.reaction && (
                                                                 <Animated.View
                                                                     style={[
@@ -508,8 +544,7 @@ const ChatScreen: React.FC = () => {
                                                                     </Text>
                                                                 </Animated.View>
                                                             )}
-
-                                                </View>
+                                                    </View>
                                                 </TouchableOpacity>
                                                 </>
                                             );
@@ -523,19 +558,70 @@ const ChatScreen: React.FC = () => {
                                             onEndReachedThreshold={0.1}
                                         contentContainerStyle={{ padding: 16 }}
                                     />
-                                    <View style={styles.inputArea}>
-                                        <TouchableOpacity onPress={pickImage} style={{ marginRight: 10 }}>
-                                            <Ionicons name="image-outline" size={28} color="#007AFF" />
-                                        </TouchableOpacity>
-                                        <TextInput
-                                            style={styles.input}
-                                            placeholder="Nhập tin nhắn..."
-                                            value={inputText}
-                                            onChangeText={setInputText}
-                                        />
-                                        <TouchableOpacity onPress={sendMessage}>
-                                            <Ionicons name="send" size={24} color="#007AFF" />
-                                        </TouchableOpacity>
+                                    <View>
+
+                                        <View>
+                                            {/* 🔥 REPLY PREVIEW */}
+                                            {replyMessage && (
+                                                <View style={{
+                                                    backgroundColor: "#F2F2F2",
+                                                    marginHorizontal: 12,
+                                                    marginBottom: 6,
+                                                    padding: 10,
+                                                    borderLeftWidth: 4,          // 🔥 dày hơn cho giống quote
+                                                    borderLeftColor: "#007AFF",
+                                                    borderRadius: 8,
+                                                }}>
+                                                    {/* Label */}
+                                                    <Text style={{
+                                                        fontSize: 11,
+                                                        color: "#007AFF",
+                                                        fontWeight: "600",
+                                                        marginBottom: 4
+                                                    }}>
+                                                        ↩ Tin nhắn được trả lời
+                                                    </Text>
+
+                                                    {/* Content */}
+                                                    <Text numberOfLines={1} style={{
+                                                        fontWeight: "500",
+                                                        color: "#333"
+                                                    }}>
+                                                        {replyMessage.content}
+                                                    </Text>
+
+                                                    {/* Cancel */}
+                                                    <TouchableOpacity onPress={() => setReplyMessage(null)}>
+                                                        <Text style={{
+                                                            color: "red",
+                                                            fontSize: 12,
+                                                            marginTop: 6
+                                                        }}>
+                                                            Hủy trả lời
+                                                        </Text>
+                                                    </TouchableOpacity>
+                                                </View>
+                                            )}
+
+                                            {/* INPUT AREA */}
+                                            <View style={styles.inputArea}>
+                                                <TouchableOpacity onPress={pickImage} style={{ marginRight: 10 }}>
+                                                    <Ionicons name="image-outline" size={28} color="#007AFF" />
+                                                </TouchableOpacity>
+
+                                                <TextInput
+                                                    style={styles.input}
+                                                    placeholder="Nhập tin nhắn..."
+                                                    value={inputText}
+                                                    onChangeText={setInputText}
+                                                />
+
+                                                <TouchableOpacity onPress={sendMessage}>
+                                                    <Ionicons name="send" size={24} color="#007AFF" />
+                                                </TouchableOpacity>
+                                            </View>
+                                        </View>
+
                                     </View>
                                 </>
                             )
@@ -555,6 +641,7 @@ const ChatScreen: React.FC = () => {
                                 Chọn cảm xúc
                             </Text>
 
+                            {/* 🔥 REACTION ROW */}
                             <View style={{ flexDirection: "row" }}>
                                 {REACTIONS.map((item) => {
                                     const isSelected = selectedMessage?.reaction === item.type;
@@ -567,8 +654,6 @@ const ChatScreen: React.FC = () => {
                                                 marginHorizontal: 6,
                                                 padding: 8,
                                                 borderRadius: 20,
-
-                                                // 🔥 highlight nếu đang chọn
                                                 backgroundColor: isSelected ? "#007AFF22" : "transparent",
                                                 borderWidth: isSelected ? 2 : 0,
                                                 borderColor: "#007AFF"
@@ -576,8 +661,6 @@ const ChatScreen: React.FC = () => {
                                         >
                                             <Text style={{
                                                 fontSize: 22,
-
-                                                // 🔥 làm nổi emoji
                                                 transform: [{ scale: isSelected ? 1.2 : 1 }]
                                             }}>
                                                 {item.emoji}
@@ -587,12 +670,43 @@ const ChatScreen: React.FC = () => {
                                 })}
                             </View>
 
-                            <TouchableOpacity
-                                onPress={() => setReactionModalVisible(false)}
-                                style={{ marginTop: 15 }}
-                            >
-                                <Text style={{ color: "red" }}>Đóng</Text>
-                            </TouchableOpacity>
+                            {/* 🔥 ACTIONS */}
+                            <View style={{ marginTop: 15, width: "100%" }}>
+
+                                {/* 👉 REPLY BUTTON */}
+                                <TouchableOpacity
+                                    onPress={() => {
+                                        setReplyMessage(selectedMessage);
+                                        setReactionModalVisible(false);
+                                        setSelectedMessage(null);
+                                    }}
+                                    style={{
+                                        paddingVertical: 10,
+                                        alignItems: "center"
+                                    }}
+                                >
+                                    <Text style={{ color: "#007AFF", fontWeight: "600" }}>
+                                        ↩ Reply
+                                    </Text>
+                                </TouchableOpacity>
+
+                                {/* 👉 DELETE / CLOSE */}
+                                <TouchableOpacity
+                                    onPress={() => {
+                                        setReactionModalVisible(false);
+                                        setSelectedMessage(null);
+                                    }}
+                                    style={{
+                                        paddingVertical: 10,
+                                        alignItems: "center"
+                                    }}
+                                >
+                                    <Text style={{ color: "red" }}>
+                                        Đóng
+                                    </Text>
+                                </TouchableOpacity>
+
+                            </View>
                         </View>
                     </View>
                 </Modal>
@@ -610,10 +724,10 @@ const styles = StyleSheet.create({
     tabText: { fontSize: 16, color: "#888" },
     activeTabText: { color: "#007AFF", fontWeight: "600" },
     content: { flex: 1, backgroundColor: "#F5F7FB" },
-    messageWrapper: { marginBottom: 12, maxWidth: '80%',overflow: 'visible' },
+    messageWrapper: { marginBottom: 12, maxWidth: '80%',overflow: 'visible',position: "relative", },
     myMsg: { alignSelf: 'flex-end' },
     otherMsg: { alignSelf: 'flex-start' },
-    messageBubble: { padding: 12, borderRadius: 18,overflow: 'visible' },
+    messageBubble: { padding: 12, borderRadius: 18,overflow: 'visible',position: "relative", },
     myBubble: { backgroundColor: '#007AFF' },
     otherBubble: { backgroundColor: '#FFF' },
     myText: { color: '#FFF' },
