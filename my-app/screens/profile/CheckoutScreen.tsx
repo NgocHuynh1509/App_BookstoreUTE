@@ -9,8 +9,10 @@ import { Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import Constants from "expo-constants";
 import { useAuth } from "../../hooks/useAuth";
+import { WebView } from 'react-native-webview'; // <--- Thêm dòng này
+import { Dropdown } from 'react-native-element-dropdown';
 
-const BASE_URL = Constants.expoConfig?.extra?.BASE_URL;
+const API_URL = Constants.expoConfig?.extra?.API_URL;
 
 // ─── Palette ──────────────────────────────────────────────────────────────────
 const C = {
@@ -31,16 +33,6 @@ const C = {
   orangeBg:    "#FFF3E0",
 };
 
-function SectionHeader({ icon, title }: { icon: string; title: string }) {
-  return (
-    <View style={s.sectionHeader}>
-      <View style={s.sectionIconWrap}>
-        <Ionicons name={icon as any} size={15} color={C.primaryMid} />
-      </View>
-      <Text style={s.sectionTitle}>{title}</Text>
-    </View>
-  );
-}
 
 export default function CheckoutScreen() {
   const route      = useRoute<any>();
@@ -54,6 +46,7 @@ export default function CheckoutScreen() {
   const [showAddressModal, setShowAddressModal] = useState(false);
   const [loading, setLoading]                   = useState(false);
   const [paymentMethod, setPaymentMethod]       = useState('COD');
+  const [currentOrderId, setCurrentOrderId] = useState(null); // <--- THÊM DÒNG NÀY NÈ MÁ
 
   // ── Coupon state
   const [coupon, setCoupon]           = useState("");
@@ -65,30 +58,195 @@ export default function CheckoutScreen() {
   const [userPoints, setUserPoints]   = useState(0);
   const [usedPoints, setUsedPoints]   = useState(0);
   const [pointsInput, setPointsInput] = useState("");
+  const [isFocus, setIsFocus] = useState(false);
+  const provinceData = [
+    { label: 'Thành phố Hà Nội', value: 'Hà Nội' },
+    { label: 'Thành phố Hồ Chí Minh', value: 'Hồ Chí Minh' },
+    { label: 'Thành phố Hải Phòng', value: 'Hải Phòng' },
+    { label: 'Thành phố Đà Nẵng', value: 'Đà Nẵng' },
+    { label: 'Thành phố Cần Thơ', value: 'Cần Thơ' },
+    { label: 'Thành phố Huế', value: 'Huế' },
+    { label: 'Tỉnh Tuyên Quang', value: 'Tuyên Quang' },
+    { label: 'Tỉnh Lào Cai', value: 'Lào Cai' },
+    { label: 'Tỉnh Thái Nguyên', value: 'Thái Nguyên' },
+    { label: 'Tỉnh Phú Thọ', value: 'Phú Thọ' },
+    { label: 'Tỉnh Bắc Ninh', value: 'Bắc Ninh' },
+    { label: 'Tỉnh Hưng Yên', value: 'Hưng Yên' },
+    { label: 'Tỉnh Ninh Bình', value: 'Ninh Bình' },
+    { label: 'Tỉnh Quảng Trị', value: 'Quảng Trị' },
+    { label: 'Tỉnh Quảng Ngãi', value: 'Quảng Ngãi' },
+    { label: 'Tỉnh Gia Lai', value: 'Gia Lai' },
+    { label: 'Tỉnh Khánh Hòa', value: 'Khánh Hòa' },
+    { label: 'Tỉnh Lâm Đồng', value: 'Lâm Đồng' },
+    { label: 'Tỉnh Đắk Lắk', value: 'Đắk Lắk' },
+    { label: 'Tỉnh Đồng Nai', value: 'Đồng Nai' },
+    { label: 'Tỉnh Tây Ninh', value: 'Tây Ninh' },
+    { label: 'Tỉnh Vĩnh Long', value: 'Vĩnh Long' },
+    { label: 'Tỉnh Đồng Tháp', value: 'Đồng Tháp' },
+    { label: 'Tỉnh Cà Mau', value: 'Cà Mau' },
+    { label: 'Tỉnh An Giang', value: 'An Giang' },
+    { label: 'Tỉnh Lai Châu', value: 'Lai Châu' },
+    { label: 'Tỉnh Điện Biên', value: 'Điện Biên' },
+    { label: 'Tỉnh Sơn La', value: 'Sơn La' },
+    { label: 'Tỉnh Lạng Sơn', value: 'Lạng Sơn' },
+    { label: 'Tỉnh Quảng Ninh', value: 'Quảng Ninh' },
+    { label: 'Tỉnh Thanh Hóa', value: 'Thanh Hóa' },
+    { label: 'Tỉnh Nghệ An', value: 'Nghệ An' },
+    { label: 'Tỉnh Hà Tĩnh', value: 'Hà Tĩnh' },
+    { label: 'Tỉnh Cao Bằng', value: 'Cao Bằng' },
+  ];
+  // State cho form địa chỉ mới
+  function SectionHeader({ icon, title }: { icon: string; title: string }) {
+      return (
+        <View style={s.sectionHeader}>
+          <View style={s.sectionIconWrap}>
+            <Ionicons name={icon as any} size={15} color={C.primaryMid} />
+          </View>
+          <Text style={s.sectionTitle}>{title}</Text>
+        </View>
+      );
+    }
 
-  useEffect(() => { fetchInitialAddress(); fetchUserPoints(); }, [user?.id]);
+    useEffect(() => { fetchInitialAddress(); fetchUserPoints(); }, [user?.id]);
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [newAddr, setNewAddr] = useState({
+    recipientName: '',
+    phoneNumber: '',
+    province: '',
+    district: '',
+    ward: '',
+    specificAddress: '',
+    isDefault: false
+  });
 
-  // ==========================
-  // API LOGIC (unchanged)
-  // ==========================
-  const fetchInitialAddress = async () => {
-    if (!user?.id) return;
-    try {
-      const token = await AsyncStorage.getItem('token');
-      const res   = await fetch(`${BASE_URL}/api/addresses/default/${user.id}`, {
-        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-      });
-      const data = await res.json();
-      if (res.ok && data) setCurrentAddress(data);
-    } catch (err) { console.error("Lỗi fetch địa chỉ:", err); }
-  };
+  // ─── 1. HÀM LƯU ĐỊA CHỈ (GỘP & TỐI ƯU) ──────────────────────────
+    const handleAddNewAddress = async () => {
+      // 1. Kiểm tra đầu vào
+      if (!newAddr.recipientName || !newAddr.phoneNumber || !newAddr.specificAddress || !newAddr.province) {
+        Alert.alert("Thông báo", "Vui lòng điền đầy đủ các thông tin bắt buộc");
+        return;
+      }
+
+      // 2. Kiểm tra User ID (Tránh lỗi 400 như trong ảnh bạn gửi)
+      if (!user?.id) {
+        Alert.alert("Lỗi", "Phiên đăng nhập hết hạn, vui lòng đăng nhập lại");
+        return;
+      }
+
+      setLoading(true);
+      try {
+        const token = await AsyncStorage.getItem('token');
+
+        // Payload gửi đi bao gồm cả isDefault (true/false)
+        const payload = {
+          ...newAddr,
+          customer: { customerId: user.id }
+        };
+
+        const response = await fetch(`${API_URL}/addresses/add`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(payload),
+        });
+
+        const result = await response.json();
+
+        if (response.ok) {
+          // Backend trả về savedAddressDTO trong result.data
+          setCurrentAddress(result.data);
+
+          setShowAddModal(false);
+
+          // RESET STATE: Trở về trắng để lần sau thêm địa chỉ khác không bị dính dữ liệu cũ
+          setNewAddr({
+            recipientName: '',
+            phoneNumber: '',
+            province: '',
+            district: '',
+            ward: '',
+            specificAddress: '',
+            isDefault: false // Reset về false cho lần thêm sau
+          });
+
+          Alert.alert("Thành công", "Đã lưu địa chỉ giao hàng mới");
+        } else {
+          // Hiển thị lỗi từ Backend (Ví dụ: "Thiếu thông tin khách hàng")
+          Alert.alert("Lỗi", result.message || "Không thể lưu địa chỉ.");
+        }
+      } catch (error) {
+        console.error("Lỗi khi thêm địa chỉ:", error);
+        Alert.alert("Lỗi", "Kết nối server thất bại");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    const fetchInitialAddress = async () => {
+      if (!user?.id) return;
+      try {
+        const token = await AsyncStorage.getItem('token');
+        const res = await fetch(`${API_URL}/addresses/default/${user.id}`, {
+          headers: { 'Authorization': `Bearer ${token}` },
+        });
+
+        const data = await res.json(); // Bây giờ parse thoải mái, không bao giờ lỗi nữa!
+
+        if (res.ok && data) {
+          setCurrentAddress(data);
+        } else {
+          setCurrentAddress(null);
+        }
+      } catch (err) {
+        console.log("Lỗi tải địa chỉ:", err);
+        setCurrentAddress(null);
+      }
+    };
+
+    // ─── Tính Phí Vận Chuyển ────────────────────────────
+    const shippingFee = (() => {
+      if (!currentAddress) return 0;
+
+      const province = (currentAddress.province || "").toLowerCase();
+
+      // 1. Tính tổng số lượng quyển sách
+      // Thêm dấu ? và giá trị mặc định để không bị crash nếu selectedItems rỗng
+      const totalQuantity = (selectedItems || []).reduce((sum, item) => {
+        return sum + (Number(item.quantity) || 0);
+      }, 0);
+
+      // 2. Xác định phí ship cơ bản theo khu vực
+      let baseFee = 0;
+      const group20k = ["đồng nai", "tây ninh", "lâm đồng", "đồng tháp", "bình dương"];
+
+      if (province.includes("hồ chí minh") || province.includes("tphcm")) {
+        baseFee = 10000;
+      } else if (group20k.some(p => province.includes(p))) {
+        baseFee = 20000;
+      } else {
+        baseFee = 30000;
+      }
+
+      // 3. Cộng thêm phí dựa trên số lượng quyển sách
+      let extraFee = 0;
+      if (totalQuantity > 10) {
+        extraFee = 15000; // Trên 10 quyển thêm 15k
+      } else if (totalQuantity > 5) {
+        extraFee = 10000; // Trên 5 quyển thêm 10k
+      }
+
+      return baseFee + extraFee;
+    })();
+
 
   // Load điểm hiện có của user
   const fetchUserPoints = async () => {
     if (!user?.id) return;
     try {
       const token = await AsyncStorage.getItem('token');
-      const res   = await fetch(`${BASE_URL}/api/profile`, {
+      const res   = await fetch(`${API_URL}/profile`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       const data = await res.json();
@@ -103,14 +261,28 @@ export default function CheckoutScreen() {
     setLoading(true);
     try {
       const token = await AsyncStorage.getItem('token');
-      const res   = await fetch(`${BASE_URL}/api/addresses/user/${user.id}`, {
-        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+      const res = await fetch(`${API_URL}/addresses/user/${user.id}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Accept': 'application/json'
+        },
       });
-      const data = await res.json();
-      setAllAddresses(Array.isArray(data) ? data : []);
-      setShowAddressModal(true);
-    } catch { Alert.alert("Lỗi", "Không thể tải danh sách địa chỉ"); }
-    finally { setLoading(false); }
+
+      const data = await res.json(); // Data này là List<ShippingAddressDTO>
+
+      if (res.ok) {
+        // Data lúc này là mảng các object gọn nhẹ (id, recipientName, phoneNumber...)
+        setAllAddresses(Array.isArray(data) ? data : []);
+        setShowAddressModal(true);
+      } else {
+        Alert.alert("Thông báo", "Không tìm thấy danh sách địa chỉ");
+      }
+    } catch (error) {
+      console.error(error);
+      Alert.alert("Lỗi", "Không thể tải danh sách địa chỉ");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const selectAddress = (addr: any) => { setCurrentAddress(addr); setShowAddressModal(false); };
@@ -118,7 +290,7 @@ export default function CheckoutScreen() {
   const openCouponSelector = async () => {
     try {
       const token = await AsyncStorage.getItem("token");
-      const res   = await fetch(`${BASE_URL}/api/coupons/available/${user.id}`, {
+      const res   = await fetch(`${API_URL}/api/coupons/available/${user.id}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       const data = await res.json();
@@ -161,69 +333,137 @@ export default function CheckoutScreen() {
 
   const discountFromPoints  = usedPoints * POINT_RATE;
   const totalDiscount       = discountFromCoupon + discountFromPoints;
-  const displayedTotal      = Math.max(0, totalPrice - totalDiscount);
+  const displayedTotal = Math.max(0, totalPrice - totalDiscount) + shippingFee;
+  // Thêm state này vào đầu CheckoutScreen
+  const [paymentUrl, setPaymentUrl] = useState(null);
+  const [showWebView, setShowWebView] = useState(false);
 
   // ==========================
   // ĐẶT HÀNG — gửi thông tin coupon + điểm lên server
   // ==========================
   const handleOrder = async () => {
-    if (!currentAddress) { Alert.alert("Thông báo", "Vui lòng chọn địa chỉ giao hàng"); return; }
+    if (!currentAddress) {
+      Alert.alert("Thông báo", "Vui lòng chọn địa chỉ giao hàng");
+      return;
+    }
+
     setLoading(true);
     try {
-      const token   = await AsyncStorage.getItem('token');
-      const payload = {
-        user_id:             user?.id,
-        shipping_address_id: currentAddress.id,
-        items:               selectedItems,
-        total_price:         totalPrice,
-        discount_points:     usedPoints,
-        discount_coupon:     coupon,
-        final_total:         displayedTotal,    // gửi luôn total đã tính
-        payment_method:      paymentMethod,
-      };
-      const res = await fetch(`${BASE_URL}/api/orders/create`, {
+      const token = await AsyncStorage.getItem('token');
+      const isBuyNow = route.params?.isBuyNow || false;
+
+      // 1. Rẽ nhánh Endpoint
+      const endpoint = isBuyNow
+        ? `${API_URL}/api/orders/buy-now`
+        : `${API_URL}/api/orders/create`;
+
+      // 2. Tạo Payload riêng biệt
+      let payload = {};
+      if (isBuyNow) {
+        payload = {
+          user_id: user?.id,
+          shipping_address_id: currentAddress.id,
+          items: selectedItems.map(it => ({
+            book_id: it.book_id,
+            quantity: Number(it.quantity) || 1,
+            price: Number(it.price) || 0
+          })),
+            // --- BỔ SUNG CÁC CỘT TIỀN MỚI ---
+                    shipping_fee: shippingFee, // Hiện tại má đang để Free ship
+                    voucher_discount: Number(discountFromCoupon) || 0,
+                    points_discount_amount: Number(discountFromPoints) || 0,
+          total_price: Number(totalPrice) || 0,
+          discount_points: Number(usedPoints) || 0,
+          discount_coupon: coupon || "",
+          final_total: Number(displayedTotal) || 0,
+          payment_method: paymentMethod,
+          address: currentAddress.addressString || ""
+        };
+      } else {
+        payload = {
+            // --- BỔ SUNG CÁC CỘT TIỀN MỚI ---
+                    shipping_fee: shippingFee, // Hiện tại má đang để Free ship
+                    voucher_discount: Number(discountFromCoupon) || 0,
+                    points_discount_amount: Number(discountFromPoints) || 0,
+          user_id: user?.id,
+          shipping_address_id: currentAddress.id,
+          items: selectedItems,
+          total_price: totalPrice,
+          discount_points: usedPoints,
+          discount_coupon: coupon,
+          final_total: displayedTotal,
+          payment_method: paymentMethod,
+          isFromCart: route.params?.isFromCart ?? true,
+        };
+      }
+
+      console.log("🚀 GỌI API:", endpoint);
+
+      const res = await fetch(endpoint, {
         method: 'POST',
-        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
         body: JSON.stringify(payload),
       });
+
       const data = await res.json();
+
       if (res.ok && data.success) {
-        // ── Đọc field backend trả về ─────────────────────────────
-        // { success, orderId, earned_points, bonus_points?, reward_coupon?, reward_coupon_percent? }
-        const lines: string[] = ["Đơn hàng của bạn đã được đặt thành công! 🎉"];
-
-        // Điểm tích lũy từ đơn hàng (luôn có)
-        if (data.earned_points && data.earned_points > 0) {
-          lines.push(`⭐ Tích lũy +${data.earned_points} điểm`);
+          // LƯU LẠI ORDER ID ĐỂ TÍ NỮA DÙNG TRONG WEBVIEW
+                  setCurrentOrderId(data.orderId); // <--- THÊM DÒNG NÀY
+        // 3. Xử lý sau khi gọi API thành công
+        if (paymentMethod === 'VNPAY' && data.vnpayUrl) {
+          // Lưu URL và mở WebView (Nhớ khai báo 2 state này ở đầu Component nhen)
+          setPaymentUrl(data.vnpayUrl);
+          setShowWebView(true);
+        } else {
+          // Thanh toán COD thành công
+          Alert.alert("✅ Thành công", "Đơn hàng của bạn đã được đặt thành công!", [
+              { text: "OK", onPress: () => navigation.navigate("MainTabs") }
+          ]);
         }
-
-        // Thưởng thêm điểm bonus (random 50%)
-        if (data.bonus_points && data.bonus_points > 0) {
-          lines.push(`🎁 May mắn! Thưởng thêm +${data.bonus_points} điểm!`);
-        }
-
-        // Thưởng coupon (random 50%)
-        if (data.reward_coupon) {
-          const pctTxt = data.reward_coupon_percent ? ` giảm ${data.reward_coupon_percent}%` : "";
-          lines.push(`🎫 Tặng mã${pctTxt}: ${data.reward_coupon} (30 ngày)`);
-        }
-
-        Alert.alert("✅ Đặt hàng thành công", lines.join("\n\n"), [
-          { text: "Về trang chủ", onPress: () => navigation.navigate("MainTabs") },
-        ]);
       } else {
-        Alert.alert("Thất bại", data.error || "Có lỗi xảy ra khi xử lý đơn hàng");
+        Alert.alert("Thất bại", data.error || data.message || "Lỗi xử lý đơn hàng");
       }
-    } catch { Alert.alert("Lỗi", "Kết nối server thất bại"); }
-    finally { setLoading(false); }
-  };
+    } catch (err) {
+      console.log("❌ Lỗi Fetch:", err);
+      Alert.alert("Lỗi", "Kết nối server thất bại");
+    } finally {
+      setLoading(false);
+    }
+  }; // <-- Má thiếu cái dấu đóng này nè!
 
-  const coverUri = (img: string) => img?.startsWith('http') ? img : `${BASE_URL}/uploads/${img}`;
+  const coverUri = (img: string) => img?.startsWith('http') ? img : `${API_URL}/uploads/${img}`;
 
   const PAYMENT_OPTIONS = [
     { key: 'COD',   label: 'Thanh toán khi nhận hàng', sub: 'Trả tiền mặt khi giao hàng', icon: 'cash-outline' },
     { key: 'VNPAY', label: 'Thanh toán qua VNPAY',     sub: 'Thẻ ATM, Internet Banking',   icon: 'card-outline' },
   ];
+    const handleUpdateFailedStatus = async (orderId) => {
+      if (!orderId) return;
+
+      try {
+        // 1. Phải lấy Token ra nè má
+        const token = await AsyncStorage.getItem('token');
+
+        console.log("🚀 Đang gọi API update có Token cho:", orderId);
+
+        const response = await fetch(`${API_URL}/api/orders/update-status`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}` // <--- NHÉT TOKEN VÀO ĐÂY
+          },
+          body: JSON.stringify({ orderId: orderId, status: 'FAILED' })
+        });
+
+        console.log("Mã phản hồi từ Server:", response.status);
+      } catch (err) {
+        console.log("❌ Lỗi Fetch:", err.message);
+      }
+    };
 
   return (
     <SafeAreaView style={s.container}>
@@ -242,28 +482,115 @@ export default function CheckoutScreen() {
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={s.scroll}>
 
         {/* ── 1. ADDRESS ───────────────────────────────────────── */}
+        {/* ── 1. ADDRESS ───────────────────────────────────────── */}
         <View style={s.card}>
-          <SectionHeader icon="location-outline" title="Địa chỉ nhận hàng" />
-          <TouchableOpacity style={[s.addressBox, !currentAddress && s.addressBoxEmpty]} onPress={openAddressSelector} activeOpacity={0.85}>
-            {currentAddress ? (
+          {/* Header có nút + để thêm địa chỉ mới mọi lúc */}
+          <View style={{
+            flexDirection: 'row',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            marginBottom: 10
+          }}>
+            <SectionHeader icon="location-outline" title="Địa chỉ nhận hàng" />
+
+            <TouchableOpacity
+              onPress={() => setShowAddModal(true)}
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                backgroundColor: C.primarySoft,
+                paddingHorizontal: 10,
+                paddingVertical: 4,
+                borderRadius: 12,
+                marginRight: 5
+              }}
+            >
+              <Ionicons name="add" size={16} color={C.primaryMid} />
+              <Text style={{ color: C.primaryMid, fontSize: 12, fontWeight: '700', marginLeft: 2 }}>Thêm mới</Text>
+            </TouchableOpacity>
+          </View>
+
+          {currentAddress ? (
+            // HIỂN THỊ KHI ĐÃ CÓ ĐỊA CHỈ
+            <TouchableOpacity
+              style={s.addressBox}
+              onPress={openAddressSelector}
+              activeOpacity={0.85}
+            >
               <View style={s.addressContent}>
-                <View style={s.addressIconWrap}><Ionicons name="location" size={18} color={C.primaryMid} /></View>
+                <View style={s.addressIconWrap}>
+                  <Ionicons name="location" size={18} color={C.primaryMid} />
+                </View>
                 <View style={{ flex: 1 }}>
-                  <Text style={s.addressName}>{currentAddress.recipient_name}<Text style={{ color: C.text3 }}>  |  </Text>{currentAddress.phone_number}</Text>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 8 }}>
+                    <Text style={s.addressName}>
+                      {currentAddress.recipientName || currentAddress.recipient_name}
+                      <Text style={{ color: C.text3, fontWeight: 'normal' }}>  |  </Text>
+                      {currentAddress.phoneNumber || currentAddress.phone_number}
+                    </Text>
+
+                    {/* HIỂN THỊ BADGE MẶC ĐỊNH NẾU LÀ TRUE */}
+                    {(currentAddress.isDefault || currentAddress.is_default === 1) && (
+                      <View style={{
+                        backgroundColor: C.primarySoft,
+                        paddingHorizontal: 6,
+                        paddingVertical: 2,
+                        borderRadius: 4,
+                        borderWidth: 0.5,
+                        borderColor: C.primaryMid
+                      }}>
+                        <Text style={{ color: C.primaryMid, fontSize: 10, fontWeight: '700' }}>Mặc định</Text>
+                      </View>
+                    )}
+                  </View>
+
                   <Text style={s.addressDetail} numberOfLines={2}>
-                    {[currentAddress.specific_address, currentAddress.ward, currentAddress.district, currentAddress.province].filter(Boolean).join(", ")}
+                    {[
+                      currentAddress.specificAddress || currentAddress.specific_address,
+                      currentAddress.ward,
+                      currentAddress.district,
+                      currentAddress.province
+                    ].filter(Boolean).join(", ")}
                   </Text>
                 </View>
-                <View style={s.changeBtn}><Text style={s.changeBtnTxt}>Đổi</Text></View>
+
+                <TouchableOpacity style={s.changeBtn} onPress={openAddressSelector}>
+                  <Text style={s.changeBtnTxt}>Đổi</Text>
+                  <Ionicons name="chevron-forward" size={14} color={C.primaryMid} />
+                </TouchableOpacity>
               </View>
-            ) : (
-              <View style={s.addressEmpty}>
-                <Ionicons name="location-outline" size={22} color={C.primaryMid} />
-                <Text style={s.addressEmptyTxt}>Chọn địa chỉ giao hàng</Text>
-                <Ionicons name="chevron-forward" size={16} color={C.text3} />
+            </TouchableOpacity>
+          ) : (
+            // HIỂN THỊ KHI CHƯA CÓ ĐỊA CHỈ (TRỐNG)
+            <TouchableOpacity
+              style={[s.addressBox, s.addressBoxEmpty, {
+                paddingVertical: 30,
+                alignItems: 'center',
+                borderStyle: 'dashed',
+                borderWidth: 1.5,
+                borderColor: C.primaryTint
+              }]}
+              onPress={() => setShowAddModal(true)}
+            >
+              <View style={{
+                backgroundColor: C.primarySoft,
+                width: 50,
+                height: 50,
+                borderRadius: 25,
+                justifyContent: 'center',
+                alignItems: 'center',
+                marginBottom: 10
+              }}>
+                <Ionicons name="add" size={30} color={C.primaryMid} />
               </View>
-            )}
-          </TouchableOpacity>
+              <Text style={{ color: C.primaryMid, fontWeight: '700', fontSize: 15 }}>
+                Chưa có địa chỉ giao hàng
+              </Text>
+              <Text style={{ color: C.text3, fontSize: 13, marginTop: 4 }}>
+                Nhấn để thêm địa chỉ nhận hàng của bạn
+              </Text>
+            </TouchableOpacity>
+          )}
         </View>
 
         {/* ── 2. PRODUCTS ──────────────────────────────────────── */}
@@ -383,7 +710,9 @@ export default function CheckoutScreen() {
             </View>
             <View style={s.summaryRow}>
               <Text style={s.summaryLabel}>Phí vận chuyển</Text>
-              <Text style={[s.summaryVal, { color: C.green }]}>Miễn phí</Text>
+              <Text style={[s.summaryVal, { color: C.text1 }]}>
+                {shippingFee === 0 ? "Chưa chọn địa chỉ" : `${shippingFee.toLocaleString("vi-VN")}đ`}
+              </Text>
             </View>
             {discountFromCoupon > 0 && (
               <View style={s.summaryRow}>
@@ -447,23 +776,57 @@ export default function CheckoutScreen() {
             </View>
             <ScrollView showsVerticalScrollIndicator={false}>
               {allAddresses.map((addr, idx) => {
+                // Kiểm tra xem địa chỉ này có đang được chọn hay không
                 const sel = currentAddress?.id === addr.id;
+
+                // Kiểm tra trạng thái mặc định (hỗ trợ cả Boolean true và Integer 1)
+                const isDefault = addr.isDefault || addr.is_default === 1;
+
                 return (
-                  <TouchableOpacity key={addr.id}
+                  <TouchableOpacity
+                    key={addr.id}
                     style={[s.addrItem, sel && s.addrItemActive, idx === allAddresses.length - 1 && { borderBottomWidth: 0 }]}
-                    onPress={() => selectAddress(addr)} activeOpacity={0.85}>
+                    onPress={() => selectAddress(addr)}
+                    activeOpacity={0.85}
+                  >
                     <View style={[s.addrAccent, sel && { backgroundColor: C.primaryMid }]} />
+
                     <View style={s.addrBody}>
                       <View style={s.addrNameRow}>
-                        <Text style={s.addrName}>{addr.recipient_name}</Text>
-                        {addr.is_default === 1 && <View style={s.defaultBadge}><Text style={s.defaultBadgeTxt}>Mặc định</Text></View>}
+                        {/* Hiển thị tên người nhận: hỗ trợ cả 2 kiểu đặt tên biến */}
+                        <Text style={s.addrName}>
+                          {addr.recipientName || addr.recipient_name}
+                        </Text>
+
+                        {/* Nhãn Mặc định */}
+                        {isDefault && (
+                          <View style={s.defaultBadge}>
+                            <Text style={s.defaultBadgeTxt}>Mặc định</Text>
+                          </View>
+                        )}
                       </View>
-                      <Text style={s.addrPhone}>{addr.phone_number}</Text>
+
+                      {/* Số điện thoại */}
+                      <Text style={s.addrPhone}>
+                        {addr.phoneNumber || addr.phone_number}
+                      </Text>
+
+                      {/* Địa chỉ chi tiết */}
                       <Text style={s.addrDetail} numberOfLines={2}>
-                        {[addr.specific_address, addr.ward, addr.district, addr.province].filter(Boolean).join(", ")}
+                        {[
+                          addr.specificAddress || addr.specific_address,
+                          addr.ward,
+                          addr.district,
+                          addr.province
+                        ].filter(Boolean).join(", ")}
                       </Text>
                     </View>
-                    <Ionicons name={sel ? "radio-button-on" : "radio-button-off"} size={22} color={sel ? C.primaryMid : C.text3} />
+
+                    <Ionicons
+                      name={sel ? "radio-button-on" : "radio-button-off"}
+                      size={22}
+                      color={sel ? C.primaryMid : C.text3}
+                    />
                   </TouchableOpacity>
                 );
               })}
@@ -524,6 +887,215 @@ export default function CheckoutScreen() {
           </View>
         </View>
       </Modal>
+
+      {/* ── ADD NEW ADDRESS MODAL ────────────────────────────────────── */}
+      <Modal visible={showAddModal} animationType="slide" transparent>
+        <View style={s.modalOverlay}>
+          <View style={[s.modalSheet, { height: '85%' }]}>
+            <View style={s.sheetHandle} />
+            <View style={s.sheetHeader}>
+              <Text style={s.sheetTitle}>Thêm địa chỉ mới</Text>
+              <TouchableOpacity style={s.sheetCloseBtn} onPress={() => setShowAddModal(false)}>
+                <Ionicons name="close" size={20} color={C.text2} />
+              </TouchableOpacity>
+            </View>
+
+            <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ padding: 20 }}>
+              <View style={{ gap: 15 }}>
+
+                {/* Tên người nhận */}
+                <View>
+                  <Text style={{ fontSize: 13, fontWeight: '700', color: C.text2, marginBottom: 8 }}>Người nhận *</Text>
+                  <TextInput
+                    style={s.inputField}
+                    placeholder="Nhập tên người nhận"
+                    placeholderTextColor={C.text3}
+                    value={newAddr.recipientName}
+                    onChangeText={(txt) => setNewAddr({...newAddr, recipientName: txt})}
+                  />
+                </View>
+
+                {/* Số điện thoại */}
+                <View>
+                  <Text style={{ fontSize: 13, fontWeight: '700', color: C.text2, marginBottom: 8 }}>Số điện thoại *</Text>
+                  <TextInput
+                    style={s.inputField}
+                    placeholder="Nhập số điện thoại liên lạc"
+                    placeholderTextColor={C.text3}
+                    keyboardType="phone-pad"
+                    value={newAddr.phoneNumber}
+                    onChangeText={(txt) => setNewAddr({...newAddr, phoneNumber: txt})}
+                  />
+                </View>
+
+                <View>
+                    <Text style={{ fontSize: 13, fontWeight: '700', color: C.text2, marginBottom: 8 }}>
+                      Tỉnh / Thành phố *
+                    </Text>
+
+                    <Dropdown
+                      style={[
+                        s.inputField, // Giữ style cũ của bạn để đồng bộ giao diện
+                        { height: 50, paddingHorizontal: 12 },
+                        isFocus && { borderColor: 'blue' }
+                      ]}
+                      placeholderStyle={{ fontSize: 14, color: C.text3 }}
+                      selectedTextStyle={{ fontSize: 14, color: C.text2 }}
+                      inputSearchStyle={{ height: 40, fontSize: 14 }}
+                      data={provinceData}
+                      search // Hiện ô tìm kiếm cho người dùng gõ tên tỉnh nhanh hơn
+                      maxHeight={300}
+                      labelField="label"
+                      valueField="value"
+                      placeholder="-- Chọn Tỉnh / Thành phố --"
+                      searchPlaceholder="Tìm tên tỉnh..."
+                      value={newAddr.province}
+                      onFocus={() => setIsFocus(true)}
+                      onBlur={() => setIsFocus(false)}
+                      onChange={item => {
+                        setNewAddr({...newAddr, province: item.value}); // Cập nhật vào state cũ của bạn
+                        setIsFocus(false);
+                      }}
+                    />
+                  </View>
+
+                {/* Quận / Huyện */}
+                <View>
+                  <Text style={{ fontSize: 13, fontWeight: '700', color: C.text2, marginBottom: 8 }}>Phường / Xã *</Text>
+                  <TextInput
+                    style={s.inputField}
+                    placeholder="Ví dụ: Phường Tam Bình"
+                    placeholderTextColor={C.text3}
+                    value={newAddr.district}
+                    onChangeText={(txt) => setNewAddr({...newAddr, district: txt})}
+                  />
+                </View>
+
+
+
+                {/* Địa chỉ cụ thể */}
+                <View>
+                  <Text style={{ fontSize: 13, fontWeight: '700', color: C.text2, marginBottom: 8 }}>Địa chỉ cụ thể *</Text>
+                  <TextInput
+                    style={[s.inputField, { height: 80, textAlignVertical: 'top' }]}
+                    placeholder="Số nhà, tên đường..."
+                    placeholderTextColor={C.text3}
+                    multiline
+                    value={newAddr.specificAddress}
+                    onChangeText={(txt) => setNewAddr({...newAddr, specificAddress: txt})}
+                  />
+                </View>
+                {/* Đặt làm mặc định */}
+                <TouchableOpacity
+                  style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    paddingVertical: 10,
+                    marginTop: 5
+                  }}
+                  activeOpacity={0.8}
+                  onPress={() => setNewAddr({...newAddr, isDefault: !newAddr.isDefault})}
+                >
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                    <View style={{
+                      width: 24,
+                      height: 24,
+                      borderRadius: 6,
+                      borderWidth: 2,
+                      borderColor: newAddr.isDefault ? C.primaryMid : C.border,
+                      backgroundColor: newAddr.isDefault ? C.primaryMid : 'transparent',
+                      justifyContent: 'center',
+                      alignItems: 'center'
+                    }}>
+                      {newAddr.isDefault && <Ionicons name="checkmark" size={16} color="#FFF" />}
+                    </View>
+                    <Text style={{ fontSize: 14, color: C.text1, fontWeight: '600' }}>Đặt làm địa chỉ mặc định</Text>
+                  </View>
+
+
+                </TouchableOpacity>
+
+                {/* Nút lưu */}
+                <TouchableOpacity
+                  style={[s.orderBtn, { width: '100%', marginTop: 10 }, loading && s.orderBtnDisabled]}
+                  onPress={handleAddNewAddress}
+                  disabled={loading}
+                >
+                  {loading ? <ActivityIndicator color="#FFF" /> : (
+                    <>
+                      <Ionicons name="save-outline" size={20} color="#FFF" />
+                      <Text style={s.orderBtnTxt}>LƯU ĐỊA CHỈ</Text>
+                    </>
+                  )}
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  onPress={() => setShowAddModal(false)}
+                  style={{ padding: 10, alignItems: 'center' }}
+                >
+                  <Text style={{ color: C.text3, fontWeight: '600' }}>Hủy bỏ</Text>
+                </TouchableOpacity>
+
+              </View>
+              <View style={{ height: 40 }} />
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
+      {/* --- MODAL WEBVIEW THANH TOÁN VNPAY --- */}
+        <Modal visible={showWebView} animationType="slide">
+          <SafeAreaView style={{ flex: 1 }}>
+            <View style={{
+              height: 50,
+              flexDirection: 'row',
+              alignItems: 'center',
+              paddingHorizontal: 15,
+              borderBottomWidth: 1,
+              borderColor: '#EEE',
+              backgroundColor: '#FFF'
+            }}>
+              <TouchableOpacity onPress={() => setShowWebView(false)}>
+                <Ionicons name="close" size={25} color="#333" />
+              </TouchableOpacity>
+              <Text style={{ fontSize: 16, fontWeight: 'bold', marginLeft: 20 }}>Thanh toán VNPAY</Text>
+            </View>
+
+            <WebView
+              source={{ uri: paymentUrl }}
+              onNavigationStateChange={(navState) => {
+                // Chỉ xử lý khi thấy link return
+                if (navState.url.includes('vnpay-return')) {
+
+                  // --- CHIÊU NÀY LÀ QUAN TRỌNG NHẤT ---
+                  // Dùng Regex để móc OrderId trực tiếp từ URL của VNPAY trả về
+                  const orderIdMatch = navState.url.match(/[?&]vnp_TxnRef=([^&]+)/);
+                  const resCodeMatch = navState.url.match(/[?&]vnp_ResponseCode=([^&]+)/);
+
+                  // Nếu Regex tìm thấy thì dùng, không thì mới dùng currentOrderId làm dự phòng
+                  const orderIdFromUrl = orderIdMatch ? orderIdMatch[1] : currentOrderId;
+                  const responseCode = resCodeMatch ? resCodeMatch[1] : "99";
+
+                  setShowWebView(false);
+
+                  setTimeout(() => {
+                    if (responseCode === '00') {
+                      Alert.alert("✅ Thành công", "Đơn hàng đã thanh toán!");
+                      navigation.navigate("MainTabs");
+                    } else {
+                      // Dùng cái ID vừa móc được từ URL nè má!
+                      console.log("🚀 Gọi update FAILED cho đơn:", orderIdFromUrl);
+                      handleUpdateFailedStatus(orderIdFromUrl);
+
+                      Alert.alert("⚠️ Thông báo", "Giao dịch đã bị hủy.");
+                      navigation.navigate("MainTabs");
+                    }
+                  }, 500);
+                }
+              }}
+            />
+          </SafeAreaView>
+        </Modal>
     </SafeAreaView>
   );
 }

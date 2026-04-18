@@ -10,13 +10,15 @@ import {
   Alert,
   StatusBar,
   Platform,
+  Modal,
 } from "react-native";
 import { useRoute, useNavigation } from "@react-navigation/native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import Constants from "expo-constants";
 import { Ionicons } from "@expo/vector-icons";
+import { WebView } from "react-native-webview"; // Thêm cái này
 
-const BASE_URL = Constants.expoConfig?.extra?.BASE_URL;
+const BASE_URL = Constants.expoConfig?.extra?.API_URL;
 
 // ─── Palette ──────────────────────────────────────────────────────────────────
 const C = {
@@ -40,11 +42,12 @@ const C = {
 
 // ─── Status steps ─────────────────────────────────────────────────────────────
 const ORDER_STATUS_STEPS = [
-  { key: "pending",   label: "Đơn hàng mới",    icon: "document-text-outline" },
-  { key: "confirmed", label: "Đã xác nhận",      icon: "checkmark-circle-outline" },
-  { key: "preparing", label: "Đang chuẩn bị",    icon: "construct-outline" },
-  { key: "delivery",  label: "Đang giao hàng",   icon: "bicycle-outline" },
-  { key: "success",   label: "Giao thành công",  icon: "bag-check-outline" },
+  { key: "pending",   label: "Chờ xác nhận", icon: "document-text-outline" },
+  { key: "confirmed", label: "Đã xác nhận",  icon: "checkmark-circle-outline" },
+  { key: "shipping",  label: "Đang giao",    icon: "bicycle-outline" },
+  { key: "completed", label: "Hoàn thành",   icon: "bag-check-outline" },
+  { key: "returned",  label: "Hoàn trả",     icon: "refresh-circle-outline" },
+  { key: "cancelled", label: "Đã hủy",       icon: "close-circle-outline" },
 ];
 
 // ─── Section header ───────────────────────────────────────────────────────────
@@ -77,6 +80,29 @@ export default function OrderDetail() {
 
   const [orderData, setOrderData] = useState<any>(null);
   const [loading, setLoading]     = useState(true);
+  const [showWebView, setShowWebView] = useState(false);
+  const [paymentUrl, setPaymentUrl] = useState("");
+
+  const handleRePayment = async () => {
+    try {
+      setLoading(true);
+      const token = await AsyncStorage.getItem("token");
+      const res = await fetch(`${BASE_URL}/api/orders/re-payment/${orderId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = await res.json();
+      if (res.ok && data.vnpayUrl) {
+        setPaymentUrl(data.vnpayUrl);
+        setShowWebView(true);
+      } else {
+        Alert.alert("Lỗi", data.error || "Không thể tạo liên kết thanh toán");
+      }
+    } catch (error) {
+      Alert.alert("Lỗi", "Kết nối server thất bại");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // ==========================
   // API LOGIC (unchanged)
@@ -103,6 +129,38 @@ export default function OrderDetail() {
   const checkCanCancel = (createdAt: string) => {
     const diff = (Date.now() - new Date(createdAt).getTime()) / 60000;
     return diff <= 30;
+  };
+
+  const handleConfirmReceived = async () => {
+    try {
+      const token = await AsyncStorage.getItem("token");
+
+      const res = await fetch(
+          `${BASE_URL}/api/orders/confirm-delivered/${orderId}`,
+          {
+            method: "PUT",
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
+            },
+          }
+      );
+
+      const data = await res.json();
+
+      console.log("STATUS:", res.status);
+      console.log("DATA:", data);
+
+      if (res.ok) {
+        Alert.alert("Thành công", "Đơn hàng đã hoàn thành");
+        fetchDetail();
+      } else {
+        Alert.alert("Lỗi", data.error || data.message || "Không thể cập nhật");
+      }
+    } catch (e) {
+      console.log("NETWORK ERROR:", e);
+      Alert.alert("Lỗi", "Không kết nối được server");
+    }
   };
 
   const handleCancelOrder = async () => {
@@ -133,77 +191,154 @@ export default function OrderDetail() {
   };
 
   // ─── Status stepper ──────────────────────────────────────────────────────
+  // const renderStatusStepper = () => {
+  //   if (orderData.status === "cancelled") {
+  //     return (
+  //       <View style={s.cancelledBox}>
+  //         <View style={s.cancelledIconWrap}>
+  //           <Ionicons name="close-circle-outline" size={32} color={C.sale} />
+  //         </View>
+  //         <Text style={s.cancelledTitle}>Đơn hàng đã bị huỷ</Text>
+  //         <Text style={s.cancelledSub}>Đơn hàng này đã được huỷ thành công.</Text>
+  //       </View>
+  //     );
+  //   }
+  //
+  //   const currentIndex = ORDER_STATUS_STEPS.findIndex(s => s.key === orderData.status);
+  //
+  //   return (
+  //     <View style={s.stepper}>
+  //       {ORDER_STATUS_STEPS.map((step, index) => {
+  //         const done    = index < currentIndex;
+  //         const active  = index === currentIndex;
+  //         const isLast  = index === ORDER_STATUS_STEPS.length - 1;
+  //
+  //         return (
+  //           <View key={step.key} style={s.stepRow}>
+  //             {/* Left column: dot + line */}
+  //             <View style={s.stepLeft}>
+  //               <View style={[
+  //                 s.stepDot,
+  //                 done   && s.stepDotDone,
+  //                 active && s.stepDotActive,
+  //               ]}>
+  //                 {done ? (
+  //                   <Ionicons name="checkmark" size={10} color="#FFF" />
+  //                 ) : active ? (
+  //                   <View style={s.stepDotInner} />
+  //                 ) : null}
+  //               </View>
+  //               {!isLast && (
+  //                 <View style={[s.stepLine, (done || active) && s.stepLineDone]} />
+  //               )}
+  //             </View>
+  //
+  //             {/* Right column: label */}
+  //             <View style={s.stepRight}>
+  //               <View style={[s.stepLabelWrap, active && s.stepLabelWrapActive]}>
+  //                 <Ionicons
+  //                   name={step.icon as any}
+  //                   size={15}
+  //                   color={active ? C.primaryMid : done ? C.green : C.text3}
+  //                 />
+  //                 <Text style={[
+  //                   s.stepLabel,
+  //                   done   && s.stepLabelDone,
+  //                   active && s.stepLabelActive,
+  //                 ]}>
+  //                   {step.label}
+  //                 </Text>
+  //                 {active && (
+  //                   <View style={s.stepActiveBadge}>
+  //                     <Text style={s.stepActiveBadgeTxt}>Hiện tại</Text>
+  //                   </View>
+  //                 )}
+  //               </View>
+  //             </View>
+  //           </View>
+  //         );
+  //       })}
+  //     </View>
+  //   );
+  // };
+
   const renderStatusStepper = () => {
-    if (orderData.status === "cancelled") {
+    const status = (orderData.status || "").toLowerCase();
+
+    const FLOW = ["pending", "confirmed", "shipping", "completed"];
+
+    const isCancelled = status === "cancelled";
+    const isReturned  = status === "returned";
+
+    // ❌ Cancel → show riêng
+    if (isCancelled) {
       return (
-        <View style={s.cancelledBox}>
-          <View style={s.cancelledIconWrap}>
+          <View style={s.cancelledBox}>
             <Ionicons name="close-circle-outline" size={32} color={C.sale} />
+            <Text style={s.cancelledTitle}>Đơn hàng đã bị huỷ</Text>
           </View>
-          <Text style={s.cancelledTitle}>Đơn hàng đã bị huỷ</Text>
-          <Text style={s.cancelledSub}>Đơn hàng này đã được huỷ thành công.</Text>
-        </View>
       );
     }
 
-    const currentIndex = ORDER_STATUS_STEPS.findIndex(s => s.key === orderData.status);
+    // 🔥 Lấy các step tới hiện tại
+    let visibleSteps: string[] = [];
+
+    if (isReturned) {
+      // returned = full flow + returned
+      visibleSteps = [...FLOW, "returned"];
+    } else {
+      const currentIndex = FLOW.indexOf(status);
+      visibleSteps = FLOW.slice(0, currentIndex + 1);
+    }
 
     return (
-      <View style={s.stepper}>
-        {ORDER_STATUS_STEPS.map((step, index) => {
-          const done    = index < currentIndex;
-          const active  = index === currentIndex;
-          const isLast  = index === ORDER_STATUS_STEPS.length - 1;
+        <View style={s.stepper}>
+          {visibleSteps.map((step, index) => {
+            const isLast = index === visibleSteps.length - 1;
 
-          return (
-            <View key={step.key} style={s.stepRow}>
-              {/* Left column: dot + line */}
-              <View style={s.stepLeft}>
-                <View style={[
-                  s.stepDot,
-                  done   && s.stepDotDone,
-                  active && s.stepDotActive,
-                ]}>
-                  {done ? (
-                    <Ionicons name="checkmark" size={10} color="#FFF" />
-                  ) : active ? (
-                    <View style={s.stepDotInner} />
-                  ) : null}
-                </View>
-                {!isLast && (
-                  <View style={[s.stepLine, (done || active) && s.stepLineDone]} />
-                )}
-              </View>
+            const stepInfo = ORDER_STATUS_STEPS.find(s => s.key === step)!;
 
-              {/* Right column: label */}
-              <View style={s.stepRight}>
-                <View style={[s.stepLabelWrap, active && s.stepLabelWrapActive]}>
-                  <Ionicons
-                    name={step.icon as any}
-                    size={15}
-                    color={active ? C.primaryMid : done ? C.green : C.text3}
-                  />
-                  <Text style={[
-                    s.stepLabel,
-                    done   && s.stepLabelDone,
-                    active && s.stepLabelActive,
-                  ]}>
-                    {step.label}
-                  </Text>
-                  {active && (
-                    <View style={s.stepActiveBadge}>
-                      <Text style={s.stepActiveBadgeTxt}>Hiện tại</Text>
+            const isReturnedStep = step === "returned";
+
+            return (
+                <View key={step} style={s.stepRow}>
+                  {/* LEFT */}
+                  <View style={s.stepLeft}>
+                    <View style={[
+                      s.stepDot,
+                      isReturnedStep
+                          ? { backgroundColor: C.orange, borderColor: C.orange }
+                          : s.stepDotDone
+                    ]}>
+                      {isReturnedStep ? (
+                          <Ionicons name="refresh" size={10} color="#FFF" />
+                      ) : (
+                          <Ionicons name="checkmark" size={10} color="#FFF" />
+                      )}
                     </View>
-                  )}
+
+                    {!isLast && (
+                        <View style={[s.stepLine, s.stepLineDone]} />
+                    )}
+                  </View>
+
+                  {/* RIGHT */}
+                  <View style={s.stepRight}>
+                    <Text style={[
+                      s.stepLabel,
+                      isReturnedStep
+                          ? { color: C.orange, fontWeight: "700" }
+                          : s.stepLabelDone
+                    ]}>
+                      {stepInfo.label}
+                    </Text>
+                  </View>
                 </View>
-              </View>
-            </View>
-          );
-        })}
-      </View>
+            );
+          })}
+        </View>
     );
   };
-
   // ─── Loading / error ──────────────────────────────────────────────────────
   if (loading) return (
     <View style={[s.container, { justifyContent: "center", alignItems: "center" }]}>
@@ -297,21 +432,101 @@ export default function OrderDetail() {
         <View style={s.card}>
           <SectionHeader icon="calculator-outline" title="Tóm tắt thanh toán" />
           <View style={s.summaryBody}>
+            {/* Phương thức thanh toán */}
             <View style={s.summaryRow}>
-              <Text style={s.summaryLabel}>Tạm tính</Text>
-              <Text style={s.summaryVal}>{Number(orderData.total).toLocaleString("vi-VN")}đ</Text>
+              <Text style={s.summaryLabel}>Thanh toán qua</Text>
+              {/* Thêm style để đảm bảo icon và chữ nằm ngang */}
+              <View style={[s.methodBadge, { flexDirection: 'row', alignItems: 'center' }]}>
+                <Ionicons
+                  name={orderData.payment_method === "VNPAY" ? "card-outline" : "cash-outline"}
+                  size={14}
+                  color={C.primaryMid}
+                  style={{ marginRight: 4 }} // Khoảng cách giữa icon và chữ
+                />
+                <Text style={s.methodVal}>
+                  {orderData.payment_method === "VNPAY" ? "Ví VNPAY" : "Tiền mặt (COD)"}
+                </Text>
+              </View>
             </View>
+
+            {/* Ngày đặt hàng */}
+            <View style={s.summaryRow}>
+              <Text style={s.summaryLabel}>Ngày đặt hàng</Text>
+              <Text style={s.summaryVal}>
+                {orderData.created_at ? new Date(orderData.created_at).toLocaleDateString("vi-VN", {
+                  day: '2-digit',
+                  month: '2-digit',
+                  year: 'numeric',
+                  hour: '2-digit',
+                  minute: '2-digit'
+                }) : "---"}
+              </Text>
+            </View>
+
+            <View style={s.summaryDivider} />
+
+            <View style={s.summaryRow}>
+                  <Text style={s.summaryLabel}>Tạm tính</Text>
+                  <Text style={s.summaryVal}>
+                    {orderData.items?.reduce((sum: number, item: any) =>
+                      sum + (Number(item.price) * Number(item.quantity)), 0
+                    ).toLocaleString("vi-VN")}đ
+                  </Text>
+                </View>
+
+            {/* Phí vận chuyển */}
             <View style={s.summaryRow}>
               <Text style={s.summaryLabel}>Phí vận chuyển</Text>
-              <Text style={[s.summaryVal, { color: C.green }]}>Miễn phí</Text>
+              <Text style={[
+                s.summaryVal,
+                { color: orderData.shipping_fee > 0 ? C.text1 : C.green }
+              ]}>
+                {orderData.shipping_fee > 0
+                  ? `${Number(orderData.shipping_fee).toLocaleString("vi-VN")}đ`
+                  : "Miễn phí"}
+              </Text>
             </View>
+            {/* --- BỔ SUNG: GIẢM GIÁ VOUCHER --- */}
+                {orderData.voucher_discount > 0 && (
+                  <View style={s.summaryRow}>
+                    <Text style={s.summaryLabel}>Voucher giảm giá</Text>
+                    <Text style={[s.summaryVal, { color: C.sale }]}>
+                      -{Number(orderData.voucher_discount).toLocaleString("vi-VN")}đ
+                    </Text>
+                  </View>
+                )}
+
+                {/* --- BỔ SUNG: GIẢM GIÁ ĐIỂM THƯỞNG --- */}
+                {orderData.points_discount > 0 && (
+                  <View style={s.summaryRow}>
+                    <Text style={s.summaryLabel}>Dùng điểm thưởng</Text>
+                    <Text style={[s.summaryVal, { color: C.sale }]}>
+                      -{Number(orderData.points_discount).toLocaleString("vi-VN")}đ
+                    </Text>
+                  </View>
+                )}
+
             <View style={s.summaryDivider} />
+
+            {/* Tổng thanh toán */}
             <View style={s.summaryRow}>
               <Text style={s.summaryTotalLabel}>Tổng thanh toán</Text>
               <Text style={s.summaryTotalVal}>{Number(orderData.total).toLocaleString("vi-VN")}đ</Text>
             </View>
           </View>
         </View>
+
+        {/* Check logic: Status là PENDING (chấp hết hoa thường) và Method là VNPAY */}
+        {orderData?.status?.toUpperCase() === "PENDING" && orderData?.payment_method === "VNPAY" && (
+          <TouchableOpacity
+            style={s.rePayBtn}
+            onPress={handleRePayment}
+            activeOpacity={0.85}
+          >
+            <Ionicons name="card-outline" size={20} color="#FFF" />
+            <Text style={s.rePayBtnTxt}>Thanh toán ngay qua VNPAY</Text>
+          </TouchableOpacity>
+        )}
 
         {/* ── CANCEL ───────────────────────────────────────────── */}
         {canCancel && (
@@ -328,8 +543,19 @@ export default function OrderDetail() {
           </View>
         )}
 
+        {orderData.status === "shipping" && (
+            <TouchableOpacity
+                style={s.completeBtn}
+                onPress={handleConfirmReceived}
+                activeOpacity={0.85}
+            >
+              <Ionicons name="checkmark-circle-outline" size={18} color="#FFF" />
+              <Text style={s.completeBtnTxt}>Đã nhận hàng</Text>
+            </TouchableOpacity>
+        )}
+
         {/* ── REVIEW ───────────────────────────────────────────── */}
-        {orderData.status === "success" && (
+        {orderData.status === "completed" && (
           <View style={s.card}>
             <SectionHeader icon="star-outline" title="Đánh giá sản phẩm" />
             <View style={s.reviewList}>
@@ -357,6 +583,73 @@ export default function OrderDetail() {
 
         <View style={{ height: 20 }} />
       </ScrollView>
+      {/* ── MODAL VNPAY WEBVIEW ────────────────────────────────── */}
+            <Modal
+              visible={showWebView}
+              animationType="slide"
+              onRequestClose={() => setShowWebView(false)}
+            >
+              <SafeAreaView style={{ flex: 1, backgroundColor: "#fff" }}>
+                {/* Header của Modal */}
+                <View style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  padding: 15,
+                  borderBottomWidth: 1,
+                  borderBottomColor: '#eee'
+                }}>
+                  <TouchableOpacity onPress={() => setShowWebView(false)}>
+                    <Ionicons name="close" size={28} color={C.text1} />
+                  </TouchableOpacity>
+                  <Text style={{ fontWeight: '800', fontSize: 16 }}>Thanh toán VNPAY</Text>
+                  <View style={{ width: 28 }} />
+                </View>
+
+                {/* WebView phải chứa các thuộc tính bên trong nó */}
+                <WebView
+                  source={{ uri: paymentUrl }}
+                  startInLoadingState={true}
+                  renderLoading={() => (
+                    <ActivityIndicator
+                      size="large"
+                      color={C.primaryMid}
+                      style={{ position: 'absolute', top: '50%', left: '45%' }}
+                    />
+                  )}
+                  onNavigationStateChange={async (navState) => {
+                    if (navState.url.includes("vnp_ResponseCode")) {
+                      if (navState.url.includes("vnp_ResponseCode=00")) {
+                        setShowWebView(false);
+                        setLoading(true);
+                        try {
+                          const token = await AsyncStorage.getItem("token");
+                          const res = await fetch(`${BASE_URL}/api/orders/confirm-success`, {
+                            method: "POST",
+                            headers: {
+                              Authorization: `Bearer ${token}`,
+                              "Content-Type": "application/json"
+                            },
+                            body: JSON.stringify({ orderId: orderId })
+                          });
+                          if (res.ok) {
+                            Alert.alert("Thành công", "Đơn hàng của bạn đã được xác nhận!");
+                            fetchDetail();
+                          }
+                        } catch (error) {
+                          Alert.alert("Lỗi", "Không thể cập nhật trạng thái đơn hàng");
+                        } finally {
+                          setLoading(false);
+                        }
+                      } else {
+                        setShowWebView(false);
+                        Alert.alert("Thanh toán chưa hoàn tất", "Giao dịch đã bị hủy hoặc gặp lỗi.");
+                      }
+                    }
+                  }}
+                />
+              </SafeAreaView>
+            </Modal>
     </SafeAreaView>
   );
 }
@@ -526,4 +819,51 @@ const s = StyleSheet.create({
     borderWidth: 1, borderColor: C.primaryTint,
   },
   reviewBtnTxt: { flex: 1, fontSize: 14, color: C.primaryMid, fontWeight: "600" },
+
+  rePayBtn: {
+    flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8,
+    backgroundColor: C.green, // Màu xanh lá cho nó uy tín
+    borderRadius: 16,
+    paddingVertical: 15,
+    marginBottom: 10, // Cách nút Huỷ ra một tí
+    elevation: 3,
+    shadowColor: C.green, shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2, shadowRadius: 8,
+  },
+  rePayBtnTxt: { color: "#FFF", fontWeight: "800", fontSize: 16 },
+  methodBadge: {
+    backgroundColor: C.primarySoft,
+    borderRadius: 12,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    alignSelf: "flex-start",
+  },
+
+  methodVal: {
+    fontSize: 13,
+    fontWeight: "700",
+    color: C.primaryMid,
+  },
+
+  completeBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+    backgroundColor: "#00AB56",
+    borderRadius: 16,
+    paddingVertical: 15,
+    marginBottom: 10,
+    elevation: 3,
+    shadowColor: "#00AB56",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+  },
+
+  completeBtnTxt: {
+    color: "#FFF",
+    fontWeight: "800",
+    fontSize: 16,
+  },
 });

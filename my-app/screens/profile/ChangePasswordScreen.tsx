@@ -7,6 +7,7 @@ import {
 import { useNavigation } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
 import api from "../../services/api";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 // ─── Palette ──────────────────────────────────────────────────────────────────
 const C = {
@@ -89,6 +90,7 @@ export default function ChangePasswordScreen() {
   // ==========================
   // API LOGIC (unchanged)
   // ==========================
+
   const changePassword = async () => {
     if (!oldPass || !newPass || !confirmPass)
       return alert("Vui lòng nhập đầy đủ thông tin!");
@@ -97,13 +99,26 @@ export default function ChangePasswordScreen() {
 
     setLoading(true);
     try {
-      const res = await api.put("/profile/change-password", {
-        old_password: oldPass,
-        new_password: newPass,
-      });
+      const token = await AsyncStorage.getItem("token");
+
+      const res = await api.put(
+          "/profile/change-password",
+          {
+            old_password: oldPass,
+            new_password: newPass,
+          },
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+      );
+
       alert(res.data.message || "Đổi mật khẩu thành công!");
       navigation.goBack();
     } catch (err: any) {
+      console.log("CHANGE PASSWORD STATUS:", err?.response?.status);
+      console.log("CHANGE PASSWORD DATA:", err?.response?.data);
       alert(err.response?.data?.message || "Không thể đổi mật khẩu");
     } finally {
       setLoading(false);

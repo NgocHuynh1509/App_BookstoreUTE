@@ -17,6 +17,7 @@ import ChangeEmailScreen from "../screens/profile/ChangeEmailScreen";
 import CartScreen from "../screens/profile/CartScreen";
 import OrderHistoryScreen from "../screens/profile/OrderHistory";
 import OrderDetailScreen from "../screens/profile/OrderDetail";
+import ReviewScreen from "../screens/ReviewScreen";
 
 import BookDetailScreen from "../screens/BookDetail";
 import SearchResultScreen from "../screens/SearchResultScreen";
@@ -54,6 +55,7 @@ export default function AppNavigator() {
       <Stack.Screen name="SearchResult" component={SearchResultScreen} />
       <Stack.Screen name="OrderHistory" component={OrderHistoryScreen} />
       <Stack.Screen name="OrderDetail" component={OrderDetailScreen} />
+      <Stack.Screen name="ReviewScreen" component={ReviewScreen} />
 
       <Stack.Screen name="Chat" component={ChatScreen} />
     </Stack.Navigator>

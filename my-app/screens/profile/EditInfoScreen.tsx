@@ -10,8 +10,9 @@ import * as ImagePicker from "expo-image-picker";
 import { useAuth } from "../../hooks/useAuth";
 import { Ionicons } from "@expo/vector-icons";
 import Constants from "expo-constants";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
-const BASE_URL = Constants.expoConfig.extra.BASE_URL;
+const BASE_URL = Constants.expoConfig?.extra?.API_URL;
 
 // ─── Palette ──────────────────────────────────────────────────────────────────
 const C = {
@@ -104,17 +105,35 @@ export default function EditInfoScreen() {
   useEffect(() => {
     const loadProfile = async () => {
       try {
-        const res  = await api.get("/profile");
+        const token = await AsyncStorage.getItem("token");
+        console.log("EDIT PROFILE TOKEN:", token);
+        console.log("EDIT PROFILE URL:", `${api.defaults.baseURL}/profile`);
+
+        if (!token) {
+          Alert.alert("Thông báo", "Bạn chưa đăng nhập");
+          return;
+        }
+
+        const res = await api.get("/profile", {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
         const data = res.data;
-        setFullName(data.full_name || "");
-        setUsername(data.username  || "");
-        setEmail(data.email        || "");
-        setAddress(data.address    || "");
-        setPhone(data.phone        || "");
-        setAvatar(data.avatar ? `${BASE_URL}/uploads/${data.avatar}` : "");
         console.log("PROFILE DATA:", data);
-      } catch (error) {
+
+        setFullName(data.full_name ?? data.fullName ?? "");
+        setUsername(data.username ?? "");
+        setEmail(data.email ?? "");
+        setAddress(data.address ?? "");
+        setPhone(data.phone ?? "");
+        setAvatar(data.avatar ? `${BASE_URL}/uploads/${data.avatar}` : "");
+      } catch (error: any) {
+        console.log("LOAD PROFILE STATUS:", error?.response?.status);
+        console.log("LOAD PROFILE DATA:", error?.response?.data);
         console.log("Lỗi load profile:", error);
+        Alert.alert("Lỗi", "Không tải được thông tin cá nhân");
       }
     };
     loadProfile();
@@ -130,49 +149,151 @@ export default function EditInfoScreen() {
 
   const uploadAvatar = async (image: any) => {
     try {
+      const token = await AsyncStorage.getItem("token");
+      console.log("UPLOAD TOKEN:", token);
+
       const formData = new FormData();
-      formData.append("avatar", { uri: image.uri, name: "avatar.jpg", type: "image/jpeg" } as any);
+      formData.append("avatar", {
+        uri: image.uri,
+        name: "avatar.jpg",
+        type: "image/jpeg",
+      } as any);
+
       const res = await api.put("/profile/avatar", formData, {
-        headers: { "Content-Type": "multipart/form-data", Accept: "application/json" },
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "multipart/form-data",
+          Accept: "application/json",
+        },
         transformRequest: () => formData,
       });
+
       setAvatar(`${BASE_URL}/uploads/${res.data.avatar}`);
       alert("Đổi avatar thành công!");
-    } catch (error) {
+    } catch (error: any) {
+      console.log("UPLOAD STATUS:", error?.response?.status);
+      console.log("UPLOAD DATA:", error?.response?.data);
       console.log("UPLOAD ERROR:", error);
-      alert("Không thể upload avatar!");
+      alert(error?.response?.data?.message || "Không thể upload avatar!");
     }
   };
 
   const sendOTP = async () => {
     try {
-      const res = await api.post("/profile/send-otp", { new_email: newEmail });
+      const token = await AsyncStorage.getItem("token");
+      console.log("SEND OTP TOKEN:", token);
+      console.log("SEND OTP URL:", `${api.defaults.baseURL}/profile/send-otp`);
+      console.log("NEW EMAIL:", newEmail);
+
+      if (!token) {
+        Alert.alert("Thông báo", "Bạn chưa đăng nhập");
+        return;
+      }
+
+      const res = await api.post(
+          "/profile/send-otp",
+          { new_email: newEmail },
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+      );
+
+      console.log("SEND OTP RESPONSE:", res.data);
+
       setOtpServer(res.data.otp);
-      alert("Đã gửi OTP đến email mới!");
+      Alert.alert("Thành công", "Đã gửi OTP đến email mới!");
       setStep("verify");
-    } catch { alert("Không thể gửi OTP"); }
+    } catch (error: any) {
+      console.log("SEND OTP STATUS:", error?.response?.status);
+      console.log("SEND OTP DATA:", error?.response?.data);
+      console.log("SEND OTP ERROR:", error);
+
+      Alert.alert(
+          "Lỗi",
+          error?.response?.data?.message || "Không thể gửi OTP"
+      );
+    }
   };
 
   const verifyOTP = async () => {
     try {
-      await api.post("/profile/verify-otp", {
-        otp_client: otp, otp_server: otpServer, new_email: newEmail,
-      });
-      alert("Đổi email thành công!");
-      setEmail(newEmail); setStep("none"); setNewEmail(""); setOtp(""); setOtpServer("");
+      const token = await AsyncStorage.getItem("token");
+      if (!token) {
+        Alert.alert("Thông báo", "Bạn chưa đăng nhập");
+        return;
+      }
+
+      const res = await api.post(
+          "/profile/verify-otp",
+          {
+            otp_client: otp,
+            otp_server: otpServer,
+            new_email: newEmail,
+          },
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+      );
+
+      await AsyncStorage.setItem("token", res.data.token);
+      await loadUser();
+
+      Alert.alert("Thành công", "Đổi email thành công!");
+      setEmail(newEmail);
+      setStep("none");
+      setNewEmail("");
+      setOtp("");
+      setOtpServer("");
     } catch (error: any) {
-      alert(error.response?.data?.message || "OTP không chính xác!");
+      console.log("VERIFY OTP STATUS:", error?.response?.status);
+      console.log("VERIFY OTP DATA:", error?.response?.data);
+      Alert.alert("Lỗi", error?.response?.data?.message || "OTP không chính xác!");
     }
   };
 
   const saveInfo = async () => {
     try {
-      const res = await api.put("/profile/info", { full_name: fullName, address, phone });
-      alert(res.data.message);
+      const token = await AsyncStorage.getItem("token");
+      console.log("SAVE INFO TOKEN:", token);
+      console.log("SAVE INFO URL:", `${api.defaults.baseURL}/profile/info`);
+
+      if (!token) {
+        Alert.alert("Thông báo", "Bạn chưa đăng nhập");
+        return;
+      }
+
+      const res = await api.put(
+          "/profile/info",
+          {
+            full_name: fullName,
+            address,
+            phone,
+          },
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+      );
+
+      console.log("SAVE INFO RESPONSE:", res.data);
+      Alert.alert("Thành công", res.data.message);
+
+      await loadUser();
       navigation.goBack();
     } catch (error: any) {
-      console.log(error.response?.data);
-      alert(error.response?.data?.message || "Không thể cập nhật thông tin. Vui lòng thử lại!");
+      console.log("SAVE INFO STATUS:", error?.response?.status);
+      console.log("SAVE INFO DATA:", error?.response?.data);
+      console.log("SAVE INFO ERROR:", error);
+
+      Alert.alert(
+          "Lỗi",
+          error?.response?.data?.message || "Không thể cập nhật thông tin. Vui lòng thử lại!"
+      );
     }
   };
 
