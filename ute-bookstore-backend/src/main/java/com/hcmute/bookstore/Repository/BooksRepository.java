@@ -30,4 +30,14 @@ public interface BooksRepository extends JpaRepository<Books, String> {
     );
 
     long countByQuantityLessThanEqual(int quantity);
+
+    @org.springframework.data.jpa.repository.Query(
+            "select coalesce(sum(b.quantity), 0) from Books b"
+    )
+    Long sumStockQuantity();
+
+    @org.springframework.data.jpa.repository.Query(
+            "select c.categoryName, count(b) from Books b left join b.category c group by c.categoryName"
+    )
+    java.util.List<Object[]> countBooksByCategory();
 }

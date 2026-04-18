@@ -17,19 +17,20 @@ import java.util.*;
 @RequiredArgsConstructor
 public class VNPayService {
 
-    @Value("${vnpay.tmnCode}")
+    @Value("${vnpay.tmnCode:}")
     private String tmnCode;
 
-    @Value("${vnpay.hashSecret}")
+    @Value("${vnpay.hashSecret:}")
     private String hashSecret; // CHỈ DÙNG DUY NHẤT BIẾN NÀY
 
-    @Value("${vnpay.payUrl}")
+    @Value("${vnpay.payUrl:}")
     private String payUrl;
 
-    @Value("${vnpay.returnUrl}")
+    @Value("${vnpay.returnUrl:}")
     private String returnUrl;
 
     public String createPaymentUrl(PaymentDTO dto, HttpServletRequest request) throws UnsupportedEncodingException {
+        ensureConfigured();
         String vnp_Version = "2.1.0";
         String vnp_Command = "pay";
         String vnp_TxnRef = dto.getOrderId();
@@ -129,5 +130,14 @@ public class VNPayService {
         System.out.println("DEBUG RETURN - Chữ ký VNPAY gửi: " + vnp_SecureHash);
 
         return signValue.equalsIgnoreCase(vnp_SecureHash);
+    }
+
+    private void ensureConfigured() {
+        if (tmnCode == null || tmnCode.isBlank()
+                || hashSecret == null || hashSecret.isBlank()
+                || payUrl == null || payUrl.isBlank()
+                || returnUrl == null || returnUrl.isBlank()) {
+            throw new IllegalStateException("VNPay config missing. Set vnpay.tmnCode, vnpay.hashSecret, vnpay.payUrl, vnpay.returnUrl");
+        }
     }
 }

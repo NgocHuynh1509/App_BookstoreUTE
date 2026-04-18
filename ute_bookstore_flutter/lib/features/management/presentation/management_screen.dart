@@ -1,40 +1,57 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'package:ute_bookstore_flutter/app/providers.dart';
-import 'package:ute_bookstore_flutter/chat/presentation/chat_list_screen.dart';
+import '../../../app/providers.dart';
+import '../../../widgets/placeholder_screen.dart';
 import '../../customers/presentation/customers_screen.dart';
+import '../../auth/presentation/admin_login_screen.dart';
 
 class ManagementScreen extends ConsumerWidget {
   const ManagementScreen({super.key});
 
+  Future<void> _logout(BuildContext context, WidgetRef ref) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Đăng xuất'),
+        content: const Text('Bạn có chắc muốn đăng xuất khỏi hệ thống?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Hủy'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Đăng xuất'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm == true) {
+      await ref.read(sessionStorageProvider).clear();
+      if (!context.mounted) return;
+      Navigator.of(context).pushAndRemoveUntil(
+        MaterialPageRoute(builder: (_) => const AdminLoginScreen()),
+        (_) => false,
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final chatRepo = ref.watch(chatRepositoryProvider);
-
     final items = [
-      _MenuItem(
-        title: 'Quản lý người dùng',
-        icon: Icons.people_outline,
-        builder: (_) => const CustomersScreen(),
-      ),
-      _MenuItem(
-        title: 'Khuyến mãi',
-        icon: Icons.local_offer_outlined,
-      ),
-      _MenuItem(
-        title: 'Doanh thu',
-        icon: Icons.insights_outlined,
-      ),
-      _MenuItem(
-        title: 'Dòng tiền',
-        icon: Icons.account_balance_wallet_outlined,
-      ),
-      _MenuItem(
-        title: 'Tin nhắn / hỗ trợ',
-        icon: Icons.chat_bubble_outline,
-        builder: (_) => ChatListScreen(repository: chatRepo),
-      ),
+      _MenuItem('Quản lý người dùng', Icons.people_outline, screen: const CustomersScreen()),
+      _MenuItem('Danh mục', Icons.category_outlined, screen: const PlaceholderScreen(title: 'Danh mục')),
+      _MenuItem('Mã giảm giá', Icons.local_offer_outlined, screen: const PlaceholderScreen(title: 'Mã giảm giá')),
+      _MenuItem('Nhân viên', Icons.badge_outlined, screen: const PlaceholderScreen(title: 'Nhân viên')),
+      _MenuItem('Đánh giá', Icons.star_outline, screen: const PlaceholderScreen(title: 'Đánh giá')),
+      _MenuItem('Thông báo', Icons.notifications_none_rounded, screen: const PlaceholderScreen(title: 'Thông báo')),
+      _MenuItem('Báo cáo', Icons.summarize_outlined, screen: const PlaceholderScreen(title: 'Báo cáo')),
+      _MenuItem('Thống kê', Icons.insights_outlined, screen: const PlaceholderScreen(title: 'Thống kê')),
+      _MenuItem('Cài đặt', Icons.settings_outlined, screen: const PlaceholderScreen(title: 'Cài đặt')),
+      _MenuItem('Hồ sơ', Icons.account_circle_outlined, screen: const PlaceholderScreen(title: 'Hồ sơ')),
+      _MenuItem('Đăng xuất', Icons.logout, onTap: () => _logout(context, ref)),
     ];
 
     return Scaffold(
@@ -64,15 +81,15 @@ class ManagementScreen extends ConsumerWidget {
             ),
             trailing: const Icon(Icons.chevron_right),
             onTap: () {
-              if (item.builder != null) {
+              if (item.onTap != null) {
+                item.onTap!();
+                return;
+              }
+              if (item.screen != null) {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(
-                    builder: item.builder!,
-                  ),
+                  MaterialPageRoute(builder: (_) => item.screen!),
                 );
-              } else {
-                debugPrint("Chưa có màn cho: ${item.title}");
               }
             },
           );
@@ -85,11 +102,8 @@ class ManagementScreen extends ConsumerWidget {
 class _MenuItem {
   final String title;
   final IconData icon;
-  final WidgetBuilder? builder;
+  final Widget? screen;
+  final VoidCallback? onTap;
 
-  _MenuItem({
-    required this.title,
-    required this.icon,
-    this.builder,
-  });
+  _MenuItem(this.title, this.icon, {this.screen, this.onTap});
 }

@@ -6,9 +6,13 @@ public class DashboardSummaryResponse {
 
     private long totalBooks;
     private long totalOrders;
+    private long totalUsers;
     private BigDecimal revenueDay;
     private BigDecimal revenueMonth;
     private BigDecimal revenueYear;
+    private String revenueDayFormatted;
+    private String revenueMonthFormatted;
+    private String revenueYearFormatted;
     private long pendingOrders;
     private long lowStockBooks;
     private long unreadMessages;
@@ -27,6 +31,14 @@ public class DashboardSummaryResponse {
 
     public void setTotalOrders(long totalOrders) {
         this.totalOrders = totalOrders;
+    }
+
+    public long getTotalUsers() {
+        return totalUsers;
+    }
+
+    public void setTotalUsers(long totalUsers) {
+        this.totalUsers = totalUsers;
     }
 
     public BigDecimal getRevenueDay() {
@@ -53,6 +65,30 @@ public class DashboardSummaryResponse {
         this.revenueYear = revenueYear;
     }
 
+    public String getRevenueDayFormatted() {
+        return revenueDayFormatted;
+    }
+
+    public void setRevenueDayFormatted(String revenueDayFormatted) {
+        this.revenueDayFormatted = revenueDayFormatted;
+    }
+
+    public String getRevenueMonthFormatted() {
+        return revenueMonthFormatted;
+    }
+
+    public void setRevenueMonthFormatted(String revenueMonthFormatted) {
+        this.revenueMonthFormatted = revenueMonthFormatted;
+    }
+
+    public String getRevenueYearFormatted() {
+        return revenueYearFormatted;
+    }
+
+    public void setRevenueYearFormatted(String revenueYearFormatted) {
+        this.revenueYearFormatted = revenueYearFormatted;
+    }
+
     public long getPendingOrders() {
         return pendingOrders;
     }
@@ -77,4 +113,3 @@ public class DashboardSummaryResponse {
         this.unreadMessages = unreadMessages;
     }
 }
-
