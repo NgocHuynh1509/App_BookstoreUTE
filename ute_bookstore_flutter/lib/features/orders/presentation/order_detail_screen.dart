@@ -320,7 +320,7 @@ class OrderDetailScreen extends ConsumerWidget {
                     ),
                     if (order.voucherDiscount > 0)
                       _DetailRow(
-                        label: 'Mã giảm giá',
+                        label: 'Voucher giảm giá',
                         value: '-${formatCurrency(order.voucherDiscount)}',
                         valueColor: Colors.red,
                       ),

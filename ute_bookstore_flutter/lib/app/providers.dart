@@ -7,6 +7,9 @@ import '../features/auth/data/auth_repository.dart';
 import '../features/dashboard/data/dashboard_api.dart';
 import '../features/orders/data/order_api.dart';
 import '../features/products/data/product_api.dart';
+import '../chat/data/chat_api.dart';
+import '../chat/data/socket_service.dart';
+import '../chat/data/chat_repository.dart';
 import '../features/customers/data/customer_api.dart';
 
 final sessionStorageProvider = Provider<SessionStorage>((ref) {
@@ -34,6 +37,21 @@ final orderApiProvider = Provider<OrderApi>((ref) {
   return OrderApi(ref.read(apiClientProvider));
 });
 
+final chatApiProvider = Provider<ChatApi>((ref) {
+  final apiClient = ref.watch(apiClientProvider);
+  return ChatApi(apiClient);
+});
+
+final socketServiceProvider = Provider<SocketService>((ref) {
+  final apiClient = ref.watch(apiClientProvider);
+  return SocketService(apiClient);
+});
+
+final chatRepositoryProvider = Provider<ChatRepository>((ref) {
+  final api = ref.watch(chatApiProvider);
+  final socket = ref.watch(socketServiceProvider);
+  return ChatRepository(api, socket);
+});
 final customerApiProvider = Provider<CustomerApi>(
       (ref) => CustomerApi(ref.read(apiClientProvider)),
 );

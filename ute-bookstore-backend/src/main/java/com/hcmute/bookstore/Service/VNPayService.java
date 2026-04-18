@@ -99,7 +99,6 @@ public class VNPayService {
     }
 
     public boolean validateReturn(Map<String, String> vnpParams) {
-        ensureConfigured();
         String vnp_SecureHash = vnpParams.get("vnp_SecureHash");
         // 1. Phải dùng TreeMap để các tham số trả về được sắp xếp đúng A-Z
         Map<String, String> fields = new TreeMap<>();
