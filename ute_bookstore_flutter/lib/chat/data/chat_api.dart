@@ -27,9 +27,7 @@ class ChatApi {
     final response = await _client.dio.post(
       '/chat/upload',
       data: formData,
-      options: Options(
-        headers: {'Content-Type': 'multipart/form-data'},
-      ),
+
     );
     return response.data; // Trả về text URL: "/chat/media/..."
   }

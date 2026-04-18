@@ -10,6 +10,7 @@ class ChatMessage {
   final DateTime createdAt;
   final String? userName; // Người gửi
   final String? receiverName; // Người nhận
+  final String? reaction; 
 
   ChatMessage({
     this.id,

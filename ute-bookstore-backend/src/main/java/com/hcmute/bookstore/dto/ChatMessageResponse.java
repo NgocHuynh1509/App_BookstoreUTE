@@ -1,6 +1,7 @@
 package com.hcmute.bookstore.dto;
 
 import com.hcmute.bookstore.Entity.MessageType;
+import com.hcmute.bookstore.Entity.ReactionType;
 import lombok.Builder;
 import lombok.Data;
 
@@ -17,6 +18,8 @@ public class ChatMessageResponse {
     private String senderRole;
     private LocalDateTime createdAt;
     private String receiverName;
+
+    private String reaction;
 
     // Thông tin Reply
     private String replyToContent;

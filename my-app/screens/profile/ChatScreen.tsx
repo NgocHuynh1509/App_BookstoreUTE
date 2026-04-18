@@ -1,6 +1,8 @@
+
 import React, { useState, useEffect, useRef } from "react";
 import { View, Text, StyleSheet, TouchableOpacity, FlatList, TextInput, KeyboardAvoidingView, Platform, ActivityIndicator, Alert, Image } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { Modal } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import * as ImagePicker from 'expo-image-picker';
 import { Client } from "@stomp/stompjs";
@@ -17,6 +19,8 @@ interface Message {
     messageType: 'TEXT' | 'IMAGE' | 'VIDEO' | 'PRODUCT' | 'ORDER';
     senderRole: 'USER' | 'ADMIN';
     createdAt: string;
+    // ✅ THÊM
+        reaction?: string;
 }
 
 const BASE_URL = Constants.expoConfig?.extra?.API_URL || "http://192.168.1.22:8080";
@@ -29,6 +33,51 @@ const ChatScreen: React.FC = () => {
     const [userData, setUserData] = useState<{username: string, token: string} | null>(null);
     const stompClient = useRef<Client | null>(null);
     const headerHeight = useHeaderHeight(); // Lấy chiều cao header tự động
+    const [reactionModalVisible, setReactionModalVisible] = useState(false);
+    const [selectedMessage, setSelectedMessage] = useState<Message | null>(null);
+    const REACTIONS = [
+        { type: 'LIKE', emoji: '👍' },
+        { type: 'LOVE', emoji: '❤️' },
+        { type: 'HAHA', emoji: '😆' },
+        { type: 'WOW', emoji: '😮' },
+        { type: 'SAD', emoji: '😢' },
+        { type: 'ANGRY', emoji: '😡' },
+    ];
+    const [page, setPage] = useState(0);
+    const [hasMore, setHasMore] = useState(true);
+    const [loadingMore, setLoadingMore] = useState(false);
+    const [showTimeId, setShowTimeId] = useState<string | null>(null);
+
+    const formatTime = (dateStr: string) => {
+        const date = new Date(dateStr);
+        return date.toLocaleTimeString('vi-VN', {
+            hour: '2-digit',
+            minute: '2-digit'
+        });
+    };
+
+    const formatDateLabel = (dateStr: string) => {
+        const date = new Date(dateStr);
+        const now = new Date();
+
+        const isToday =
+            date.getDate() === now.getDate() &&
+            date.getMonth() === now.getMonth() &&
+            date.getFullYear() === now.getFullYear();
+
+        const yesterday = new Date();
+        yesterday.setDate(now.getDate() - 1);
+
+        const isYesterday =
+            date.getDate() === yesterday.getDate() &&
+            date.getMonth() === yesterday.getMonth() &&
+            date.getFullYear() === yesterday.getFullYear();
+
+        if (isToday) return "Hôm nay";
+        if (isYesterday) return "Hôm qua";
+
+        return date.toLocaleDateString("vi-VN");
+    };
 
     useEffect(() => {
         const getUserData = async () => {
@@ -59,28 +108,57 @@ const ChatScreen: React.FC = () => {
     }, [activeTab, userData]);
 
     const initChat = async () => {
-        setLoading(true);
-        await loadHistory();
+        setLoading(true); // thêm
+        setMessages([]);
+        setPage(0);
+        setHasMore(true);
+
+        await loadHistory(0);
         await connectWebSocket();
-        setLoading(false);
+
+        setLoading(false); // 🔥 QUAN TRỌNG
     };
+    const loadHistory = async (nextPage = 0) => {
+        if (!userData || !hasMore) return;
 
-    // Trong loadHistory: Đảm bảo dữ liệu nhận về được hiển thị đúng
-    const loadHistory = async () => {
-        if (!userData) return;
+        if (nextPage !== 0) {
+            setLoadingMore(true);
+        }
+
         try {
-            // API này hiện tại đã trả về List<ChatMessageResponse> bao gồm cả tin nhắn Admin gửi
-            const res = await axios.get(`${BASE_URL}/chat/history/${userData.username}`, {
-                headers: { Authorization: `Bearer ${userData.token}` }
-            });
+            const res = await axios.get(
+                `${BASE_URL}/chat/history/${userData.username}?page=${nextPage}&size=20`,
+                {
+                    headers: { Authorization: `Bearer ${userData.token}` }
+                }
+            );
 
-            // Vì FlatList dùng 'inverted', tin nhắn mới nhất phải ở đầu mảng
-            // Nếu Backend trả về DESC (mới nhất trước) thì chỉ cần set thẳng
-            setMessages(res.data);
+            const newMessages = res.data;
+
+            if (newMessages.length === 0) {
+                setHasMore(false);
+            } else {
+                setMessages(prev => {
+                    const merged = [...prev, ...newMessages];
+
+                    // 🔥 remove duplicate theo id
+                    const unique = merged.filter(
+                        (msg, index, self) =>
+                            index === self.findIndex(m => m.id === msg.id)
+                    );
+
+                    return unique;
+                });
+                setPage(nextPage);
+            }
+
         } catch (e) {
             console.error("History Error", e);
+        } finally {
+            setLoadingMore(false);
         }
     };
+
 
 
 
@@ -113,6 +191,38 @@ const ChatScreen: React.FC = () => {
         setMessages(prev => [localMsg, ...prev]);
         setInputText("");
     };
+    const sendReaction = (type: string) => {
+        if (!selectedMessage || !stompClient.current?.connected || !userData) return;
+
+        if (selectedMessage.id.startsWith("temp-")) {
+            Alert.alert("Thông báo", "Tin nhắn chưa gửi xong");
+            return;
+        }
+
+        const payload = {
+            messageId: selectedMessage.id,
+            partnerName: "admin",
+            reaction: type
+        };
+
+        console.log("🔥 SEND REACTION:", payload);
+
+        stompClient.current.publish({
+            destination: "/app/chat.react",
+            body: JSON.stringify(payload),
+        });
+
+        // ✅ THÊM ĐOẠN NÀY (QUAN TRỌNG)
+            setMessages(prev =>
+                prev.map(msg =>
+                    msg.id === selectedMessage.id
+                        ? { ...msg, reaction: type }
+                        : msg
+                )
+            );
+
+        setReactionModalVisible(false);
+    };
 
     const connectWebSocket = async () => {
         if (!userData) return;
@@ -128,12 +238,43 @@ const ChatScreen: React.FC = () => {
                     client.subscribe(`/user/queue/messages`, (message) => {
                         const newMessage = JSON.parse(message.body);
 
-                        // Kiểm tra tránh trùng tin nhắn do Optimistic UI khi chính mình gửi
                         setMessages((prev) => {
+                            // 🔥 tìm tin nhắn temp trùng nội dung
+                            const tempIndex = prev.findIndex(
+                                m =>
+                                    m.id.startsWith("temp-") &&
+                                    Math.abs(new Date(m.createdAt).getTime() - new Date(newMessage.createdAt).getTime()) < 5000
+                            );
+
+                            // ✅ nếu có → replace
+                            if (tempIndex !== -1) {
+                                const updated = [...prev];
+                                updated[tempIndex] = newMessage;
+                                return updated;
+                            }
+
+                            // ❌ tránh duplicate
                             const isExist = prev.some(m => m.id === newMessage.id);
-                            if (isExist) return prev;
+                            if (isExist) {
+                                console.log("⚠️ DUPLICATE MESSAGE:", newMessage.id);
+                                return prev;
+                            }
+
                             return [newMessage, ...prev];
                         });
+                    });
+                // 2. Subscribe nhận Reaction REALTIME
+                    client.subscribe(`/user/queue/reactions`, (data) => {
+                        const updatedMessage = JSON.parse(data.body);
+
+                        // Cập nhật lại tin nhắn trong danh sách có ID tương ứng
+                        setMessages((prev) =>
+                            prev.map(msg =>
+                                msg.id === updatedMessage.id
+                                ? { ...msg, reaction: updatedMessage.reaction }
+                                : msg
+                            )
+                        );
                     });
             },
             onStompError: (frame) => console.log("❌ LỖI BROKER:", frame.headers['message']),
@@ -207,29 +348,6 @@ const ChatScreen: React.FC = () => {
             }
         };
 
-//     const sendMessage = async () => {
-//         if (!inputText.trim() || !userData || !stompClient.current?.connected) return;
-//         const chatRequest = {
-//             userName: userData.username,
-//             receiverName: "admin",
-//             senderRole: "USER",
-//             content: inputText.trim(),
-//             messageType: "TEXT",
-//         };
-//         stompClient.current.publish({
-//             destination: "/app/chat.sendMessage",
-//             body: JSON.stringify(chatRequest),
-//         });
-//         const localMsg: Message = {
-//             id: Date.now().toString(),
-//             content: inputText.trim(),
-//             senderRole: 'USER',
-//             messageType: 'TEXT',
-//             createdAt: new Date().toISOString()
-//         };
-//         setMessages(prev => [localMsg, ...prev]);
-//         setInputText("");
-//     };
 
     return (
             <SafeAreaView style={styles.container} edges={['top']}>
@@ -257,25 +375,116 @@ const ChatScreen: React.FC = () => {
                                 <>
                                     <FlatList
                                         data={messages}
-                                        keyExtractor={(item) => item.id}
-                                        renderItem={({item}) => {
+                                        keyExtractor={(item, index) => item.id + "-" + index}
+                                        renderItem={({ item, index }) => {
                                             const isMe = item.senderRole === "USER";
+
+                                            // 🔥 lấy message trước (do inverted nên là index + 1)
+                                            const prev = messages[index + 1];
+
+                                            const showDate =
+                                                !prev ||
+                                                formatDateLabel(prev.createdAt) !== formatDateLabel(item.createdAt);
                                             return (
+                                                <>
+                                                {/* ✅ Divider ngày */}
+                                                            {showDate && (
+                                                                <View style={{ alignItems: 'center', marginVertical: 10 }}>
+                                                                    <Text style={{
+                                                                        fontSize: 12,
+                                                                        color: '#666',
+                                                                        backgroundColor: '#EAEAEA',
+                                                                        paddingHorizontal: 10,
+                                                                        paddingVertical: 4,
+                                                                        borderRadius: 10
+                                                                    }}>
+                                                                        {formatDateLabel(item.createdAt)}
+                                                                    </Text>
+                                                                </View>
+                                                            )}
+
+                                                <TouchableOpacity
+                                                    onPress={() => {
+                                                        setShowTimeId(prev => prev === item.id ? null : item.id);
+                                                    }}
+
+                                                    onLongPress={() => {
+                                                        setSelectedMessage(item);
+                                                        setReactionModalVisible(true);
+                                                    }}
+                                                    activeOpacity={0.8}
+                                                >
                                                 <View style={[styles.messageWrapper, isMe ? styles.myMsg : styles.otherMsg]}>
-                                                    <View style={[styles.messageBubble, isMe ? styles.myBubble : styles.otherBubble]}>
+                                                    <View style={[
+                                                        styles.messageBubble,
+                                                        isMe ? styles.myBubble : styles.otherBubble,
+                                                        item.messageType === 'IMAGE' && {
+                                                            backgroundColor: 'transparent',
+                                                            padding: 0
+                                                        }
+                                                    ]}>
                                                         {item.messageType === 'IMAGE' && item.mediaUrl ? (
                                                             <Image
                                                                 source={{ uri: `${BASE_URL}${item.mediaUrl}` }}
-                                                                style={{ width: 200, height: 200, borderRadius: 10, marginBottom: item.content ? 8 : 0 }}
+                                                                style={{
+                                                                    width: 200,
+                                                                    height: 200,
+                                                                    borderRadius: 12,   // bo góc đẹp hơn
+                                                                }}
                                                                 resizeMode="cover"
                                                             />
                                                         ) : null}
-                                                        {item.content ? <Text style={isMe ? styles.myText : styles.otherText}>{item.content}</Text> : null}
+                                                        {item.content ? (
+                                                           <Text style={isMe ? styles.myText : styles.otherText}>
+                                                             {item.content}
+                                                                </Text>
+                                                        ) : null}
+                                                        {showTimeId === item.id && (
+                                                            <Text style={{
+                                                                fontSize: 10,
+                                                                color: isMe ? 'rgba(255,255,255,0.6)' : '#888',
+                                                                marginTop: 4,
+                                                                alignSelf: isMe ? 'flex-end' : 'flex-start',
+                                                            }}>
+                                                                {formatTime(item.createdAt)}
+                                                            </Text>
+                                                        )}
+
+
+
+
                                                     </View>
-    </View>
+                                                            {item.reaction && (
+                                                            <View style={{
+                                                                position: 'absolute',
+                                                                bottom: -10,
+                                                                right: isMe ? undefined : -5,
+                                                                left: isMe ? -5 : undefined,
+                                                                backgroundColor: '#FFF',
+                                                                borderRadius: 12,
+                                                                paddingHorizontal: 6,
+                                                                paddingVertical: 2,
+                                                                borderWidth: 1,
+                                                                borderColor: '#EEE'
+                                                            }}>
+                                                                <Text style={{ fontSize: 12, lineHeight: 14 }}>
+                                                                    {REACTIONS.find(r => r.type === item.reaction)?.emoji}
+                                                                </Text>
+                                                            </View>
+                                                        )}
+
+                                                </View>
+                                                </TouchableOpacity>
+                                                </>
                                             );
                                         }}
                                         inverted
+                                            onEndReached={() => {
+                                                if (!loadingMore && hasMore && messages.length >= 20) {
+                                                    loadHistory(page + 1);
+                                                }
+                                            }}
+                                            onEndReachedThreshold={0.1}
                                         contentContainerStyle={{ padding: 16 }}
                                     />
                                     <View style={styles.inputArea}>
@@ -299,6 +508,58 @@ const ChatScreen: React.FC = () => {
                         )}
                     </View>
                 </KeyboardAvoidingView>
+                <Modal
+                    visible={reactionModalVisible}
+                    transparent
+                    animationType="fade"
+                >
+                    <View style={styles.modalOverlay}>
+                        <View style={styles.modalBox}>
+                            <Text style={{ fontWeight: "bold", marginBottom: 10 }}>
+                                Chọn cảm xúc
+                            </Text>
+
+                            <View style={{ flexDirection: "row" }}>
+                                {REACTIONS.map((item) => {
+                                    const isSelected = selectedMessage?.reaction === item.type;
+
+                                    return (
+                                        <TouchableOpacity
+                                            key={item.type}
+                                            onPress={() => sendReaction(item.type)}
+                                            style={{
+                                                marginHorizontal: 6,
+                                                padding: 8,
+                                                borderRadius: 20,
+
+                                                // 🔥 highlight nếu đang chọn
+                                                backgroundColor: isSelected ? "#007AFF22" : "transparent",
+                                                borderWidth: isSelected ? 2 : 0,
+                                                borderColor: "#007AFF"
+                                            }}
+                                        >
+                                            <Text style={{
+                                                fontSize: 22,
+
+                                                // 🔥 làm nổi emoji
+                                                transform: [{ scale: isSelected ? 1.2 : 1 }]
+                                            }}>
+                                                {item.emoji}
+                                            </Text>
+                                        </TouchableOpacity>
+                                    );
+                                })}
+                            </View>
+
+                            <TouchableOpacity
+                                onPress={() => setReactionModalVisible(false)}
+                                style={{ marginTop: 15 }}
+                            >
+                                <Text style={{ color: "red" }}>Đóng</Text>
+                            </TouchableOpacity>
+                        </View>
+                    </View>
+                </Modal>
             </SafeAreaView>
         );
     };
@@ -313,17 +574,67 @@ const styles = StyleSheet.create({
     tabText: { fontSize: 16, color: "#888" },
     activeTabText: { color: "#007AFF", fontWeight: "600" },
     content: { flex: 1, backgroundColor: "#F5F7FB" },
-    messageWrapper: { marginBottom: 12, maxWidth: '80%' },
+    messageWrapper: { marginBottom: 12, maxWidth: '80%',overflow: 'visible' },
     myMsg: { alignSelf: 'flex-end' },
     otherMsg: { alignSelf: 'flex-start' },
-    messageBubble: { padding: 12, borderRadius: 18 },
+    messageBubble: { padding: 12, borderRadius: 18,overflow: 'visible' },
     myBubble: { backgroundColor: '#007AFF' },
     otherBubble: { backgroundColor: '#FFF' },
     myText: { color: '#FFF' },
     otherText: { color: '#333' },
     inputArea: { flexDirection: 'row', padding: 12, backgroundColor: '#FFF', alignItems: 'center', borderTopWidth: 1, borderTopColor: '#EEE' },
     input: { flex: 1, backgroundColor: '#F0F2F5', borderRadius: 24, paddingHorizontal: 16, height: 40, marginRight: 10 },
-    emptyBox: { flex: 1, justifyContent: "center", alignItems: "center" }
+    emptyBox: { flex: 1, justifyContent: "center", alignItems: "center" },
+    modalOverlay: {
+        flex: 1,
+        backgroundColor: 'rgba(0,0,0,0.4)',
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+
+    modalBox: {
+        backgroundColor: '#FFF',
+        padding: 20,
+        borderRadius: 12,
+        alignItems: 'center',
+        width: 350,
+    },
+    reactionBadge: {
+        position: 'absolute',
+        bottom: -8,
+
+        backgroundColor: '#FFF',
+        borderRadius: 10,
+
+        paddingHorizontal: 4,
+        paddingVertical: 1,
+
+        minWidth: 20,
+        height: 18,
+
+        justifyContent: 'center',
+        alignItems: 'center',
+
+        borderWidth: 1,
+        borderColor: '#EEE',
+
+        elevation: 3,
+    },
+    reactionOutside: {
+        position: 'absolute',
+        bottom: -12,
+
+        backgroundColor: '#FFF',
+        borderRadius: 12,
+
+        paddingHorizontal: 6,
+        paddingVertical: 2,
+
+        borderWidth: 1,
+        borderColor: '#EEE',
+
+        elevation: 3,
+    },
 });
 
 export default ChatScreen;

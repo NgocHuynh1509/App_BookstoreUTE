@@ -3,6 +3,8 @@ package com.hcmute.bookstore.dto;
 import com.hcmute.bookstore.Entity.MessageType;
 import lombok.*;
 
+import java.time.LocalDateTime;
+
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
@@ -14,6 +16,7 @@ public class ChatMessageRequest {
     private String content;
     private String mediaUrl;      // URL sau khi đã upload file thành công
     private MessageType messageType;
+    private LocalDateTime createdAt;
 
 
     // Các ID để thiết lập quan hệ

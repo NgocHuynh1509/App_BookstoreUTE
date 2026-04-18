@@ -45,6 +45,10 @@ public class ChatService {
             builder.totalPrice(entity.getAttachedOrder().getTotalAmount());
         }
 
+        if (entity.getReaction() != null) {
+            builder.reaction(entity.getReaction().name());
+        }
+
         return builder.build();
     }
 

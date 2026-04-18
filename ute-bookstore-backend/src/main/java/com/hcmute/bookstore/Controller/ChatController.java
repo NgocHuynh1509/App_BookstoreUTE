@@ -1,5 +1,6 @@
 package com.hcmute.bookstore.Controller;
 
+import com.hcmute.bookstore.Entity.ReactionType;
 import com.hcmute.bookstore.Service.ChatService;
 import com.hcmute.bookstore.dto.ChatMessageRequest;
 import com.hcmute.bookstore.dto.ChatMessageResponse;
@@ -86,18 +87,53 @@ public class ChatController {
     }
 
     @MessageMapping("/chat.react")
-    public void reactMessage(@Payload ReactionRequest request) {
+    public void reactMessage(@Payload ReactionRequest request, java.security.Principal principal) {
+        // 1. Xác định người thực hiện reaction thực tế từ Token/Session
+        String actualSender = (principal != null) ? principal.getName() : "ANONYMOUS";
+        System.out.println("🚀 [REACTION CHECK] User thực hiện react: " + actualSender);
+
+        // 2. Tìm tin nhắn gốc trong Database
         ChatMessage message = chatRepository.findById(request.getMessageId())
                 .orElseThrow(() -> new RuntimeException("Message not found"));
 
-        message.setReaction(request.getReaction());
-        chatRepository.save(message);
+        // 3. Cập nhật Reaction
+        ReactionType currentReaction = message.getReaction(); // reaction hiện tại
+        ReactionType newReaction = request.getReaction();     // reaction user vừa chọn
 
-        // Gửi thông báo reaction cho đối phương
+        if (currentReaction == null) {
+            // ✅ Case 1: chưa có → set mới
+            message.setReaction(newReaction);
+
+        } else if (currentReaction.equals(newReaction)) {
+            // ✅ Case 2: bấm lại cùng reaction → huỷ
+            message.setReaction(null);
+
+        } else {
+            // ✅ Case 3: đổi reaction
+            message.setReaction(newReaction);
+        }
+
+        ChatMessage updatedMessage = chatRepository.save(message);
+
+        // 4. Chuyển đổi sang Response DTO (để thống nhất cấu trúc dữ liệu với tin nhắn)
+        ChatMessageResponse response = chatService.mapToResponse(updatedMessage);
+
+        // 5. GỬI CHO ĐỐI PHƯƠNG (Người nhận được reaction)
+        // PartnerName thường là người ở đầu kia của cuộc hội thoại
+        if (request.getPartnerName() != null) {
+            System.out.println("DEBUG: Gui reaction toi Partner: " + request.getPartnerName());
+            messagingTemplate.convertAndSendToUser(
+                    request.getPartnerName(),
+                    "/queue/reactions",
+                    response
+            );
+        }
+
+        // 6. GỬI CHO CHÍNH MÌNH (Để đồng bộ hóa các thiết bị khác nếu user đăng nhập nhiều nơi)
         messagingTemplate.convertAndSendToUser(
-                request.getPartnerName(),
+                actualSender,
                 "/queue/reactions",
-                message
+                response
         );
     }
 }
