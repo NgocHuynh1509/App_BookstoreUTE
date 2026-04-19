@@ -1,4 +1,4 @@
-
+import { useRoute, useNavigation } from "@react-navigation/native"; // FIX: Thêm useNavigation
 import React, { useState, useEffect, useRef } from "react";
 import { View, Text, StyleSheet, TouchableOpacity, FlatList, TextInput, KeyboardAvoidingView, Platform, ActivityIndicator, Alert, Image } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -29,11 +29,18 @@ interface Message {
     replyToMediaUrl?: string;
     replyToMessageType?: 'TEXT' | 'IMAGE' | 'VIDEO' | 'PRODUCT' | 'ORDER';
     replyToSender?: string;
+// Thêm các trường này
+    bookId?: string;
+    bookName?: string;
+    bookImage?: string;
+    bookPrice?: number; // Hoặc dùng totalPrice nếu bạn map vào đó
 }
 
 const BASE_URL = Constants.expoConfig?.extra?.API_URL || "http://192.168.1.22:8080";
 
 const ChatScreen: React.FC = () => {
+    const route = useRoute<any>();
+        const navigation = useNavigation<any>(); // Thêm navigation để dùng goBack
     const [activeTab, setActiveTab] = useState<'seller' | 'ai'>('seller');
     const [messages, setMessages] = useState<Message[]>([]);
     const [inputText, setInputText] = useState("");
@@ -57,6 +64,11 @@ const ChatScreen: React.FC = () => {
     const [showTimeId, setShowTimeId] = useState<string | null>(null);
     const reactionAnim = useRef<{[key: string]: Animated.Value}>({});
     const [replyMessage, setReplyMessage] = useState<Message | null>(null);
+
+
+    const { productPreview } = route.params || {};
+    // Sử dụng state này để điều khiển việc hiển thị/ẩn banner
+    const [previewItem, setPreviewItem] = useState(productPreview);
 
 
     const formatTime = (dateStr: string) => {
@@ -177,6 +189,9 @@ const ChatScreen: React.FC = () => {
     const sendMessage = async () => {
         if (!inputText.trim() || !userData || !stompClient.current?.connected) return;
 
+        // Lấy bookId từ preview nếu có, nếu không thì mới để null
+            const currentBookId = productPreview?.id || null;
+
         const chatRequest = {
             userName: userData.username,
             receiverName: "admin",
@@ -184,6 +199,7 @@ const ChatScreen: React.FC = () => {
             content: inputText.trim(),
             messageType: "TEXT",
             replyToId: replyMessage?.id || null,
+            bookId: currentBookId, // <--- TRUYỀN ID THẬT Ở ĐÂY
         };
 
         stompClient.current.publish({
@@ -202,11 +218,14 @@ const ChatScreen: React.FC = () => {
             replyToMediaUrl: replyMessage?.mediaUrl,
             replyToMessageType: replyMessage?.messageType,
             replyToSender: replyMessage?.senderRole === 'ADMIN' ? 'Admin' : replyMessage?.userName,
+            bookId: currentBookId,
         };
 
         setMessages(prev => [localMsg, ...prev]);
         setInputText("");
         setReplyMessage(null);
+        // Tùy chọn: Ẩn banner sau khi đã gửi tin nhắn trao đổi về món đó
+            if (previewItem) setPreviewItem(null);
     };
 
     const sendReaction = (type: string) => {
@@ -401,6 +420,31 @@ const ChatScreen: React.FC = () => {
                     {activeTab === 'seller' ? (
                         loading ? <ActivityIndicator size="large" color="#007AFF" style={{ flex: 1 }} /> : (
                             <>
+                                {/* Banner sản phẩm đang trao đổi */}
+                                {previewItem && (
+                                    <View style={styles.productBanner}>
+                                        <View style={styles.bannerHeader}>
+                                            <Text style={styles.bannerHeaderText}>Bạn đang trao đổi với Người bán về mặt hàng này</Text>
+                                            <TouchableOpacity onPress={() => setPreviewItem(null)}>
+                                                <Ionicons name="close" size={18} color="#999" />
+                                            </TouchableOpacity>
+                                        </View>
+
+                                        <View style={styles.bannerBody}>
+                                            <Image source={{ uri: previewItem.cover_image }} style={styles.bannerImg} />
+                                            <View style={styles.bannerInfo}>
+                                                <Text numberOfLines={1} style={styles.bannerTitle}>{previewItem.title}</Text>
+                                                <Text style={styles.bannerPrice}>{previewItem.price?.toLocaleString('vi-VN')}đ</Text>
+                                            </View>
+                                            <TouchableOpacity
+                                                style={styles.changeBtn}
+                                                onPress={() => navigation.goBack()}
+                                            >
+                                                <Text style={styles.changeBtnText}>Thay đổi</Text>
+                                            </TouchableOpacity>
+                                        </View>
+                                    </View>
+                                )}
                                 <FlatList
                                     data={messages}
                                     keyExtractor={(item, index) => item.id + "-" + index}
@@ -408,10 +452,11 @@ const ChatScreen: React.FC = () => {
                                         const isMe = item.senderRole === "USER";
                                         const prev = messages[index + 1];
                                         const showDate = !prev || formatDateLabel(prev.createdAt) !== formatDateLabel(item.createdAt);
+
                                         return (
-                                            <>
+                                            <View key={item.id} style={{ marginBottom: 10 }}> {/* Thêm margin ở đây để các tin nhắn không dính nhau */}
                                                 {showDate && (
-                                                    <View style={{ alignItems: 'center', marginVertical: 10 }}>
+                                                    <View style={{ alignItems: 'center', marginVertical: 15 }}>
                                                         <Text style={styles.dateLabel}>{formatDateLabel(item.createdAt)}</Text>
                                                     </View>
                                                 )}
@@ -426,30 +471,82 @@ const ChatScreen: React.FC = () => {
                                                 >
                                                     <View style={[styles.messageWrapper, isMe ? styles.myMsg : styles.otherMsg]}>
                                                         {renderReplyContent(item)}
-                                                        <View style={[
-                                                            styles.messageBubble,
-                                                            isMe ? styles.myBubble : styles.otherBubble,
-                                                            item.messageType === 'IMAGE' && { backgroundColor: 'transparent', padding: 0 }
-                                                        ]}>
-                                                            {item.messageType === 'IMAGE' && item.mediaUrl ? (
-                                                                <Image
-                                                                    source={{ uri: `${BASE_URL}${item.mediaUrl}` }}
-                                                                    style={styles.messageImage}
-                                                                    resizeMode="cover"
-                                                                />
-                                                            ) : null}
-                                                            {item.content ? <Text style={isMe ? styles.myText : styles.otherText}>{item.content}</Text> : null}
-                                                        </View>
-                                                        {item.reaction && (
-                                                            <View style={[styles.reactionOutside, { left: isMe ? -5 : undefined, right: isMe ? undefined : -5 }]}>
-                                                                <Text style={{ fontSize: 12 }}>{REACTIONS.find(r => r.type === item.reaction)?.emoji}</Text>
+
+                                                        {/* 1. CARD SẢN PHẨM */}
+                                                        {item.bookId && (
+                                                            <TouchableOpacity
+                                                                activeOpacity={0.9}
+                                                                onPress={() => navigation.navigate("BookDetail", { id: item.bookId })}
+                                                                style={{ alignSelf: isMe ? 'flex-end' : 'flex-start', marginBottom: 6 }}
+                                                            >
+                                                                <View style={styles.productMessageCard}>
+                                                                    <Image source={{ uri: item.bookImage }} style={styles.productMsgImg} />
+                                                                    <View style={styles.productMsgInfo}>
+                                                                        <Text style={styles.productMsgTitle}>{item.bookName}</Text>
+                                                                        <Text style={styles.productMsgPrice}>
+                                                                            {item.bookPrice || item.totalPrice
+                                                                                ? `${Number(item.bookPrice || item.totalPrice).toLocaleString('vi-VN')}đ`
+                                                                                : "Liên hệ"}
+                                                                        </Text>
+                                                                    </View>
+                                                                </View>
+                                                            </TouchableOpacity>
+                                                        )}
+
+                                                        {/* 2. HÌNH ẢNH */}
+                                                        {item.messageType === 'IMAGE' && item.mediaUrl && (
+                                                            <Image
+                                                                source={{ uri: `${BASE_URL}${item.mediaUrl}` }}
+                                                                style={[styles.messageImage, { alignSelf: isMe ? 'flex-end' : 'flex-start', marginBottom: 4 }]}
+                                                                resizeMode="cover"
+                                                            />
+                                                        )}
+
+                                                        {/* 3. BUBBLE VĂN BẢN (CHỈ RENDER 1 LẦN) */}
+                                                        {item.content ? (
+                                                            <View style={[
+                                                                styles.messageBubble,
+                                                                isMe ? styles.myBubble : styles.otherBubble,
+                                                                {
+                                                                    alignSelf: isMe ? 'flex-end' : 'flex-start',
+                                                                    marginTop: (item.bookId || item.mediaUrl) ? 2 : 0
+                                                                }
+                                                            ]}>
+                                                                <Text style={isMe ? styles.myText : styles.otherText}>
+                                                                    {item.content}
+                                                                </Text>
+
+                                                                {/* REACTION CHO TIN NHẮN CÓ CHỮ */}
+                                                                {item.reaction && (
+                                                                    <View style={[
+                                                                        styles.reactionOutside,
+                                                                        { [isMe ? 'left' : 'right']: -10, bottom: -5 }
+                                                                    ]}>
+                                                                        <Text style={{ fontSize: 12 }}>
+                                                                            {REACTIONS.find(r => r.type === item.reaction)?.emoji}
+                                                                        </Text>
+                                                                    </View>
+                                                                )}
                                                             </View>
+                                                        ) : (
+                                                            /* REACTION CHO TIN NHẮN CHỈ CÓ ẢNH/CARD */
+                                                            item.reaction && (
+                                                                <View style={[
+                                                                    styles.reactionOutside,
+                                                                    { alignSelf: isMe ? 'flex-end' : 'flex-start', [isMe ? 'marginRight' : 'marginLeft']: 5 }
+                                                                ]}>
+                                                                    <Text style={{ fontSize: 12 }}>
+                                                                        {REACTIONS.find(r => r.type === item.reaction)?.emoji}
+                                                                    </Text>
+                                                                </View>
+                                                            )
                                                         )}
                                                     </View>
                                                 </TouchableOpacity>
-                                            </>
+                                            </View>
                                         );
                                     }}
+
                                     inverted
                                     onEndReached={() => {
                                         if (!loadingMore && hasMore && messages.length >= 20) loadHistory(page + 1);
@@ -552,7 +649,103 @@ const styles = StyleSheet.create({
     replyPreviewText: { fontSize: 12, color: '#666' },
     replyPreviewThumb: { width: 40, height: 40, borderRadius: 4, marginRight: 10 },
     reactionItem: { marginHorizontal: 6, padding: 8 },
-    modalButton: { paddingVertical: 10, alignItems: "center", width: '100%'}
+    modalButton: { paddingVertical: 10, alignItems: "center", width: '100%'},
+
+    productBanner: {
+        backgroundColor: '#fff',
+        padding: 12,
+        margin: 10,
+        borderRadius: 15,
+        // shadow cho nổi bật
+        elevation: 3,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+      },
+      bannerHeader: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        marginBottom: 8,
+      },
+      bannerHeaderText: {
+        fontSize: 12,
+        color: '#888',
+      },
+      bannerBody: {
+        flexDirection: 'row',
+        alignItems: 'center',
+      },
+      bannerImg: {
+        width: 50,
+        height: 50,
+        borderRadius: 8,
+      },
+      bannerInfo: {
+        flex: 1,
+        marginLeft: 10,
+      },
+      bannerTitle: {
+        fontSize: 14,
+        fontWeight: '500',
+        color: '#333',
+      },
+      bannerPrice: {
+        fontSize: 14,
+        color: '#ee4d2d',
+        fontWeight: 'bold',
+      },
+      changeBtn: {
+        borderWidth: 1,
+        borderColor: '#ddd',
+        paddingHorizontal: 10,
+        paddingVertical: 5,
+        borderRadius: 5,
+      },
+      changeBtnText: {
+        fontSize: 13,
+        color: '#333',
+      },
+    productMessageCard: {
+        flexDirection: 'row',
+        backgroundColor: '#fff',
+        borderRadius: 12,
+        padding: 12, // Tăng padding cho thoáng
+        width: 280,  // Tăng chiều rộng banner (trước có thể là 220-240)
+        minHeight: 100, // Tăng chiều cao tối thiểu
+        borderWidth: 1,
+        borderColor: '#E8E8E8',
+        alignItems: 'flex-start',
+        // Đổ bóng cho giống hình mẫu bạn gửi
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
+        elevation: 3,
+    },
+    productMsgImg: {
+        width: 80,  // Chỉnh ảnh bự ra (từ 50 lên 80)
+        height: 100, // Tăng chiều cao ảnh cho cân đối với sách
+        borderRadius: 4,
+        backgroundColor: '#f9f9f9',
+    },
+    productMsgInfo: {
+        flex: 1,
+        marginLeft: 12,
+        justifyContent: 'center',
+    },
+    productMsgTitle: {
+        fontSize: 15,
+        fontWeight: '600',
+        color: '#333',
+        lineHeight: 20, // Khoảng cách dòng để đọc tên sách dễ hơn
+        marginBottom: 8,
+        // Không để numberOfLines ở đây để nó hiện hết tên
+    },
+    productMsgPrice: {
+        fontSize: 16,
+        color: '#ee4d2d', // Màu cam đỏ đặc trưng giá tiền
+        fontWeight: '700',
+    },
 });
 
 export default ChatScreen;

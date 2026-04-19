@@ -42,4 +42,5 @@ public class ChatMessageResponse {
 
     private boolean isMarkedUnreadByAdmin;
     private boolean isMarkedUnreadByUser;
+    private BigDecimal bookPrice; // <-- Thêm trường này
 }
