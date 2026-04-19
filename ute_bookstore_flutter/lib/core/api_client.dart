@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 
 import '../api_config.dart';
 import 'session_storage.dart';
@@ -14,10 +15,23 @@ class ApiClient {
     final dio = Dio(
       BaseOptions(
         baseUrl: ApiConfig.baseUrl,
-        connectTimeout: const Duration(seconds: 15),
-        receiveTimeout: const Duration(seconds: 15),
+        connectTimeout: const Duration(seconds: 30),
+        receiveTimeout: const Duration(seconds: 60),
+        sendTimeout: const Duration(seconds: 30),
       ),
     );
+
+    if (!kReleaseMode) {
+      dio.interceptors.add(
+        LogInterceptor(
+          requestBody: true,
+          responseBody: true,
+          requestHeader: true,
+          responseHeader: false,
+          logPrint: (object) => debugPrint(object.toString()),
+        ),
+      );
+    }
 
     dio.interceptors.add(
       InterceptorsWrapper(
@@ -30,6 +44,10 @@ class ApiClient {
           handler.next(options);
         },
         onError: (error, handler) async {
+          if (!kReleaseMode) {
+            debugPrint('HTTP ERROR ${error.response?.statusCode} ${error.requestOptions.uri}');
+            debugPrint('BODY: ${error.response?.data}');
+          }
           if (error.response?.statusCode == 401 ||
               error.response?.statusCode == 403) {
             await storage.clear();
@@ -42,4 +60,3 @@ class ApiClient {
     return ApiClient._(dio);
   }
 }
-

@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
+
+import '../app/admin_shell.dart';
 import '../services/auth_service.dart';
 import '../widgets/custom_text_field.dart';
 import '../widgets/primary_button.dart';
-import 'admin_dashboard_screen.dart';
 import 'admin_forgot_password_screen.dart';
 
 class AdminLoginScreen extends StatefulWidget {
@@ -44,7 +45,7 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
 
       if (!mounted) return;
       Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (_) => const AdminDashboardScreen()),
+        MaterialPageRoute(builder: (_) => const AdminShell()),
       );
     } catch (e) {
       setState(() {
@@ -101,7 +102,7 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
                   ),
                   const SizedBox(height: 16),
                   Text(
-                    'Admin Login',
+                    'Đăng nhập quản trị',
                     style: theme.textTheme.headlineSmall?.copyWith(
                       fontWeight: FontWeight.bold,
                       color: const Color(0xFF1F2933),
@@ -109,7 +110,7 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    'Đăng nhập để quản lý hệ thống bookstore',
+                    'Đăng nhập để quản lý hệ thống bán sách',
                     style: theme.textTheme.bodyMedium?.copyWith(
                       color: Colors.grey[600],
                     ),
@@ -119,8 +120,8 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
 
                   CustomTextField(
                     controller: _emailController,
-                    labelText: 'Email',
-                    hintText: 'admin@example.com',
+                    labelText: 'Email quản trị',
+                    hintText: 'admin@gmail.com',
                     prefixIcon: Icons.email_outlined,
                     validator: (value) {
                       if (value == null || value.trim().isEmpty) {

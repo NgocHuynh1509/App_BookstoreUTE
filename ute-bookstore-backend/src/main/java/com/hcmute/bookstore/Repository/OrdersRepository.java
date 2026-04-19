@@ -10,27 +10,57 @@ import org.springframework.stereotype.Repository;
 
 import java.util.Date;
 import java.util.List;
-import java.util.Optional;
 
 
 @Repository
 public interface OrdersRepository extends JpaRepository<Orders, String> {
     List<Orders> findByCustomer_CustomerIdOrderByOrderDateDesc(String customerId);
-    Optional<Orders> findByOrderIdAndCustomer_CustomerId(String orderId, String customerId);
 
-	Page<Orders> findByStatusIgnoreCase(String status, Pageable pageable);
+    Page<Orders> findByStatusIgnoreCase(String status, Pageable pageable);
 
-	long countByStatusIgnoreCase(String status);
+    java.util.Optional<Orders> findByOrderIdAndCustomer_CustomerId(String orderId, String customerId);
 
-	@Query("select coalesce(sum(o.totalAmount), 0) from Orders o where o.orderDate >= ?1 and o.orderDate < ?2")
-	java.math.BigDecimal sumTotalAmountBetween(Date from, Date to);
+    long countByStatusIgnoreCase(String status);
+
+    @Query("select coalesce(sum(o.totalAmount), 0) from Orders o where o.orderDate >= ?1 and o.orderDate < ?2")
+    java.math.BigDecimal sumTotalAmountBetween(Date from, Date to);
+
     @Query("SELECT o FROM Orders o JOIN o.payment p " +
             "WHERE o.paymentMethod = 'VNPAY' " +
             "AND o.status != 'CANCELLED' " +
             "AND p.status != 'SUCCESS' " +
             "AND o.orderDate < :expiryDate")
-    List<Orders> findExpiredVnpayOrders(@Param("expiryDate") Date expiryDate);
+    List<Orders> findExpiredVnPayOrders(@Param("expiryDate") Date expiryDate);
 
-    Optional<Orders> findById(String orderId);
+    @Deprecated
+    default List<Orders> findExpiredVnpayOrders(Date expiryDate) {
+        return findExpiredVnPayOrders(expiryDate);
+    }
+
+    @Query("select function('date', o.orderDate), coalesce(sum(o.totalAmount), 0) " +
+            "from Orders o where o.orderDate >= ?1 and o.orderDate < ?2 " +
+            "group by function('date', o.orderDate) order by function('date', o.orderDate)")
+    java.util.List<Object[]> sumRevenueByDay(Date from, Date to);
+
+    @Query("select function('date_format', o.orderDate, '%Y-%m'), coalesce(sum(o.totalAmount), 0) " +
+            "from Orders o where o.orderDate >= ?1 and o.orderDate < ?2 " +
+            "group by function('date_format', o.orderDate, '%Y-%m') order by function('date_format', o.orderDate, '%Y-%m')")
+    java.util.List<Object[]> sumRevenueByMonth(Date from, Date to);
+
+    @Query("select function('date', o.orderDate), count(o) " +
+            "from Orders o where o.orderDate >= ?1 and o.orderDate < ?2 " +
+            "group by function('date', o.orderDate) order by function('date', o.orderDate)")
+    java.util.List<Object[]> countOrdersByDay(Date from, Date to);
+
+    @Query("select function('date_format', o.orderDate, '%Y-%m'), count(o) " +
+            "from Orders o where o.orderDate >= ?1 and o.orderDate < ?2 " +
+            "group by function('date_format', o.orderDate, '%Y-%m') order by function('date_format', o.orderDate, '%Y-%m')")
+    java.util.List<Object[]> countOrdersByMonth(Date from, Date to);
+
+    @Query("select o.status, count(o) from Orders o group by o.status")
+    java.util.List<Object[]> countByStatusGroup();
+
+    @Query("select min(o.orderDate) from Orders o")
+    Date findMinOrderDate();
 
 }
