@@ -2,6 +2,7 @@ package com.hcmute.bookstore.Service;
 
 import com.hcmute.bookstore.Entity.ChatMessage;
 import com.hcmute.bookstore.Entity.MessageStatus;
+import com.hcmute.bookstore.Entity.Orders;
 import com.hcmute.bookstore.Repository.ChatMessageRepository;
 import com.hcmute.bookstore.dto.ChatMessageResponse;
 import com.hcmute.bookstore.dto.admin.ChatThreadDTO;
@@ -25,8 +26,8 @@ public class ChatService {
                 .content(entity.getContent())
                 .mediaUrl(entity.getMediaUrl())
                 .messageType(entity.getMessageType())
-                .senderRole(entity.getSenderRole())
                 .userName(entity.getUserName())
+                .senderRole(entity.getSenderRole())
                 .receiverName(entity.getReceiverName())
                 .createdAt(entity.getCreatedAt())
                 .isMarkedUnreadByAdmin(entity.isMarkedUnreadByAdmin())
@@ -47,10 +48,24 @@ public class ChatService {
             builder.bookPrice(entity.getAttachedBook().getPrice());
         }
 
+        // CẬP NHẬT PHẦN MAP ORDER TẠI ĐÂY
         if (entity.getAttachedOrder() != null) {
-            builder.orderId(entity.getAttachedOrder().getOrderId());
-            builder.orderStatus(entity.getAttachedOrder().getStatus().toString());
-            builder.totalPrice(entity.getAttachedOrder().getTotalAmount());
+            Orders order = entity.getAttachedOrder();
+            builder.orderId(order.getOrderId());
+            builder.orderStatus(order.getStatus().toString());
+            builder.totalPrice(order.getTotalAmount());
+
+            // Lấy số mặt hàng từ danh sách chi tiết đơn hàng
+            if (order.getOrderDetail_Order() != null) {
+                builder.orderItemCount(order.getOrderDetail_Order().size());
+            } else {
+                builder.orderItemCount(0);
+            }
+
+            // LẤY TẤM HÌNH ĐẦU TIÊN Ở ĐÂY
+            // Lấy item đầu tiên -> lấy Book -> lấy Picture
+            String firstProductImage = order.getOrderDetail_Order().get(0).getBook().getPicture();
+            builder.bookImage(firstProductImage);
         }
 
         if (entity.getReaction() != null) {

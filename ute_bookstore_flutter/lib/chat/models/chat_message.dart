@@ -23,6 +23,11 @@ class ChatMessage {
     final String? bookName;
     final String? bookImage;
     final double? bookPrice; // Dùng double để hứng Decimal
+    final String? orderId;
+      final String? orderStatus;
+      final double? totalPrice;
+      final int? orderItemCount;
+      final String? image; // Ảnh đại diện đơn hàng
 
   ChatMessage({
     this.id,
@@ -43,6 +48,11 @@ class ChatMessage {
         this.bookName,
         this.bookImage,
         this.bookPrice,
+    this.orderId,
+        this.orderStatus,
+        this.totalPrice,
+        this.orderItemCount,
+        this.image,
   });
 
   factory ChatMessage.fromMap(Map<String, dynamic> map) {
@@ -78,6 +88,11 @@ class ChatMessage {
             bookImage: map['bookImage'],
             // Xử lý Decimal từ Backend (tránh lỗi nếu là String hoặc num)
             bookPrice: map['bookPrice'] != null ? double.tryParse(map['bookPrice'].toString()) : null,
+      orderId: map['orderId']?.toString(),
+            orderStatus: map['orderStatus'],
+            totalPrice: map['totalPrice'] != null ? double.tryParse(map['totalPrice'].toString()) : null,
+            orderItemCount: map['orderItemCount'] != null ? int.tryParse(map['orderItemCount'].toString()) : null,
+            image: map['image'] ?? map['bookImage'], // Ưu tiên image, fallback về bookImage
     );
   }
 

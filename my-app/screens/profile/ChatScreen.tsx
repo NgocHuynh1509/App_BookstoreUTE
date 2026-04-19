@@ -34,6 +34,12 @@ interface Message {
     bookName?: string;
     bookImage?: string;
     bookPrice?: number; // Hoặc dùng totalPrice nếu bạn map vào đó
+// ... các trường cũ
+    orderId?: string;
+    orderStatus?: string;
+    totalPrice?: number;
+    orderItemCount?: number; // <--- Thêm dòng này để chứa số lượng mặt hàng
+    image?: string;
 }
 
 const BASE_URL = Constants.expoConfig?.extra?.API_URL || "http://192.168.1.22:8080";
@@ -64,11 +70,12 @@ const ChatScreen: React.FC = () => {
     const [showTimeId, setShowTimeId] = useState<string | null>(null);
     const reactionAnim = useRef<{[key: string]: Animated.Value}>({});
     const [replyMessage, setReplyMessage] = useState<Message | null>(null);
+// Nhận cả productPreview (từ màn chi tiết sách) và orderPreview (từ màn đơn hàng)
+    const { productPreview, orderPreview } = route.params || {};
 
-
-    const { productPreview } = route.params || {};
     // Sử dụng state này để điều khiển việc hiển thị/ẩn banner
     const [previewItem, setPreviewItem] = useState(productPreview);
+    const [orderInfo, setOrderInfo] = useState(orderPreview); // State cho đơn hàng
 
 
     const formatTime = (dateStr: string) => {
@@ -189,8 +196,9 @@ const ChatScreen: React.FC = () => {
     const sendMessage = async () => {
         if (!inputText.trim() || !userData || !stompClient.current?.connected) return;
 
-        // Lấy bookId từ preview nếu có, nếu không thì mới để null
-            const currentBookId = productPreview?.id || null;
+        const currentBookId = previewItem?.id || null;
+        const currentOrderId = orderInfo?.orderId || null; // Lấy Order ID từ banner
+
 
         const chatRequest = {
             userName: userData.username,
@@ -200,6 +208,7 @@ const ChatScreen: React.FC = () => {
             messageType: "TEXT",
             replyToId: replyMessage?.id || null,
             bookId: currentBookId, // <--- TRUYỀN ID THẬT Ở ĐÂY
+            orderId: currentOrderId, // Gửi Order ID lên Backend
         };
 
         stompClient.current.publish({
@@ -219,6 +228,7 @@ const ChatScreen: React.FC = () => {
             replyToMessageType: replyMessage?.messageType,
             replyToSender: replyMessage?.senderRole === 'ADMIN' ? 'Admin' : replyMessage?.userName,
             bookId: currentBookId,
+            orderId: currentOrderId,
         };
 
         setMessages(prev => [localMsg, ...prev]);
@@ -226,6 +236,8 @@ const ChatScreen: React.FC = () => {
         setReplyMessage(null);
         // Tùy chọn: Ẩn banner sau khi đã gửi tin nhắn trao đổi về món đó
             if (previewItem) setPreviewItem(null);
+// ... phần còn lại giữ nguyên
+        if (orderInfo) setOrderInfo(null); // Gửi xong thì ẩn banner đơn hàng
     };
 
     const sendReaction = (type: string) => {
@@ -425,9 +437,10 @@ const ChatScreen: React.FC = () => {
                                     <View style={styles.productBanner}>
                                         <View style={styles.bannerHeader}>
                                             <Text style={styles.bannerHeaderText}>Bạn đang trao đổi với Người bán về mặt hàng này</Text>
-                                            <TouchableOpacity onPress={() => setPreviewItem(null)}>
-                                                <Ionicons name="close" size={18} color="#999" />
-                                            </TouchableOpacity>
+                                            {/* SỬA TẠI ĐÂY: Khi đóng banner thì set previewItem về null */}
+                                                <TouchableOpacity onPress={() => setPreviewItem(null)}>
+                                                    <Ionicons name="close" size={18} color="#999" />
+                                                </TouchableOpacity>
                                         </View>
 
                                         <View style={styles.bannerBody}>
@@ -441,6 +454,35 @@ const ChatScreen: React.FC = () => {
                                                 onPress={() => navigation.goBack()}
                                             >
                                                 <Text style={styles.changeBtnText}>Thay đổi</Text>
+                                            </TouchableOpacity>
+                                        </View>
+                                    </View>
+                                )}
+
+                                {/* Banner đơn hàng đang trao đổi */}
+                                {!!orderInfo && (
+                                    <View style={[styles.productBanner, { borderLeftColor: '#F57C00', borderLeftWidth: 4 }]}>
+                                        <View style={styles.bannerHeader}>
+                                            <Text style={[styles.bannerHeaderText, { color: '#F57C00' }]}>
+                                                Bạn đang hỏi về đơn hàng #{orderInfo.orderId}
+                                            </Text>
+                                            <TouchableOpacity onPress={() => setOrderInfo(null)}>
+                                                <Ionicons name="close" size={18} color="#999" />
+                                            </TouchableOpacity>
+                                        </View>
+
+                                        <View style={styles.bannerBody}> {/* Đã sửa s thành styles */}
+                                            <Image source={{ uri: orderInfo.image }} style={styles.bannerImg} />
+                                            <View style={styles.bannerInfo}>
+                                                <Text style={styles.bannerTitle}>Đơn hàng gồm {orderInfo.productCount} sản phẩm</Text>
+                                                <Text style={styles.bannerPrice}>Tổng: {orderInfo.totalPrice?.toLocaleString('vi-VN')}đ</Text>
+                                                <Text style={{ fontSize: 12, color: '#666' }}>Trạng thái: {orderInfo.status}</Text>
+                                            </View>
+                                            <TouchableOpacity
+                                                style={[styles.changeBtn, { backgroundColor: '#FFF3E0' }]}
+                                                onPress={() => navigation.goBack()}
+                                            >
+                                                <Text style={[styles.changeBtnText, { color: '#F57C00' }]}>Xem đơn</Text>
                                             </TouchableOpacity>
                                         </View>
                                     </View>
@@ -464,6 +506,8 @@ const ChatScreen: React.FC = () => {
                                                 <TouchableOpacity
                                                     onPress={() => setShowTimeId(prev => prev === item.id ? null : item.id)}
                                                     onLongPress={() => {
+                                                        // 1. Chặn tin nhắn của chính mình
+                                                            if (item.senderRole !== "ADMIN") return;
                                                         setSelectedMessage(item);
                                                         setReactionModalVisible(true);
                                                     }}
@@ -488,6 +532,42 @@ const ChatScreen: React.FC = () => {
                                                                                 ? `${Number(item.bookPrice || item.totalPrice).toLocaleString('vi-VN')}đ`
                                                                                 : "Liên hệ"}
                                                                         </Text>
+                                                                    </View>
+                                                                </View>
+                                                            </TouchableOpacity>
+                                                        )}
+
+                                                        {item.orderId && (
+                                                            <TouchableOpacity
+                                                                activeOpacity={0.9}
+                                                                onPress={() => navigation.navigate("OrderDetail", { orderId: item.orderId })}
+                                                                style={{ alignSelf: isMe ? 'flex-end' : 'flex-start', marginBottom: 6 }}
+                                                            >
+                                                                <View style={[styles.productMessageCard, { borderLeftColor: '#F57C00', borderLeftWidth: 4 }]}>
+                                                                    <Image
+                                                                        source={{ uri: item.image || item.bookImage }}
+                                                                        style={styles.productMsgImg}
+                                                                    />
+                                                                    <View style={styles.productMsgInfo}>
+                                                                        <Text style={[styles.productMsgTitle, { color: '#F57C00' }]}>
+                                                                            Đơn hàng #{item.orderId}
+                                                                        </Text>
+
+                                                                        {/* Dòng hiển thị số lượng mặt hàng nè */}
+                                                                        <Text style={{ fontSize: 12, color: '#666', fontWeight: '500' }}>
+                                                                            Số lượng: {item.orderItemCount || 0} mặt hàng
+                                                                        </Text>
+
+                                                                        <Text style={styles.productMsgPrice}>
+                                                                            Tổng: {Number(item.totalPrice).toLocaleString('vi-VN')}đ
+                                                                        </Text>
+
+                                                                        <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 2 }}>
+                                                                            <Ionicons name="ellipse" size={8} color={item.orderStatus === 'completed' ? '#4CAF50' : '#F57C00'} />
+                                                                            <Text style={{ fontSize: 11, color: '#888', marginLeft: 4 }}>
+                                                                                {item.orderStatus}
+                                                                            </Text>
+                                                                        </View>
                                                                     </View>
                                                                 </View>
                                                             </TouchableOpacity>
@@ -541,6 +621,18 @@ const ChatScreen: React.FC = () => {
                                                                 </View>
                                                             )
                                                         )}
+                                                    {/* --- THÊM PHẦN NÀY VÀO ĐỂ HIỆN GIỜ KHI NHẤN --- */}
+                                                    {showTimeId === item.id && (
+                                                        <View style={{
+                                                            alignSelf: isMe ? 'flex-end' : 'flex-start',
+                                                            marginTop: 4,
+                                                            marginHorizontal: 12
+                                                        }}>
+                                                            <Text style={{ fontSize: 10, color: '#999' }}>
+                                                                {formatTime(item.createdAt)}
+                                                            </Text>
+                                                        </View>
+                                                    )}
                                                     </View>
                                                 </TouchableOpacity>
                                             </View>
@@ -745,6 +837,65 @@ const styles = StyleSheet.create({
         fontSize: 16,
         color: '#ee4d2d', // Màu cam đỏ đặc trưng giá tiền
         fontWeight: '700',
+    },
+
+    // Thêm vào trong StyleSheet.create của ChatScreen.tsx
+    productBanner: {
+        backgroundColor: "#FFF",
+        padding: 12,
+        borderBottomWidth: 1,
+        borderBottomColor: "#EEE",
+        flexDirection: "column",
+    },
+    bannerHeader: {
+        flexDirection: "row",
+        justifyContent: "space-between",
+        alignItems: "center",
+        marginBottom: 8,
+    },
+    bannerHeaderText: {
+        fontSize: 12,
+        fontWeight: "600",
+        color: "#007AFF",
+    },
+    bannerBody: {
+        flexDirection: "row",
+        alignItems: "center",
+    },
+    bannerImg: {
+        width: 50,
+        height: 50,
+        borderRadius: 8,
+        backgroundColor: "#F0F0F0",
+    },
+    bannerInfo: {
+        flex: 1,
+        marginLeft: 12,
+        justifyContent: "center",
+    },
+    bannerTitle: {
+        fontSize: 14,
+        fontWeight: "700",
+        color: "#333",
+        marginBottom: 2,
+    },
+    bannerPrice: {
+        fontSize: 13,
+        fontWeight: "600",
+        color: "#E53935", // Màu đỏ cho giá tiền
+    },
+    changeBtn: {
+        paddingHorizontal: 12,
+        paddingVertical: 6,
+        borderRadius: 15,
+        backgroundColor: "#F0F7FF",
+        borderWidth: 1,
+        borderColor: "#007AFF",
+    },
+    changeBtnText: {
+        fontSize: 12,
+        color: "#007AFF",
+        fontWeight: "600",
     },
 });
 

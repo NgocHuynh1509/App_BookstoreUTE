@@ -85,8 +85,19 @@ export default function OrderDetail() {
 
   const handleChat = () => {
     navigation.navigate("Chat", {
+      // Dữ liệu cũ
       sellerId: orderData?.seller_id,
       orderId: orderId,
+      // Dữ liệu mới bổ sung để làm Product Preview (kiểu Order)
+      orderPreview: {
+        orderId: orderId,
+        totalPrice: orderData?.total,
+        status: orderData?.status,
+        productCount: orderData?.items?.length || 0,
+        createdAt: orderData?.created_at,
+        // Lấy ảnh của sản phẩm đầu tiên làm đại diện cho banner
+        image: orderData?.items?.[0]?.cover_image || orderData?.items?.[0]?.bookImage
+      }
     });
   };
 

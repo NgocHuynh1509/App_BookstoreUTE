@@ -25,9 +25,40 @@ class MessageBubble extends StatefulWidget {
   State<MessageBubble> createState() => _MessageBubbleState();
 }
 
-class _MessageBubbleState extends State<MessageBubble> {
+class _MessageBubbleState extends State<MessageBubble> with SingleTickerProviderStateMixin{
   bool _showTime = false;
   bool _isReactAnimating = false;
+  late AnimationController _scaleController;
+    late Animation<double> _scaleAnimation;
+  @override
+    void initState() {
+      super.initState();
+      // Khởi tạo controller cho hiệu ứng nảy
+      _scaleController = AnimationController(
+        vsync: this,
+        duration: const Duration(milliseconds: 500),
+      );
+      _scaleAnimation = CurvedAnimation(
+        parent: _scaleController,
+        curve: Curves.elasticOut, // Hiệu ứng nảy đàn hồi
+      );
+    }
+
+    @override
+    void dispose() {
+      _scaleController.dispose();
+      super.dispose();
+    }
+
+    @override
+    void didUpdateWidget(covariant MessageBubble oldWidget) {
+      super.didUpdateWidget(oldWidget);
+      // Nếu reaction thay đổi (từ null sang có, hoặc từ emoji này sang emoji khác)
+      if (widget.message.reaction != oldWidget.message.reaction && widget.message.reaction != null) {
+        _scaleController.reset();
+        _scaleController.forward();
+      }
+    }
 
   String getEmoji(String? reaction) {
     switch (reaction) {
@@ -45,13 +76,6 @@ class _MessageBubbleState extends State<MessageBubble> {
     return "${time.hour.toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')}";
   }
 
-  @override
-  void didUpdateWidget(covariant MessageBubble oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (oldWidget.message.reaction != widget.message.reaction && widget.message.reaction != null) {
-      _triggerReactAnimation();
-    }
-  }
 
   void _triggerReactAnimation() {
     setState(() => _isReactAnimating = true);
@@ -62,35 +86,67 @@ class _MessageBubbleState extends State<MessageBubble> {
 
   void _showOptions(BuildContext context) {
     final reactions = ['LIKE', 'LOVE', 'HAHA', 'WOW', 'SAD', 'ANGRY'];
+    final currentReaction = widget.message.reaction; // Lấy reaction hiện tại
+
     showModalBottomSheet(
       context: context,
-      builder: (_) => SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              padding: const EdgeInsets.symmetric(vertical: 16),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
-                children: reactions.map((type) => GestureDetector(
-                  onTap: () {
-                    Navigator.pop(context);
-                    widget.onReact(type);
-                  },
-                  child: Text(getEmoji(type), style: const TextStyle(fontSize: 32)),
-                )).toList(),
+      backgroundColor: Colors.transparent, // Làm nền trong suốt để đổ bóng đẹp hơn
+      builder: (_) => Container(
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        child: SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const SizedBox(height: 8),
+              Container(width: 40, height: 4, decoration: BoxDecoration(color: Colors.grey[300], borderRadius: BorderRadius.circular(2))),
+              Container(
+                padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 8),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                  children: reactions.map((type) {
+                    final isSelected = currentReaction == type; // Kiểm tra xem có đang chọn emoji này không
+                    return GestureDetector(
+                      onTap: () {
+                        Navigator.pop(context);
+                        widget.onReact(type);
+                      },
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 200),
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          // Nếu đã chọn thì hiện nền xanh nhạt, không thì trong suốt
+                          color: isSelected ? Colors.blue.withOpacity(0.15) : Colors.transparent,
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            color: isSelected ? Colors.blue : Colors.transparent,
+                            width: 2,
+                          ),
+                        ),
+                        child: Text(
+                          getEmoji(type),
+                          style: TextStyle(
+                            fontSize: isSelected ? 38 : 32, // Phóng to nhẹ emoji đã chọn
+                          ),
+                        ),
+                      ),
+                    );
+                  }).toList(),
+                ),
               ),
-            ),
-            const Divider(height: 1),
-            ListTile(
-              leading: const Icon(Icons.reply, color: Colors.blue),
-              title: const Text("Trả lời"),
-              onTap: () {
-                Navigator.pop(context);
-                widget.onReply(widget.message);
-              },
-            ),
-          ],
+              const Divider(height: 1),
+              ListTile(
+                leading: const Icon(Icons.reply, color: Colors.blue),
+                title: const Text("Trả lời"),
+                onTap: () {
+                  Navigator.pop(context);
+                  widget.onReply(widget.message);
+                },
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -241,6 +297,95 @@ class _MessageBubbleState extends State<MessageBubble> {
     );
   }
 
+  Widget _buildOrderCard(BuildContext context) {
+    final currencyFormat = NumberFormat("#,###", "vi_VN");
+    final msg = widget.message;
+
+    return GestureDetector(
+      onTap: () {
+        // Chuyển hướng sang màn hình chi tiết đơn hàng của bạn
+        // Navigator.pushNamed(context, '/order-detail', arguments: msg.orderId);
+      },
+      child: Container(
+        width: 260,
+        margin: const EdgeInsets.only(bottom: 6),
+        padding: const EdgeInsets.all(10),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          // Viền màu cam để phân biệt với sản phẩm
+          border: Border.all(color: Colors.orange.shade200, width: 1),
+          boxShadow: const [
+            BoxShadow(color: Colors.black12, blurRadius: 4, offset: Offset(0, 2))
+          ],
+        ),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Ảnh đơn hàng (lấy tấm đầu tiên từ backend gửi về)
+            ClipRRect(
+              borderRadius: BorderRadius.circular(8),
+              child: Image.network(
+                msg.image ?? '',
+                width: 70,
+                height: 70,
+                fit: BoxFit.cover,
+                errorBuilder: (_, __, ___) => Container(
+                  width: 70,
+                  height: 70,
+                  color: Colors.orange[50],
+                  child: const Icon(Icons.shopping_bag, color: Colors.orange),
+                ),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    "Đơn hàng #${msg.orderId}",
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 14,
+                      color: Colors.orangeAccent
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    "Số lượng: ${msg.orderItemCount ?? 0} sản phẩm",
+                    style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    "Tổng: ${currencyFormat.format(msg.totalPrice ?? 0)}đ",
+                    style: const TextStyle(
+                      color: Colors.red,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 15,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: Colors.orange[50],
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    child: Text(
+                      msg.orderStatus ?? 'Đang xử lý',
+                      style: const TextStyle(fontSize: 10, color: Colors.orange),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   // Bong bóng text: Dùng widget.isMe và widget.message
   Widget _buildTextBubble() {
     return Container(
@@ -271,7 +416,7 @@ class _MessageBubbleState extends State<MessageBubble> {
 
     return GestureDetector(
       onTap: () => setState(() => _showTime = !_showTime),
-      onLongPress: () => _showOptions(context),
+      onLongPress: isMe ? null : () => _showOptions(context),
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
         child: Column(
@@ -279,6 +424,9 @@ class _MessageBubbleState extends State<MessageBubble> {
           children: [
             // 1. Sản phẩm
             if (msg.bookId != null) _buildProductCard(context),
+
+            // 2. Hiển thị Card Đơn hàng (nếu có) - MỚI THÊM
+            if (msg.orderId != null) _buildOrderCard(context),
 
             // 2. Nội dung (Ảnh hoặc Chữ)
             Stack(
@@ -292,16 +440,38 @@ class _MessageBubbleState extends State<MessageBubble> {
                 else if (msg.content.isNotEmpty)
                   _buildTextBubble(),
 
-                // Reaction icon
+                // Trong hàm build, phần hiển thị ScaleTransition:
                 if (msg.reaction != null)
                   Positioned(
-                    bottom: -8,
-                    left: isMe ? null : 4,
-                    right: isMe ? 4 : null,
-                    child: Container(
-                      padding: const EdgeInsets.all(4),
-                      decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle, boxShadow: [BoxShadow(color: Colors.black26, blurRadius: 4)]),
-                      child: Text(getEmoji(msg.reaction), style: const TextStyle(fontSize: 12)),
+                    bottom: -22,
+                    left: isMe ? null : 2,
+                    right: isMe ? 2 : null,
+                    child: ScaleTransition(
+                      scale: _scaleAnimation.isAnimating ? _scaleAnimation : const AlwaysStoppedAnimation(1.0),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(15),
+                          border: Border.all(color: Colors.grey.shade100, width: 1), // Viền nhẹ cho nổi
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.1),
+                              blurRadius: 8,
+                              offset: const Offset(0, 3),
+                            )
+                          ],
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              getEmoji(msg.reaction),
+                              style: const TextStyle(fontSize: 15), // Tăng kích thước emoji một chút
+                            ),
+                          ],
+                        ),
+                      ),
                     ),
                   ),
               ],

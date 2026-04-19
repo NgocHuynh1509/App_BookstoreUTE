@@ -38,6 +38,7 @@ public class ChatMessageResponse {
     private String orderId;
     private String orderStatus;
     private BigDecimal totalPrice;
+    private Integer orderItemCount;
     private String userName;
 
     private boolean isMarkedUnreadByAdmin;
