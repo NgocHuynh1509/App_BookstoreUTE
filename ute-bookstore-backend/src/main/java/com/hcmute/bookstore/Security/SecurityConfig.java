@@ -78,6 +78,8 @@ public class SecurityConfig {
                                 "/chat.sendMessage",
                                 "/chat.react",
                                 "/chat/**",
+                                "/api/notifications/**",
+                                "/api/users/save-fcm-token",
 
                                 "/auth/me"
                         ).authenticated()

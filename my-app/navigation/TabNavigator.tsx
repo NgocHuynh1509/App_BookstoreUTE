@@ -4,10 +4,14 @@ import ProfileScreen from "../screens/profile/ProfileScreen";
 import CartScreen from "../screens/profile/CartScreen";   // thêm
 import NotificationScreen from "../screens/NotificationScreen"; // tự tạo
 import { Ionicons } from "@expo/vector-icons";
+import { useNotification } from "../contexts/NotificationContext";
+import { View, Text } from "react-native";
 
 const Tab = createBottomTabNavigator();
 
 export default function TabNavigator() {
+    const { unreadCount } = useNotification();
+
     return (
         <Tab.Navigator
             screenOptions={{
@@ -51,7 +55,34 @@ export default function TabNavigator() {
                 options={{
                     tabBarLabel: "Thông báo",
                     tabBarIcon: ({ color }) => (
-                        <Ionicons name="notifications-outline" size={24} color={color} />
+                        <View style={{ width: 24, height: 24 }}>
+                            <Ionicons name="notifications-outline" size={24} color={color} />
+
+                            {unreadCount > 0 && (
+                                <View
+                                    style={{
+                                        position: "absolute",
+                                        top: -5,
+                                        right: -10,
+                                        backgroundColor: "red",
+                                        borderRadius: 10,
+                                        paddingHorizontal: 5,
+                                        minWidth: 18,
+                                        alignItems: "center",
+                                    }}
+                                >
+                                    <Text
+                                        style={{
+                                            color: "#fff",
+                                            fontSize: 10,
+                                            fontWeight: "bold",
+                                        }}
+                                    >
+                                        {unreadCount > 99 ? "99+" : unreadCount}
+                                    </Text>
+                                </View>
+                            )}
+                        </View>
                     ),
                 }}
             />

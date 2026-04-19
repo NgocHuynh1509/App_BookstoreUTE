@@ -21,6 +21,12 @@ public class OrderService {
     private final OrdersRepository ordersRepository;
     private final UsersRepository usersRepository;
     private final OrderDetailRepository orderDetailRepository;
+    private final NotificationService notificationService;
+    private final UserFcmTokenRepository tokenRepo;
+    private final PushNotificationService pushService;
+    private final ExpoPushService expoPushService;
+    private final PaymentRepository paymentRepository;
+
     @Autowired
     private CouponRepository couponRepo;
     @Autowired private BooksRepository bookRepo;
@@ -214,8 +220,17 @@ public class OrderService {
         }
 
         // Cập nhật trạng thái đơn hàng
-        order.setStatus("cancelled");
+        order.setStatus("Cancelled");
         ordersRepository.save(order);
+
+        notificationService.createNotification(
+                user,
+                "Đơn hàng đã bị hủy",
+                "Đơn hàng #" + order.getOrderId() + " đã được hủy thành công.",
+                NotificationType.ORDER_CANCELLED,
+                order.getOrderId(),
+                "CUSTOMER"
+        );
 
         return "Đơn hàng đã được huỷ thành công.";
     }
@@ -265,7 +280,7 @@ public class OrderService {
         String shippingAddr = request.getAddress() != null ? request.getAddress() : "Giao đến ID: " + request.getShipping_address_id();
         order.setAddress(shippingAddr);
 
-        order.setStatus("PENDING");
+        order.setStatus("Pending");
         order.setOrderDate(new Date());
         // --- MÁ CHÈN THÊM MẤY DÒNG NÀY VÀO ĐÂY ---
         order.setShippingFee(request.getShipping_fee() != null ? request.getShipping_fee() : BigDecimal.ZERO);
@@ -334,6 +349,36 @@ public class OrderService {
             }
         }
 
+        notificationService.createNotification(
+                user,
+                "Đặt hàng thành công",
+                "Đơn hàng #" + order.getOrderId() + " đã được tạo thành công.",
+                NotificationType.ORDER_CREATED,
+                order.getOrderId(),
+                "CUSTOMER"
+        );
+
+//        List<UserFcmToken> tokens = tokenRepo.findByUser(user);
+//
+//        for (UserFcmToken t : tokens) {
+//            pushService.sendPush(
+//                    t.getToken(),
+//                    "Đặt hàng thành công",
+//                    "Đơn #" + order.getOrderId() + " đã được tạo"
+//            );
+//        }
+
+        List<UserFcmToken> tokens = tokenRepo.findByUser(user);
+
+        for (UserFcmToken t : tokens) {
+            expoPushService.sendPush(
+                    t.getToken(),
+                    "Đặt hàng thành công",
+                    "Đơn #" + order.getOrderId() + " đã được tạo",
+                    order.getOrderId()
+            );
+        }
+
         return orderId;
     }
 
@@ -397,7 +442,7 @@ public class OrderService {
 
         String shippingAddr = request.getAddress() != null ? request.getAddress() : "Giao đến ID: " + request.getShipping_address_id();
         order.setAddress(shippingAddr);
-        order.setStatus("PENDING");
+        order.setStatus("Pending");
         order.setOrderDate(new Date());
         // --- MÁ CHÈN THÊM MẤY DÒNG NÀY VÀO ĐÂY ---
         order.setShippingFee(request.getShipping_fee() != null ? request.getShipping_fee() : BigDecimal.ZERO);
@@ -438,19 +483,76 @@ public class OrderService {
             orderDetailRepository.save(detail);
         }
 
+        notificationService.createNotification(
+                user,
+                "Đặt hàng thành công",
+                "Đơn hàng #" + order.getOrderId() + " đã được tạo thành công.",
+                NotificationType.ORDER_CREATED,
+                order.getOrderId(),
+                "CUSTOMER"
+        );
+
+        List<UserFcmToken> tokens = tokenRepo.findByUser(user);
+
+        for (UserFcmToken t : tokens) {
+            expoPushService.sendPush(
+                    t.getToken(),
+                    "Đặt hàng thành công",
+                    "Đơn #" + order.getOrderId() + " đã được tạo",
+                    order.getOrderId()
+            );
+        }
         return orderId;
     }
 
+    @Transactional
     public void confirmDelivered(String orderId) {
         Orders order = ordersRepository.findById(orderId)
                 .orElseThrow(() -> new RuntimeException("Order not found"));
 
-        if (!order.getStatus().equals("Shipping")) {
+        Users user = usersRepository.findByCustomer_CustomerId(order.getCustomer().getCustomerId())
+                .orElse(null);
+
+        if (!"Shipping".equalsIgnoreCase(order.getStatus())) {
             throw new RuntimeException("Chỉ đơn đang giao mới được xác nhận");
         }
 
         order.setStatus("Completed");
         ordersRepository.save(order);
+
+        if ("COD".equalsIgnoreCase(order.getPaymentMethod())) {
+            Payment payment = paymentRepository.findByOrder_OrderId(orderId);
+
+            if (payment == null) {
+                throw new RuntimeException("Không tìm thấy payment cho đơn hàng: " + orderId);
+            }
+
+            payment.setStatus("PAID");
+            payment.setPaymentTime(new Date());
+            paymentRepository.save(payment);
+        }
+
+        if (user != null) {
+            notificationService.createNotification(
+                    user,
+                    "Giao hàng thành công",
+                    "Đơn hàng #" + order.getOrderId() + " đã được giao thành công.",
+                    NotificationType.ORDER_COMPLETED,
+                    order.getOrderId(),
+                    "CUSTOMER"
+            );
+        }
+
+        List<UserFcmToken> tokens = tokenRepo.findByUser(user);
+
+        for (UserFcmToken t : tokens) {
+            expoPushService.sendPush(
+                    t.getToken(),
+                    "Giao hàng thành công",
+                    "Đơn #" + order.getOrderId() + " đã được giao thành công.",
+                    order.getOrderId()
+            );
+        }
     }
 
 }
