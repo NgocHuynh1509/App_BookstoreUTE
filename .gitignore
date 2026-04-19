@@ -1,1 +1,3 @@
 **/application.properties
+ute-bookstore-backend/src/main/resources/firebase-service-account.json
+my-app/google-services.json

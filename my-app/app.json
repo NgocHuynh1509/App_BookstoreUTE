@@ -7,12 +7,21 @@
     "icon": "./assets/images/icon.png",
     "userInterfaceStyle": "automatic",
     "extra": {
+<<<<<<< HEAD
       "API_URL": "http://10.189.76.63:8080"
+=======
+      "API_URL": "http://192.168.1.53:8080",
+      "eas": {
+        "projectId": "511a330d-0bec-48ae-93d6-a7733992696d"
+      }
+>>>>>>> 0f9228c559e0b2dbc0743612c21a64db794d9359
     },
     "ios": {
       "supportsTablet": true
     },
     "android": {
+      "package": "com.hcmute.bookstore",
+      "googleServicesFile": "./google-services.json",
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
         "foregroundImage": "./assets/images/android-icon-foreground.png"
@@ -22,7 +31,8 @@
       "favicon": "./assets/images/favicon.png"
     },
     "plugins": [
-      "expo-sqlite"
+      "expo-sqlite",
+      "expo-notifications"
     ]
   }
 }

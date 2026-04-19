@@ -1,9 +1,10 @@
 package com.hcmute.bookstore.Service;
 
-import com.hcmute.bookstore.Entity.OrderDetail;
-import com.hcmute.bookstore.Entity.Orders;
+import com.hcmute.bookstore.Entity.*;
 import com.hcmute.bookstore.Repository.OrderDetailRepository;
 import com.hcmute.bookstore.Repository.OrdersRepository;
+import com.hcmute.bookstore.Repository.UserFcmTokenRepository;
+import com.hcmute.bookstore.Repository.UsersRepository;
 import com.hcmute.bookstore.dto.admin.AdminOrderDetailItemResponse;
 import com.hcmute.bookstore.dto.admin.AdminOrderDetailResponse;
 import com.hcmute.bookstore.dto.admin.AdminOrderResponse;
@@ -22,6 +23,10 @@ public class AdminOrderService {
 
     private final OrdersRepository ordersRepository;
     private final OrderDetailRepository orderDetailRepository;
+    private final UsersRepository usersRepository;
+    private final NotificationService notificationService;
+    private final UserFcmTokenRepository tokenRepo;
+    private final ExpoPushService expoPushService;
 
     public Page<AdminOrderResponse> getOrders(String status, Pageable pageable) {
         Page<Orders> page;
@@ -33,12 +38,88 @@ public class AdminOrderService {
         return page.map(this::toResponse);
     }
 
+//    public AdminOrderResponse updateStatus(String orderId, UpdateOrderStatusRequest request) {
+//        Orders order = ordersRepository.findById(orderId)
+//                .orElseThrow(() -> new RuntimeException("Không tìm thấy đơn hàng"));
+//
+//        order.setStatus(request.getStatus());
+//        return toResponse(ordersRepository.save(order));
+//    }
+
     public AdminOrderResponse updateStatus(String orderId, UpdateOrderStatusRequest request) {
         Orders order = ordersRepository.findById(orderId)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy đơn hàng"));
 
-        order.setStatus(request.getStatus());
-        return toResponse(ordersRepository.save(order));
+        String oldStatus = order.getStatus();
+        String newStatus = request.getStatus();
+
+        order.setStatus(newStatus);
+        Orders savedOrder = ordersRepository.save(order);
+
+        Users user = usersRepository
+                .findByCustomer_CustomerId(order.getCustomer().getCustomerId())
+                .orElse(null);
+
+        if (user != null && newStatus != null && !newStatus.equalsIgnoreCase(oldStatus)) {
+            String title = null;
+            String body = null;
+            NotificationType type = null;
+
+            switch (newStatus.trim().toUpperCase()) {
+                case "CONFIRMED":
+                    title = "Đơn hàng đã được xác nhận";
+                    body = "Đơn hàng #" + order.getOrderId() + " đã được xác nhận.";
+                    type = NotificationType.ORDER_CONFIRMED;
+                    break;
+
+                case "SHIPPING":
+                    title = "Đơn hàng đang được giao";
+                    body = "Đơn hàng #" + order.getOrderId() + " đang trên đường giao.";
+                    type = NotificationType.ORDER_SHIPPING;
+                    break;
+
+                case "COMPLETED":
+                    title = "Đơn hàng đã hoàn thành";
+                    body = "Đơn hàng #" + order.getOrderId() + " đã hoàn thành.";
+                    type = NotificationType.ORDER_COMPLETED;
+                    break;
+
+                case "CANCELLED":
+                    title = "Đơn hàng đã bị hủy";
+                    body = "Đơn hàng #" + order.getOrderId() + " đã bị hủy.";
+                    type = NotificationType.ORDER_CANCELLED;
+                    break;
+
+                case "RETURNED":
+                    title = "Đơn hàng hoàn trả";
+                    body = "Đơn hàng #" + order.getOrderId() + " đã được hoàn trả.";
+                    type = NotificationType.ORDER_RETURNED;
+                    break;
+            }
+
+            if (title != null) {
+                notificationService.createNotification(
+                        user,
+                        title,
+                        body,
+                        type,
+                        order.getOrderId(),
+                        "CUSTOMER"
+                );
+
+                List<UserFcmToken> tokens = tokenRepo.findByUser(user);
+                for (UserFcmToken t : tokens) {
+                    expoPushService.sendPush(
+                            t.getToken(),
+                            title,
+                            body,
+                            order.getOrderId()
+                    );
+                }
+            }
+        }
+
+        return toResponse(savedOrder);
     }
 
     private AdminOrderResponse toResponse(Orders order) {

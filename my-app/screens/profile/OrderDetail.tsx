@@ -83,6 +83,13 @@ export default function OrderDetail() {
   const [showWebView, setShowWebView] = useState(false);
   const [paymentUrl, setPaymentUrl] = useState("");
 
+  const handleChat = () => {
+    navigation.navigate("Chat", {
+      sellerId: orderData?.seller_id,
+      orderId: orderId,
+    });
+  };
+
   const handleRePayment = async () => {
     try {
       setLoading(true);
@@ -581,6 +588,15 @@ export default function OrderDetail() {
           </View>
         )}
 
+        <TouchableOpacity
+            style={s.chatBtn}
+            onPress={handleChat}
+            activeOpacity={0.85}
+        >
+          <Ionicons name="chatbubble-ellipses-outline" size={18} color="#FFF" />
+          <Text style={s.chatBtnTxt}>Liên hệ người bán</Text>
+        </TouchableOpacity>
+
         <View style={{ height: 20 }} />
       </ScrollView>
       {/* ── MODAL VNPAY WEBVIEW ────────────────────────────────── */}
@@ -865,5 +881,23 @@ const s = StyleSheet.create({
     color: "#FFF",
     fontWeight: "800",
     fontSize: 16,
+  },
+
+  chatBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+    backgroundColor: C.primaryMid,
+    borderRadius: 16,
+    paddingVertical: 14,
+    marginTop: 10,
+    elevation: 2,
+  },
+
+  chatBtnTxt: {
+    color: "#FFF",
+    fontWeight: "800",
+    fontSize: 15,
   },
 });

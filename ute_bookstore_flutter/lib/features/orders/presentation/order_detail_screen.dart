@@ -455,25 +455,6 @@ class _OrderActionSection extends ConsumerWidget {
         break;
 
       case 'SHIPPING':
-        addConfirmButton(
-          title: 'Hoàn thành đơn hàng',
-          message: 'Xác nhận đơn này đã giao thành công?',
-          newStatus: 'Completed',
-          color: Colors.green,
-          buttonText: 'Đã giao thành công',
-          icon: Icons.verified_outlined,
-        );
-        actions.add(const SizedBox(height: 10));
-        addConfirmButton(
-          title: 'Xử lý hoàn trả',
-          message: 'Chuyển đơn này sang trạng thái Hoàn trả?',
-          newStatus: 'Returned',
-          color: Colors.teal,
-          buttonText: 'Đánh dấu hoàn trả',
-          icon: Icons.assignment_return_outlined,
-        );
-        break;
-
       case 'COMPLETED':
       case 'RETURNED':
       case 'CANCELLED':
