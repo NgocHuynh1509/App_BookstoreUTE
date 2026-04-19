@@ -7,9 +7,9 @@
     "icon": "./assets/images/icon.png",
     "userInterfaceStyle": "automatic",
     "extra": {
-      "API_URL": "http://10.189.76.63:8080",
+      "API_URL": "http://192.168.120.27:8080",
       "eas": {
-        "projectId": "380a359d-09ef-4056-afa2-809c4452d97a"
+        "projectId": "511a330d-0bec-48ae-93d6-a7733992696d"
       }
     },
     "ios": {
@@ -29,7 +29,6 @@
     "plugins": [
       "expo-sqlite",
       "expo-notifications"
-    ],
-    "owner": "ngochuynh150905"
+    ]
   }
 }

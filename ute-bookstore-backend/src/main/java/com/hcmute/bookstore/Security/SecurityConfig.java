@@ -75,6 +75,7 @@ public class SecurityConfig {
                                 "/addresses/**",
                                 "/api/orders/**",
                                 "/reviews",
+                                "/reviews/**",
                                 "/chat.sendMessage",
                                 "/chat.react",
                                 "/chat/**",

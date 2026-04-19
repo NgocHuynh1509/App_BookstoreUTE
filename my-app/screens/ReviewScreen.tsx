@@ -1,13 +1,14 @@
-import React, { useState } from "react";
 import {
   View, Text, TextInput, TouchableOpacity,
   StyleSheet, Alert, StatusBar, Platform,
-  SafeAreaView, ScrollView,
+  SafeAreaView, ScrollView, Image,
 } from "react-native";
 import api from "../services/api";
 import { useRoute, useNavigation } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import React, { useEffect, useState } from "react";
+
 // ─── Palette ──────────────────────────────────────────────────────────────────
 const C = {
   primary:     "#1565C0",
@@ -32,11 +33,56 @@ export default function ReviewScreen() {
   const { params }  = useRoute<any>();
   const navigation  = useNavigation<any>();
   const { book_id, order_id } = params;
-
+  const [bookInfo, setBookInfo] = useState<any>(null);
   const [rating, setRating]   = useState(5);
   const [comment, setComment] = useState("");
   const [loading, setLoading] = useState(false);
   const [focused, setFocused] = useState(false);
+  const [isReviewed, setIsReviewed] = useState(false);
+
+
+  const loadMyReview = async () => {
+    try {
+      if (!book_id || !order_id) return;
+
+      const token = await AsyncStorage.getItem("token");
+      if (!token) return;
+
+      const res = await api.get(
+          `/reviews/my-review?book_id=${book_id}&order_id=${order_id}`,
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          }
+      );
+
+      if (res.data?.reviewed) {
+        setRating(res.data.rating);
+        setComment(res.data.comment || "");
+        setIsReviewed(true);
+      }
+    } catch (err) {
+      console.log("LOAD MY REVIEW ERROR:", err);
+    }
+  };
+
+  const loadBookInfo = async () => {
+    try {
+      if (!book_id) return;
+
+      const res = await api.get(`/books/${book_id}`);
+      setBookInfo(res.data);
+    } catch (err) {
+      console.log("LOAD BOOK INFO ERROR:", err);
+    }
+  };
+
+  console.log("BOOK INFO:", bookInfo);
+
+  useEffect(() => {
+    loadBookInfo();
+    loadMyReview();
+  }, []);
+
 
   // ==========================
   // API LOGIC (unchanged)
@@ -49,6 +95,7 @@ export default function ReviewScreen() {
       console.log("REVIEW URL:", `${api.defaults.baseURL}/reviews`);
 
       if (!token) {
+        setLoading(false);
         Alert.alert("Lỗi", "Bạn chưa đăng nhập");
         return;
       }
@@ -65,21 +112,31 @@ export default function ReviewScreen() {
 
       console.log("REVIEW RESPONSE:", res.data);
 
-      Alert.alert("Thành công", res.data.message);
+      let rewardMsg = "";
 
       if (res.data.reward.type === "points") {
-        Alert.alert("🎉 Bạn được +10 điểm tích lũy");
+        rewardMsg = "🎉 Bạn được +10 điểm tích lũy";
       } else {
-        Alert.alert("🎉 Bạn được tặng mã giảm giá: " + res.data.reward.code);
+        rewardMsg = "🎉 Bạn được tặng mã: " + res.data.reward.code;
       }
+
+      Alert.alert("Thành công", `${res.data.message}\n\n${rewardMsg}`);
 
       navigation.goBack();
     } catch (err: any) {
-      console.log("REVIEW STATUS:", err?.response?.status);
-      console.log("REVIEW DATA:", err?.response?.data);
-      console.log("REVIEW ERROR:", err);
+      const status = err?.response?.status;
+      const data = err?.response?.data;
 
-      Alert.alert("Lỗi", err?.response?.data?.message || "Có lỗi xảy ra");
+      if (status === 409 && data?.review) {
+        setRating(data.review.rating);
+        setComment(data.review.comment || "");
+        setIsReviewed(true);
+
+        Alert.alert("Thông báo", "Bạn đã đánh giá sản phẩm này rồi");
+        return;
+      }
+
+      Alert.alert("Lỗi", data?.message || "Có lỗi xảy ra");
     } finally {
       setLoading(false);
     }
@@ -105,15 +162,75 @@ export default function ReviewScreen() {
         showsVerticalScrollIndicator={false}
       >
         {/* ── REWARD HINT ─────────────────────────────────────── */}
-        <View style={s.rewardBanner}>
-          <View style={s.rewardIconWrap}>
-            <Text style={{ fontSize: 22 }}>🎁</Text>
-          </View>
-          <View style={{ flex: 1 }}>
-            <Text style={s.rewardTitle}>Nhận thưởng khi đánh giá</Text>
-            <Text style={s.rewardSub}>+10 điểm tích lũy hoặc mã giảm giá hấp dẫn</Text>
-          </View>
-        </View>
+        {!isReviewed ? (
+            <View style={s.rewardBanner}>
+              <View style={s.rewardIconWrap}>
+                <Text style={{ fontSize: 22 }}>🎁</Text>
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={s.rewardTitle}>Nhận thưởng khi đánh giá</Text>
+                <Text style={s.rewardSub}>+10 điểm tích lũy hoặc mã giảm giá hấp dẫn</Text>
+              </View>
+            </View>
+        ) : (
+            <View style={s.reviewedBanner}>
+              <View style={s.reviewedIconWrap}>
+                <Ionicons name="checkmark-circle" size={22} color="#00AB56" />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={s.reviewedTitle}>Bạn đã đánh giá sản phẩm này</Text>
+                <Text style={s.reviewedSub}>Cảm ơn bạn đã chia sẻ trải nghiệm của mình.</Text>
+              </View>
+            </View>
+        )}
+
+        {bookInfo && (
+            <View style={s.bookCard}>
+              <Image
+                  source={{ uri: bookInfo.cover_image || bookInfo.picture }}
+                  style={s.bookImage}
+              />
+
+              <View style={{ flex: 1 }}>
+                <Text style={s.bookTitle} numberOfLines={2}>
+                  {bookInfo.title}
+                </Text>
+
+                <Text style={s.bookAuthor}>
+                  {bookInfo.author_name || bookInfo.author || "Chưa cập nhật tác giả"}
+                </Text>
+
+                <View style={s.priceBlock}>
+                  {!!bookInfo.original_price &&
+                      Number(bookInfo.original_price) > Number(bookInfo.price) && (
+                          <View style={s.oldPriceRow}>
+                            <Text style={s.oldPrice}>
+                              {Number(bookInfo.original_price).toLocaleString("vi-VN")}đ
+                            </Text>
+
+                            <View style={s.discountBadge}>
+                              <Text style={s.discountBadgeTxt}>
+                                -
+                                {Math.round(
+                                    ((Number(bookInfo.original_price) - Number(bookInfo.price)) /
+                                        Number(bookInfo.original_price)) *
+                                    100
+                                )}
+                                %
+                              </Text>
+                            </View>
+                          </View>
+                      )}
+
+                  <Text style={s.bookPriceVip}>
+                    {typeof bookInfo.price !== "undefined"
+                        ? Number(bookInfo.price).toLocaleString("vi-VN") + "đ"
+                        : "Đang cập nhật"}
+                  </Text>
+                </View>
+              </View>
+            </View>
+        )}
 
         {/* ── STAR RATING CARD ────────────────────────────────── */}
         <View style={s.card}>
@@ -124,7 +241,7 @@ export default function ReviewScreen() {
             {[1, 2, 3, 4, 5].map(star => (
               <TouchableOpacity
                 key={star}
-                onPress={() => setRating(star)}
+                onPress={() => !isReviewed && setRating(star)}
                 activeOpacity={0.7}
                 style={s.starBtn}
               >
@@ -160,6 +277,7 @@ export default function ReviewScreen() {
         <View style={s.card}>
           <Text style={s.cardLabel}>Nhận xét của bạn</Text>
           <TextInput
+              editable={!isReviewed}
             style={[s.textarea, focused && s.textareaFocused]}
             placeholder="Chia sẻ trải nghiệm của bạn về cuốn sách này..."
             placeholderTextColor={C.text3}
@@ -190,18 +308,20 @@ export default function ReviewScreen() {
 
         {/* ── SUBMIT ──────────────────────────────────────────── */}
         <TouchableOpacity
-          style={[s.submitBtn, loading && s.submitBtnLoading]}
-          onPress={sendReview}
-          disabled={loading}
-          activeOpacity={0.85}
+            style={[s.submitBtn, (loading || isReviewed) && s.submitBtnLoading]}
+            onPress={sendReview}
+            disabled={loading || isReviewed}
+            activeOpacity={0.85}
         >
           {loading ? (
-            <Text style={s.submitBtnTxt}>Đang gửi...</Text>
+              <Text style={s.submitBtnTxt}>Đang gửi...</Text>
           ) : (
-            <>
-              <Ionicons name="send-outline" size={18} color="#FFF" />
-              <Text style={s.submitBtnTxt}>Gửi đánh giá</Text>
-            </>
+              <>
+                <Ionicons name="send-outline" size={18} color="#FFF" />
+                <Text style={s.submitBtnTxt}>
+                  {isReviewed ? "Đã đánh giá" : "Gửi đánh giá"}
+                </Text>
+              </>
           )}
         </TouchableOpacity>
 
@@ -322,4 +442,111 @@ const s = StyleSheet.create({
   },
   submitBtnLoading: { backgroundColor: C.text3, elevation: 0, shadowOpacity: 0 },
   submitBtnTxt:     { color: "#FFF", fontSize: 16, fontWeight: "800" },
+  bookCard: {
+    backgroundColor: C.surface,
+    borderRadius: 20,
+    padding: 14,
+    flexDirection: "row",
+    gap: 12,
+    alignItems: "center",
+    borderWidth: 1,
+    borderColor: "#E8EEF9",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.06,
+    shadowRadius: 8,
+    elevation: 3,
+  },
+  bookImage: {
+    width: 78,
+    height: 112,
+    borderRadius: 12,
+    backgroundColor: C.bg,
+  },
+  bookTitle: {
+    fontSize: 15,
+    fontWeight: "800",
+    color: C.text1,
+    marginBottom: 4,
+  },
+  bookAuthor: {
+    fontSize: 13,
+    color: C.text2,
+    marginBottom: 6,
+  },
+  bookPrice: {
+    fontSize: 15,
+    fontWeight: "800",
+    color: C.primaryMid,
+  },
+  priceBlock: {
+    marginTop: 4,
+    gap: 4,
+  },
+
+  oldPriceRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    flexWrap: "wrap",
+  },
+
+  oldPrice: {
+    fontSize: 13,
+    color: C.text3,
+    textDecorationLine: "line-through",
+  },
+
+  discountBadge: {
+    backgroundColor: "#FFE8E6",
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 999,
+    alignSelf: "flex-start",
+  },
+
+  discountBadgeTxt: {
+    color: "#E53935",
+    fontSize: 12,
+    fontWeight: "800",
+  },
+
+  bookPriceVip: {
+    fontSize: 20,
+    fontWeight: "900",
+    color: "#E53935",
+    letterSpacing: 0.2,
+  },
+  reviewedBanner: {
+    backgroundColor: "#E9F8F0",
+    borderRadius: 18,
+    padding: 16,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 14,
+    borderWidth: 1,
+    borderColor: "#BFE8CF",
+  },
+
+  reviewedIconWrap: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: "#FFFFFF",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+
+  reviewedTitle: {
+    fontSize: 14,
+    fontWeight: "800",
+    color: "#0D1B3E",
+    marginBottom: 3,
+  },
+
+  reviewedSub: {
+    fontSize: 12,
+    color: "#4A5980",
+    lineHeight: 18,
+  },
 });
