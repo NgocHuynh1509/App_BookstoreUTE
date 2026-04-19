@@ -7,6 +7,8 @@ import '../../../features/products/presentation/product_detail_screen.dart';
 // Ví dụ nếu file nằm ở: lib/data/product_models.dart
 import '../../../features/products/data/product_models.dart';
 
+import '../../../features/orders/presentation/order_detail_screen.dart';
+
 class MessageBubble extends StatefulWidget {
   final ChatMessage message;
   final bool isMe;
@@ -303,8 +305,20 @@ class _MessageBubbleState extends State<MessageBubble> with SingleTickerProvider
 
     return GestureDetector(
       onTap: () {
-        // Chuyển hướng sang màn hình chi tiết đơn hàng của bạn
-        // Navigator.pushNamed(context, '/order-detail', arguments: msg.orderId);
+  // Kiểm tra nếu có orderId thì mới thực hiện chuyển trang
+          if (msg.orderId != null) {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                // Chú ý: Đảm bảo bạn đã import OrderDetailScreen ở đầu file
+                builder: (_) => OrderDetailScreen(orderId: msg.orderId!),
+              ),
+            );
+          } else {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text("Không tìm thấy mã đơn hàng")),
+            );
+          }
       },
       child: Container(
         width: 260,

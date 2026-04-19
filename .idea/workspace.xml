@@ -5,22 +5,8 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="90f2e1e5-d5bd-4083-a96e-40142505842d" name="Changes" comment="create order">
-      <change afterPath="$PROJECT_DIR$/.idea/copilot.data.migration.agent.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/compiler.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/compiler.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/my-app/app.json" beforeDir="false" afterPath="$PROJECT_DIR$/my-app/app.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/my-app/package-lock.json" beforeDir="false" afterPath="$PROJECT_DIR$/my-app/package-lock.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/my-app/package.json" beforeDir="false" afterPath="$PROJECT_DIR$/my-app/package.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/my-app/screens/profile/ChatScreen.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/my-app/screens/profile/ChatScreen.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/my-app/screens/profile/OrderDetail.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/my-app/screens/profile/OrderDetail.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ute-bookstore-backend/src/main/java/com/hcmute/bookstore/Service/ChatService.java" beforeDir="false" afterPath="$PROJECT_DIR$/ute-bookstore-backend/src/main/java/com/hcmute/bookstore/Service/ChatService.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ute-bookstore-backend/src/main/java/com/hcmute/bookstore/dto/ChatMessageResponse.java" beforeDir="false" afterPath="$PROJECT_DIR$/ute-bookstore-backend/src/main/java/com/hcmute/bookstore/dto/ChatMessageResponse.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ute_bookstore_flutter/lib/chat/models/chat_message.dart" beforeDir="false" afterPath="$PROJECT_DIR$/ute_bookstore_flutter/lib/chat/models/chat_message.dart" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/ute_bookstore_flutter/lib/chat/presentation/widgets/message_bubble.dart" beforeDir="false" afterPath="$PROJECT_DIR$/ute_bookstore_flutter/lib/chat/presentation/widgets/message_bubble.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ute_bookstore_python/linear_regression.joblib" beforeDir="false" afterPath="$PROJECT_DIR$/ute_bookstore_python/linear_regression.joblib" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ute_bookstore_python/orders.csv" beforeDir="false" afterPath="$PROJECT_DIR$/ute_bookstore_python/orders.csv" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ute_bookstore_python/output.png" beforeDir="false" afterPath="$PROJECT_DIR$/ute_bookstore_python/output.png" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -150,7 +136,7 @@
       <workItem from="1776439087854" duration="8914000" />
       <workItem from="1776491683742" duration="996000" />
       <workItem from="1776594814876" duration="358000" />
-      <workItem from="1776613692855" duration="8724000" />
+      <workItem from="1776613692855" duration="9517000" />
     </task>
     <task id="LOCAL-00001" summary="sql">
       <option name="closed" value="true" />
