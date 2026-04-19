@@ -4,9 +4,12 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.*;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
+import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configuration.WebSecurityCustomizer;
+import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.*;
@@ -74,7 +77,7 @@ public class SecurityConfig {
                                 "/reviews",
                                 "/chat.sendMessage",
                                 "/chat.react",
-                                "/chat/**"
+                                "/chat/**",
 
                                 "/auth/me"
                         ).authenticated()
@@ -103,18 +106,22 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
 
-//        configuration.setAllowedOriginPatterns(List.of(
-//                "http://localhost:*",
-//                "http://127.0.0.1:*"
-//        ));
+        // 1. Dùng AllowedOriginPatterns thay vì AllowedOrigins khi dùng AllowCredentials
+        // Điều này cho phép bạn vẫn dùng "*" nhưng an toàn hơn
         configuration.setAllowedOriginPatterns(List.of("*"));
 
-        configuration.setAllowedMethods(List.of(
-                "GET", "POST", "PUT", "DELETE", "OPTIONS"
-        ));
+        // 2. Cho phép đầy đủ các phương thức
+        configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
 
+        // 3. Cho phép tất cả headers (Quan trọng cho JWT và Content-Type)
         configuration.setAllowedHeaders(List.of("*"));
+
+        // 4. Cho phép gửi credentials (Cookie, Authorization Header)
+        // Rất quan trọng khi dùng Token hoặc Session
         configuration.setAllowCredentials(true);
+
+        // 5. Expose các header nếu cần (tùy chọn)
+        configuration.setExposedHeaders(List.of("Authorization"));
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
@@ -124,18 +131,5 @@ public class SecurityConfig {
     @Bean
     public WebSecurityCustomizer webSecurityCustomizer() {
         return (web) -> web.ignoring().requestMatchers("/ws-bookstore/**");
-    }
-
-    @Bean
-    public CorsConfigurationSource corsConfigurationSource() {
-        CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(List.of("*"));
-        configuration.setAllowedMethods(List.of("*"));
-        configuration.setAllowedHeaders(List.of("*"));
-        configuration.setAllowCredentials(false);
-
-        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        source.registerCorsConfiguration("/**", configuration);
-        return source;
     }
 }

@@ -6,7 +6,7 @@ import '../../../widgets/placeholder_screen.dart';
 import '../../customers/presentation/customers_screen.dart';
 import '../../auth/presentation/admin_login_screen.dart';
 // Giả định import cho ChatListScreen nếu bạn đã có file này
-// import '../../chat/presentation/chat_list_screen.dart'; 
+import '../../../../chat/presentation/chat_list_screen.dart';
 
 class ManagementScreen extends ConsumerStatefulWidget {
   const ManagementScreen({super.key});
@@ -80,8 +80,9 @@ class _ManagementScreenState extends ConsumerState<ManagementScreen> {
       _MenuItem(
         'Tin nhắn / hỗ trợ',
         Icons.chat_bubble_outline,
-        // builder: (_) => ChatListScreen(repository: chatRepo), // Sử dụng builder nếu cần truyền repo
-        screen: const PlaceholderScreen(title: 'Tin nhắn / hỗ trợ'), // Thay thế bằng ChatListScreen thực tế
+//         builder: (_) => ChatListScreen(repository: chatRepo), // Sử dụng builder nếu cần truyền repo
+//         screen: const PlaceholderScreen(title: 'Tin nhắn / hỗ trợ'), // Thay thế bằng ChatListScreen thực tế
+        screen: ChatListScreen(repository: chatRepo),
         showDot: _hasUnread,
       ),
       _MenuItem('Danh mục', Icons.category_outlined, screen: const PlaceholderScreen(title: 'Danh mục')),
