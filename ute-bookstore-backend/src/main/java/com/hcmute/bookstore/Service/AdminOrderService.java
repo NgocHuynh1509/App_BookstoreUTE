@@ -190,6 +190,7 @@ public class AdminOrderService {
         response.setShippingFee(order.getShippingFee() != null ? order.getShippingFee() : BigDecimal.ZERO);
         response.setVoucherDiscount(order.getVoucherDiscount() != null ? order.getVoucherDiscount() : BigDecimal.ZERO);
         response.setPointsDiscount(order.getPointsDiscount() != null ? order.getPointsDiscount() : BigDecimal.ZERO);
+        response.setCustomerUsername(order.getCustomer().getUser().getUserName());
         response.setItems(items);
 
         if (order.getShippingAddress() != null) {

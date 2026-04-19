@@ -5,6 +5,8 @@ import 'package:intl/intl.dart';
 import '../../../app/providers.dart';
 import '../data/order_detail_model.dart';
 import 'orders_screen.dart';
+import '../../../chat/presentation/chat_detail_screen.dart';
+import '../../../chat/data/chat_repository.dart';
 
 final orderDetailProvider =
 FutureProvider.family<OrderDetailModel, String>((ref, orderId) async {
@@ -97,9 +99,14 @@ Future<void> updateOrderStatus(
 }
 
 class OrderDetailScreen extends ConsumerWidget {
-  const OrderDetailScreen({super.key, required this.orderId});
+  const OrderDetailScreen({
+    super.key,
+    required this.orderId,
+    required this.chatRepository,
+  });
 
   final String orderId;
+  final ChatRepository chatRepository;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -129,6 +136,8 @@ class OrderDetailScreen extends ConsumerWidget {
           ),
         ),
         data: (order) {
+          print("USERNAME: ${order.customerUsername}");
+
           final subtotal = order.items.fold<double>(
             0,
                 (sum, item) => sum + item.unitPrice * item.quantity,
@@ -341,6 +350,34 @@ class OrderDetailScreen extends ConsumerWidget {
               ),
               const SizedBox(height: 14),
               _OrderActionSection(order: order),
+              const SizedBox(height: 14),
+              if (order.customerUsername.trim().isNotEmpty)
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton.icon(
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => ChatDetailScreen(
+                            customerUsername: order.customerUsername,
+                            repository: chatRepository,
+                          ),
+                        ),
+                      );
+                    },
+                    icon: const Icon(Icons.chat_bubble_outline),
+                    label: const Text('Liên hệ người mua'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.blue,
+                      foregroundColor: Colors.white,
+                      minimumSize: const Size.fromHeight(48),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                    ),
+                  ),
+                ),
               const SizedBox(height: 20),
             ],
           );

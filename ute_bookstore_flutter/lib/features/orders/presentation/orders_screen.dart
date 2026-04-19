@@ -335,7 +335,10 @@ class _OrderCard extends ConsumerWidget {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (_) => OrderDetailScreen(orderId: order.orderId),
+            builder: (_) => OrderDetailScreen(
+              orderId: order.orderId,
+              chatRepository: ref.read(chatRepositoryProvider),
+            ),
           ),
         );
       },

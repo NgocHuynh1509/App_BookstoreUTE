@@ -36,6 +36,7 @@ class OrderDetailModel {
   final double shippingFee;
   final double voucherDiscount;
   final double pointsDiscount;
+  final String customerUsername;
   final List<OrderDetailItem> items;
 
   OrderDetailModel({
@@ -50,6 +51,7 @@ class OrderDetailModel {
     required this.shippingFee,
     required this.voucherDiscount,
     required this.pointsDiscount,
+    required this.customerUsername,
     required this.items,
   });
 
@@ -66,6 +68,7 @@ class OrderDetailModel {
       shippingFee: (json['shippingFee'] as num?)?.toDouble() ?? 0,
       voucherDiscount: (json['voucherDiscount'] as num?)?.toDouble() ?? 0,
       pointsDiscount: (json['pointsDiscount'] as num?)?.toDouble() ?? 0,
+      customerUsername: json['customerUsername']?.toString() ?? '',
       items: (json['items'] as List<dynamic>? ?? [])
           .map((e) => OrderDetailItem.fromJson(e as Map<String, dynamic>))
           .toList(),

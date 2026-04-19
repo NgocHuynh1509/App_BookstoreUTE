@@ -18,6 +18,7 @@ public class AdminOrderDetailResponse {
     private BigDecimal shippingFee;
     private BigDecimal voucherDiscount;
     private BigDecimal pointsDiscount;
+    private String customerUsername;
 
     private List<AdminOrderDetailItemResponse> items;
 
@@ -53,6 +54,9 @@ public class AdminOrderDetailResponse {
 
     public BigDecimal getPointsDiscount() { return pointsDiscount; }
     public void setPointsDiscount(BigDecimal pointsDiscount) { this.pointsDiscount = pointsDiscount; }
+
+    public String getCustomerUsername() { return customerUsername; }
+    public void setCustomerUsername(String customerUsername) { this.customerUsername = customerUsername; }
 
     public List<AdminOrderDetailItemResponse> getItems() { return items; }
     public void setItems(List<AdminOrderDetailItemResponse> items) { this.items = items; }

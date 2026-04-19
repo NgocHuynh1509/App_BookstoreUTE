@@ -5,6 +5,7 @@ class OrderItem {
   final String address;
   final String customerId;
   final String customerEmail;
+  final String customerUsername;
   final String fullName;
   final String phone;// ✅ thêm dòng này
   final double totalAmount;
@@ -18,6 +19,7 @@ class OrderItem {
     required this.address,
     required this.customerId,
     required this.customerEmail,
+    required this.customerUsername,
     required this.fullName,
     required this.phone,// ✅
     required this.totalAmount,
@@ -33,6 +35,7 @@ class OrderItem {
       address: json['address']?.toString() ?? '',
       customerId: json['customerId']?.toString() ?? '',
       customerEmail: json['customerEmail']?.toString() ?? '',
+      customerUsername: json['customerUsername']?.toString() ?? '',
       fullName: json['fullName']?.toString() ?? '', // ✅ thêm
       phone: json['phone']?.toString() ?? '',
       totalAmount: (json['totalAmount'] as num?)?.toDouble() ?? 0,
