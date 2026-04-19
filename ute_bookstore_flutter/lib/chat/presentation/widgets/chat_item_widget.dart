@@ -5,13 +5,20 @@ import '../../models/chat_thread.dart';
 class ChatItemWidget extends StatelessWidget {
   final ChatThread thread;
   final VoidCallback onTap;
+  final VoidCallback onLongPress;
 
-  const ChatItemWidget({super.key, required this.thread, required this.onTap});
+  const ChatItemWidget({
+    super.key,
+    required this.thread,
+    required this.onTap,
+    required this.onLongPress,
+  });
 
   @override
   Widget build(BuildContext context) {
     return ListTile(
       onTap: onTap,
+      onLongPress: onLongPress,
       leading: CircleAvatar(
         radius: 25,
         backgroundColor: Colors.blueGrey[100],
@@ -37,15 +44,17 @@ class ChatItemWidget extends StatelessWidget {
             DateFormat('HH:mm').format(thread.lastTime),
             style: const TextStyle(fontSize: 12, color: Colors.grey),
           ),
-          if (thread.unreadCount > 0)
+          if (thread.unreadCount > 0 || thread.isManualUnread)
             Container(
               margin: const EdgeInsets.only(top: 4),
               padding: const EdgeInsets.all(6),
               decoration: const BoxDecoration(color: Colors.red, shape: BoxShape.circle),
-              child: Text(
-                "${thread.unreadCount}",
-                style: const TextStyle(color: Colors.white, fontSize: 10),
-              ),
+              child: thread.unreadCount > 0
+                  ? Text(
+                      "${thread.unreadCount}",
+                      style: const TextStyle(color: Colors.white, fontSize: 10),
+                    )
+                  : const SizedBox(width: 10, height: 10), // Dấu chấm đỏ đơn thuần nếu là thủ công
             ),
         ],
       ),

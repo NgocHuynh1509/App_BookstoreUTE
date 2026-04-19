@@ -12,6 +12,13 @@ class ChatMessage {
   final String? receiverName; // Người nhận
   final String? reaction;
 
+  // -- REPLY FIELDS --
+  final String? replyToId;
+  final String? replyToContent;
+  final String? replyToMediaUrl;
+  final MessageType? replyToMessageType;
+  final String? replyToSender;
+
   ChatMessage({
     this.id,
     required this.content,
@@ -21,16 +28,19 @@ class ChatMessage {
     required this.createdAt,
     this.userName,
     this.receiverName,
-    this.reaction, // ✅ THÊM
+    this.reaction,
+    this.replyToId,
+    this.replyToContent,
+    this.replyToMediaUrl,
+    this.replyToMessageType,
+    this.replyToSender,
   });
 
-  // Chuyển từ JSON (Map) sang Object
   factory ChatMessage.fromMap(Map<String, dynamic> map) {
     return ChatMessage(
       id: map['id']?.toString(),
       content: map['content'] ?? '',
       mediaUrl: map['mediaUrl'],
-      // Sửa lại trong chat_message.dart
       senderRole: SenderRole.values.firstWhere(
         (e) => e.name.toUpperCase() == (map['senderRole']?.toString().toUpperCase() ?? 'USER'),
         orElse: () => SenderRole.USER,
@@ -39,16 +49,24 @@ class ChatMessage {
         (e) => e.name.toUpperCase() == (map['messageType']?.toString().toUpperCase() ?? 'TEXT'),
         orElse: () => MessageType.TEXT,
       ),
-      createdAt: map['createdAt'] != null 
-          ? DateTime.parse(map['createdAt']) 
+      createdAt: map['createdAt'] != null
+          ? DateTime.parse(map['createdAt'])
           : DateTime.now(),
       userName: map['userName'],
       receiverName: map['receiverName'],
-      reaction: map['reaction'], // ✅ THÊM
+      reaction: map['reaction'],
+      replyToId: map['replyToId'],
+      replyToContent: map['replyToContent'],
+      replyToMediaUrl: map['replyToMediaUrl'],
+      replyToMessageType: map['replyToMessageType'] != null
+          ? MessageType.values.firstWhere(
+              (e) => e.name.toUpperCase() == map['replyToMessageType'].toString().toUpperCase(),
+              orElse: () => MessageType.TEXT)
+          : null,
+      replyToSender: map['replyToSender'],
     );
   }
 
-  // Chuyển từ Object sang Map (Dùng khi gửi tin qua Socket)
   Map<String, dynamic> toMap() {
     return {
       'content': content,
@@ -57,6 +75,7 @@ class ChatMessage {
       'userName': userName,
       'receiverName': receiverName,
       'mediaUrl': mediaUrl,
+      'replyToId': replyToId,
     };
   }
 }

@@ -3,7 +3,6 @@ import 'widgets/chat_item_widget.dart';
 import 'chat_detail_screen.dart';
 import '../models/chat_thread.dart';
 import '../data/chat_repository.dart';
-// Nhớ thêm import SessionStorage nếu chưa có
 import '../../core/session_storage.dart';
 
 class ChatListScreen extends StatefulWidget {
@@ -21,23 +20,16 @@ class _ChatListScreenState extends State<ChatListScreen> {
   @override
   void initState() {
     super.initState();
-    // 1. KẾT NỐI SOCKET NGAY KHI VÀO MÀN HÌNH
     _initSocketConnection();
-    // 2. TẢI DANH SÁCH LẦN ĐẦU TỪ API REST
     _loadThreads();
   }
 
   void _initSocketConnection() async {
-      // 1. Khởi tạo storage
       final storage = SessionStorage();
-
-      // 2. Lấy token thật từ SharedPreferences
       String? token = await storage.getToken();
 
       if (token != null && token.isNotEmpty) {
         print("🔑 [UI] Đã lấy được Token thật: ${token.substring(0, 10)}...");
-
-        // 3. Truyền token thật vào để kết nối
         widget.repository.startSocketConnection(
           token,
           (newMessage) {
@@ -49,11 +41,9 @@ class _ChatListScreenState extends State<ChatListScreen> {
         );
       } else {
         print("❌ [UI] LỖI: Không tìm thấy Token trong storage. Vui lòng đăng nhập lại!");
-        // Có thể điều hướng về trang Login ở đây
       }
   }
 
-  /// Hàm tải danh sách các cuộc hội thoại
   Future<void> _loadThreads() async {
     try {
       final threads = await widget.repository.fetchChatThreads();
@@ -71,10 +61,48 @@ class _ChatListScreenState extends State<ChatListScreen> {
 
   @override
   void dispose() {
-    // 3. NGẮT KẾT NỐI KHI THOÁT MÀN HÌNH
-    // (Nếu bạn muốn Admin luôn nhận tin nhắn dù ở màn hình khác, hãy cân nhắc đóng ở App level)
     widget.repository.dispose();
     super.dispose();
+  }
+
+  void _showToggleUnreadMenu(ChatThread thread) {
+    showModalBottomSheet(
+      context: context,
+      builder: (context) {
+        return SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ListTile(
+                leading: Icon(
+                  thread.isManualUnread ? Icons.mark_chat_read : Icons.mark_chat_unread,
+                  color: Colors.blue,
+                ),
+                title: Text(
+                  thread.isManualUnread ? "Đánh dấu là đã đọc" : "Đánh dấu là chưa đọc",
+                ),
+                onTap: () async {
+                  Navigator.pop(context);
+                  try {
+                    await widget.repository.toggleUnread(
+                      thread.customerUsername,
+                      !thread.isManualUnread,
+                    );
+                    _loadThreads();
+                  } catch (e) {
+                    if (mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text("Lỗi: $e")),
+                      );
+                    }
+                  }
+                },
+              ),
+            ],
+          ),
+        );
+      },
+    );
   }
 
   @override
@@ -86,7 +114,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh),
-            onPressed: _loadThreads, // Nút làm mới thủ công
+            onPressed: _loadThreads,
           )
         ],
       ),
@@ -109,7 +137,8 @@ class _ChatListScreenState extends State<ChatListScreen> {
                               repository: widget.repository,
                             ),
                           ),
-                        ),
+                        ).then((_) => _loadThreads()), 
+                        onLongPress: () => _showToggleUnreadMenu(_threads[index]),
                       );
                     },
                   ),

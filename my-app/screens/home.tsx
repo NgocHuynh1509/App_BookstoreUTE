@@ -19,7 +19,7 @@ import {
   type RecentBook,
 } from "../services/recentlyViewed";
 
-const API_URL = Constants.expoConfig?.extra?.API_URL;
+const API_URL = Constants.expoConfig?.extra?.API_URL || "http://192.168.1.19:8080";
 
 
 // ─── Palette ──────────────────────────────────────────────────────────────────
@@ -373,11 +373,33 @@ const [showBuyQtyModal, setShowBuyQtyModal] = useState(false);  const [selectedI
 
   // ── Recently viewed: reload khi focus lại màn hình
   const [recentBooks, setRecentBooks] = useState<RecentBook[]>([]);
+  const [hasUnreadChat, setHasUnreadChat] = useState(false);
+
   useFocusEffect(
     useCallback(() => {
       setRecentBooks(getRecentlyViewed(10));
-    }, [])
+      checkUnreadStatus();
+      
+      const interval = setInterval(checkUnreadStatus, 15000); // Tự động kiểm tra mỗi 15 giây
+      return () => clearInterval(interval);
+    }, [user])
   );
+
+  const checkUnreadStatus = async () => {
+    if (!user) return;
+    try {
+      const token = await AsyncStorage.getItem("token");
+      if (!token) return;
+
+      const res = await axios.get(`${API_URL}/chat/unread-status/${user.username}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      console.log("UNREAD STATUS FOR", user.username, ":", res.data);
+      setHasUnreadChat(res.data === true);
+    } catch (err) {
+      console.log("Lỗi kiểm tra tin nhắn chưa đọc:", err);
+    }
+  };
   const handleClearRecent = () => { clearRecentlyViewed(); setRecentBooks([]); };
 
   // ── Long-press → similar sheet (giữ nguyên flow cũ)
@@ -530,6 +552,7 @@ const [showBuyQtyModal, setShowBuyQtyModal] = useState(false);  const [selectedI
                   onPress={() => navigation.navigate("Chat")}
               >
                 <Ionicons name="chatbubble-ellipses-outline" size={22} color="#FFF" />
+                {hasUnreadChat && <View style={s.notifDot} />}
               </TouchableOpacity>
 
               <TouchableOpacity style={s.headerIconBtn}>

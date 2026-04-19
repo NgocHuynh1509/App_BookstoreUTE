@@ -5,9 +5,38 @@ import '../../../app/providers.dart';
 import '../../../widgets/placeholder_screen.dart';
 import '../../customers/presentation/customers_screen.dart';
 import '../../auth/presentation/admin_login_screen.dart';
+// Giả định import cho ChatListScreen nếu bạn đã có file này
+// import '../../chat/presentation/chat_list_screen.dart'; 
 
-class ManagementScreen extends ConsumerWidget {
+class ManagementScreen extends ConsumerStatefulWidget {
   const ManagementScreen({super.key});
+
+  @override
+  ConsumerState<ManagementScreen> createState() => _ManagementScreenState();
+}
+
+class _ManagementScreenState extends ConsumerState<ManagementScreen> {
+  bool _hasUnread = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _checkUnreadStatus();
+  }
+
+  Future<void> _checkUnreadStatus() async {
+    try {
+      final chatRepo = ref.read(chatRepositoryProvider);
+      final status = await chatRepo.hasUnread();
+      if (mounted) {
+        setState(() {
+          _hasUnread = status;
+        });
+      }
+    } catch (e) {
+      debugPrint("Lỗi kiểm tra trạng thái tin nhắn: $e");
+    }
+  }
 
   Future<void> _logout(BuildContext context, WidgetRef ref) async {
     final confirm = await showDialog<bool>(
@@ -39,9 +68,22 @@ class ManagementScreen extends ConsumerWidget {
   }
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
+    final chatRepo = ref.watch(chatRepositoryProvider);
+
     final items = [
-      _MenuItem('Quản lý người dùng', Icons.people_outline, screen: const CustomersScreen()),
+      _MenuItem(
+        'Quản lý người dùng',
+        Icons.people_outline,
+        screen: const CustomersScreen(),
+      ),
+      _MenuItem(
+        'Tin nhắn / hỗ trợ',
+        Icons.chat_bubble_outline,
+        // builder: (_) => ChatListScreen(repository: chatRepo), // Sử dụng builder nếu cần truyền repo
+        screen: const PlaceholderScreen(title: 'Tin nhắn / hỗ trợ'), // Thay thế bằng ChatListScreen thực tế
+        showDot: _hasUnread,
+      ),
       _MenuItem('Danh mục', Icons.category_outlined, screen: const PlaceholderScreen(title: 'Danh mục')),
       _MenuItem('Mã giảm giá', Icons.local_offer_outlined, screen: const PlaceholderScreen(title: 'Mã giảm giá')),
       _MenuItem('Nhân viên', Icons.badge_outlined, screen: const PlaceholderScreen(title: 'Nhân viên')),
@@ -51,7 +93,11 @@ class ManagementScreen extends ConsumerWidget {
       _MenuItem('Thống kê', Icons.insights_outlined, screen: const PlaceholderScreen(title: 'Thống kê')),
       _MenuItem('Cài đặt', Icons.settings_outlined, screen: const PlaceholderScreen(title: 'Cài đặt')),
       _MenuItem('Hồ sơ', Icons.account_circle_outlined, screen: const PlaceholderScreen(title: 'Hồ sơ')),
-      _MenuItem('Đăng xuất', Icons.logout, onTap: () => _logout(context, ref)),
+      _MenuItem(
+        'Đăng xuất',
+        Icons.logout,
+        onTap: () => _logout(context, ref),
+      ),
     ];
 
     return Scaffold(
@@ -61,6 +107,12 @@ class ManagementScreen extends ConsumerWidget {
           'Quản trị',
           style: TextStyle(fontWeight: FontWeight.w700),
         ),
+        actions: [
+          IconButton(
+            onPressed: _checkUnreadStatus,
+            icon: const Icon(Icons.refresh),
+          ),
+        ],
       ),
       body: ListView.separated(
         padding: const EdgeInsets.all(16),
@@ -79,17 +131,37 @@ class ManagementScreen extends ConsumerWidget {
               item.title,
               style: const TextStyle(fontWeight: FontWeight.w600),
             ),
-            trailing: const Icon(Icons.chevron_right),
-            onTap: () {
+            trailing: SizedBox(
+              width: 60,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  if (item.showDot)
+                    Container(
+                      width: 10,
+                      height: 10,
+                      decoration: const BoxDecoration(
+                        color: Colors.red,
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                  const SizedBox(width: 8),
+                  const Icon(Icons.chevron_right),
+                ],
+              ),
+            ),
+            onTap: () async {
               if (item.onTap != null) {
                 item.onTap!();
                 return;
               }
               if (item.screen != null) {
-                Navigator.push(
+                await Navigator.push(
                   context,
                   MaterialPageRoute(builder: (_) => item.screen!),
                 );
+                // Refresh unread status when coming back
+                _checkUnreadStatus();
               }
             },
           );
@@ -104,6 +176,13 @@ class _MenuItem {
   final IconData icon;
   final Widget? screen;
   final VoidCallback? onTap;
+  final bool showDot;
 
-  _MenuItem(this.title, this.icon, {this.screen, this.onTap});
+  _MenuItem(
+    this.title,
+    this.icon, {
+    this.screen,
+    this.onTap,
+    this.showDot = false,
+  });
 }

@@ -119,6 +119,7 @@ class SocketService {
       required String content,
       String messageType = 'TEXT',
       String? mediaUrl,
+      String? replyToId,
     }) {
       if (_client != null && _client!.connected) {
         final payload = {
@@ -128,6 +129,7 @@ class SocketService {
           'content': content,
           'messageType': messageType,
           if (mediaUrl != null) 'mediaUrl': mediaUrl,
+          if (replyToId != null) 'replyToId': replyToId,
           'timestamp': DateTime.now().toIso8601String(),
         };
 

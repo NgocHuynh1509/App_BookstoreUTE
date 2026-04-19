@@ -27,8 +27,26 @@ class ChatApi {
     final response = await _client.dio.post(
       '/chat/upload',
       data: formData,
-
     );
     return response.data; // Trả về text URL: "/chat/media/..."
+  }
+
+  // Đánh dấu đã xem toàn bộ tin nhắn
+  Future<void> markSeen(String customerUsername) async {
+    await _client.dio.post('/admin/chat/mark-seen/$customerUsername');
+  }
+
+  // Bật/tắt đánh dấu chưa đọc thủ công
+  Future<void> toggleUnread(String customerUsername, bool isUnread) async {
+    await _client.dio.post(
+      '/admin/chat/toggle-unread/$customerUsername',
+      queryParameters: {'isUnread': isUnread},
+    );
+  }
+
+  // Kiểm tra xem có bất kỳ tin nhắn chưa đọc nào không
+  Future<bool> getUnreadStatus() async {
+    final response = await _client.dio.get('/admin/chat/unread-status');
+    return response.data == true;
   }
 }
