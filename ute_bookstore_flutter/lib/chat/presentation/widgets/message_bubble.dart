@@ -8,12 +8,14 @@ import '../../../features/products/presentation/product_detail_screen.dart';
 import '../../../features/products/data/product_models.dart';
 
 import '../../../features/orders/presentation/order_detail_screen.dart';
+import '../../data/chat_repository.dart';
 
 class MessageBubble extends StatefulWidget {
   final ChatMessage message;
   final bool isMe;
   final Function(String) onReact;
   final Function(ChatMessage) onReply;
+  final ChatRepository repository;
 
   const MessageBubble({
     super.key,
@@ -21,6 +23,7 @@ class MessageBubble extends StatefulWidget {
     required this.isMe,
     required this.onReact,
     required this.onReply,
+    required this.repository,
   });
 
   @override
@@ -311,7 +314,11 @@ class _MessageBubbleState extends State<MessageBubble> with SingleTickerProvider
               context,
               MaterialPageRoute(
                 // Chú ý: Đảm bảo bạn đã import OrderDetailScreen ở đầu file
-                builder: (_) => OrderDetailScreen(orderId: msg.orderId!),
+                // builder: (_) => OrderDetailScreen(orderId: msg.orderId!),
+                builder: (_) => OrderDetailScreen(
+                  orderId: msg.orderId!,
+                  chatRepository: widget.repository,
+                ),
               ),
             );
           } else {

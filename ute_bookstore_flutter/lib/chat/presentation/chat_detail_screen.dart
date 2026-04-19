@@ -188,6 +188,7 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
                             isMe: msg.senderRole == SenderRole.ADMIN,
                             onReact: (reaction) => _sendReaction(msg, reaction),
                             onReply: (message) => setState(() => _replyMessage = message), // ✅ THÊM
+                            repository: widget.repository,
                           ),
                           if (msg.senderRole == SenderRole.ADMIN) const SizedBox(width: 8),
                         ],
