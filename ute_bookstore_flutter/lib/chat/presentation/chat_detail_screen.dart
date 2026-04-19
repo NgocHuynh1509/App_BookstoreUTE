@@ -179,7 +179,7 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
                                 alignment: Alignment.topCenter,
                                 child: CircleAvatar(
                                   radius: 14,
-                                  backgroundImage: const NetworkImage("/uploads/avt.jpg"),
+                                  backgroundImage: const NetworkImage("/upload/avt.jpg"),
                                 ),
                               ),
                             ),

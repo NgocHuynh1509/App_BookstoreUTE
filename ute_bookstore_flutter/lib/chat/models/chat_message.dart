@@ -18,6 +18,11 @@ class ChatMessage {
   final String? replyToMediaUrl;
   final MessageType? replyToMessageType;
   final String? replyToSender;
+  // -- THÊM CÁC TRƯỜNG PRODUCT --
+    final String? bookId;
+    final String? bookName;
+    final String? bookImage;
+    final double? bookPrice; // Dùng double để hứng Decimal
 
   ChatMessage({
     this.id,
@@ -34,6 +39,10 @@ class ChatMessage {
     this.replyToMediaUrl,
     this.replyToMessageType,
     this.replyToSender,
+    this.bookId,
+        this.bookName,
+        this.bookImage,
+        this.bookPrice,
   });
 
   factory ChatMessage.fromMap(Map<String, dynamic> map) {
@@ -64,6 +73,11 @@ class ChatMessage {
               orElse: () => MessageType.TEXT)
           : null,
       replyToSender: map['replyToSender'],
+      bookId: map['bookId'],
+            bookName: map['bookName'],
+            bookImage: map['bookImage'],
+            // Xử lý Decimal từ Backend (tránh lỗi nếu là String hoặc num)
+            bookPrice: map['bookPrice'] != null ? double.tryParse(map['bookPrice'].toString()) : null,
     );
   }
 

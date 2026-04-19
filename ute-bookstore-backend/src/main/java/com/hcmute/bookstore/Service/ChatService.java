@@ -44,6 +44,7 @@ public class ChatService {
             builder.bookId(entity.getAttachedBook().getBookId());
             builder.bookName(entity.getAttachedBook().getTitle());
             builder.bookImage(entity.getAttachedBook().getPicture());
+            builder.bookPrice(entity.getAttachedBook().getPrice());
         }
 
         if (entity.getAttachedOrder() != null) {

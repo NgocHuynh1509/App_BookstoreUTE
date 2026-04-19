@@ -190,6 +190,14 @@ export default function BookDetail() {
     navigation.navigate("Chat", {
       sellerId: book?.seller_id,
       bookId: book?.id,
+      // Gửi thêm object sản phẩm để hiển thị banner
+      productPreview: {
+        id: book.id,
+        title: book.title,
+        price: book.price,
+        cover_image: book.cover_image,
+        stock: book.stock
+      }
     });
   };
 
@@ -666,8 +674,8 @@ export default function BookDetail() {
                 <TouchableOpacity
                     style={s.stepBtn}
                     onPress={() => {
-                      if (quantity < book?.stock) setQuantity(quantity + 1);
-                      else Alert.alert("Thông báo", "Đã đạt giới hạn tồn kho");
+                      if (quantity < book?.stock) {setQuantity(quantity + 1);}
+                      else {Alert.alert("Thông báo", "Đã đạt giới hạn tồn kho");}
                     }}
                 >
                   <Text style={s.stepBtnTxt}>+</Text>
