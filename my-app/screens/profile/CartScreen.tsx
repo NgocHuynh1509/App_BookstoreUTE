@@ -11,6 +11,7 @@ import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import axios from "axios";
 import { useAuth } from "../../hooks/useAuth";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { CommonActions } from "@react-navigation/native";
 
 const API_URL = Constants.expoConfig?.extra?.API_URL;
 
@@ -223,7 +224,22 @@ export default function CartScreen() {
             <View style={s.emptyBox}>
               <Ionicons name="cart-outline" size={80} color={C.primaryTint} />
               <Text style={s.emptyTitle}>Giỏ hàng trống</Text>
-              <TouchableOpacity style={s.emptyBtn} onPress={() => navigation.navigate("Home")}>
+              <TouchableOpacity
+                  style={s.emptyBtn}
+                  onPress={() =>
+                      navigation.dispatch(
+                          CommonActions.reset({
+                            index: 0,
+                            routes: [
+                              {
+                                name: "MainTabs",
+                                params: { screen: "HomeTab" },
+                              },
+                            ],
+                          })
+                      )
+                  }
+              >
                 <Text style={s.emptyBtnTxt}>Tiếp tục mua sắm</Text>
               </TouchableOpacity>
             </View>

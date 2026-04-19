@@ -5,6 +5,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 @RestControllerAdvice
@@ -22,5 +23,13 @@ public class GlobalExceptionHandler {
         return ResponseEntity
                 .status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(Map.of("message", "Lỗi hệ thống: " + ex.getMessage()));
+    }
+
+    @ExceptionHandler(AlreadyReviewedException.class)
+    public ResponseEntity<?> handleAlreadyReviewed(AlreadyReviewedException ex) {
+        Map<String, Object> body = new LinkedHashMap<>();
+        body.put("message", ex.getMessage());
+        body.put("review", ex.getReview());
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(body);
     }
 }

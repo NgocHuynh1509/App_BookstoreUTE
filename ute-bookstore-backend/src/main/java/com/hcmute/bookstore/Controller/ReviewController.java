@@ -3,6 +3,7 @@ package com.hcmute.bookstore.Controller;
 import com.hcmute.bookstore.Service.ReviewService;
 import com.hcmute.bookstore.dto.CreateReviewRequest;
 import com.hcmute.bookstore.dto.CreateReviewResponse;
+import com.hcmute.bookstore.dto.MyReviewResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
@@ -20,5 +21,15 @@ public class ReviewController {
     ) {
         String email = authentication.getName();
         return reviewService.createReview(email, request);
+    }
+
+    @GetMapping("/reviews/my-review")
+    public MyReviewResponse getMyReview(
+            @RequestParam("book_id") String bookId,
+            @RequestParam("order_id") String orderId,
+            Authentication authentication
+    ) {
+        String email = authentication.getName();
+        return reviewService.getMyReview(email, bookId, orderId);
     }
 }

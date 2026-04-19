@@ -4,6 +4,7 @@ import com.hcmute.bookstore.Entity.Books;
 import com.hcmute.bookstore.Entity.Orders;
 import com.hcmute.bookstore.Entity.Review;
 import com.hcmute.bookstore.Entity.Users;
+import com.hcmute.bookstore.Exception.AlreadyReviewedException;
 import com.hcmute.bookstore.Repository.BooksRepository;
 import com.hcmute.bookstore.Repository.OrderDetailRepository;
 import com.hcmute.bookstore.Repository.OrdersRepository;
@@ -11,12 +12,16 @@ import com.hcmute.bookstore.Repository.ReviewRepository;
 import com.hcmute.bookstore.Repository.UsersRepository;
 import com.hcmute.bookstore.dto.CreateReviewRequest;
 import com.hcmute.bookstore.dto.CreateReviewResponse;
+import com.hcmute.bookstore.dto.MyReviewResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.Optional;
 import java.util.UUID;
+
 @Service
 @RequiredArgsConstructor
 public class ReviewService {
@@ -58,12 +63,23 @@ public class ReviewService {
             throw new RuntimeException("Sản phẩm này không thuộc đơn hàng");
         }
 
-        boolean reviewed = reviewRepository
-                .findByCustomer_CustomerIdAndBook_BookId(customerId, request.getBook_id())
-                .isPresent();
+        Optional<Review> existingReviewOpt = reviewRepository
+                .findByCustomer_CustomerIdAndBook_BookId(customerId, request.getBook_id());
 
-        if (reviewed) {
-            throw new RuntimeException("Bạn đã đánh giá sản phẩm này rồi");
+        if (existingReviewOpt.isPresent()) {
+            Review existingReview = existingReviewOpt.get();
+
+            MyReviewResponse myReview = new MyReviewResponse(
+                    existingReview.getReviewId(),
+                    existingReview.getBook().getBookId(),
+                    request.getOrder_id(),
+                    existingReview.getRating(),
+                    existingReview.getComment(),
+                    formatDate(existingReview.getCreationDate()),
+                    true
+            );
+
+            throw new AlreadyReviewedException("Bạn đã đánh giá sản phẩm này rồi", myReview);
         }
 
         Books book = booksRepository.findById(request.getBook_id())
@@ -93,6 +109,52 @@ public class ReviewService {
         );
     }
 
+    @Transactional(readOnly = true)
+    public MyReviewResponse getMyReview(String emailFromToken, String bookId, String orderId) {
+        Users user = usersRepository.findByCustomer_Email(emailFromToken)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy user"));
+
+        String customerId = user.getCustomer().getCustomerId();
+
+        Orders order = ordersRepository.findByOrderIdAndCustomer_CustomerId(orderId, customerId)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy đơn hàng"));
+
+        boolean boughtThisBook = orderDetailRepository.existsByOrder_OrderIdAndBook_BookId(
+                order.getOrderId(),
+                bookId
+        );
+
+        if (!boughtThisBook) {
+            throw new RuntimeException("Sản phẩm này không thuộc đơn hàng");
+        }
+
+        Optional<Review> reviewOpt = reviewRepository.findByCustomer_CustomerIdAndBook_BookId(customerId, bookId);
+
+        if (reviewOpt.isEmpty()) {
+            return new MyReviewResponse(
+                    null,
+                    bookId,
+                    orderId,
+                    null,
+                    null,
+                    null,
+                    false
+            );
+        }
+
+        Review review = reviewOpt.get();
+
+        return new MyReviewResponse(
+                review.getReviewId(),
+                review.getBook().getBookId(),
+                orderId,
+                review.getRating(),
+                review.getComment(),
+                formatDate(review.getCreationDate()),
+                true
+        );
+    }
+
     private String normalizeReviewableStatus(String status) {
         if (status == null) return "pending";
 
@@ -102,5 +164,10 @@ public class ReviewService {
             case "shipping", "delivery", "dang_giao", "đang giao" -> "delivery";
             default -> "pending";
         };
+    }
+
+    private String formatDate(Date date) {
+        if (date == null) return null;
+        return new SimpleDateFormat("dd/MM/yyyy").format(date);
     }
 }
