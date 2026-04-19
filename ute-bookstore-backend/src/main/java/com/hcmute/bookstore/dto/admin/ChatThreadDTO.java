@@ -13,4 +13,5 @@ public class ChatThreadDTO {
     private String lastMessage;
     private LocalDateTime lastTime;
     private int unreadCount;
+    private boolean manualUnread;
 }

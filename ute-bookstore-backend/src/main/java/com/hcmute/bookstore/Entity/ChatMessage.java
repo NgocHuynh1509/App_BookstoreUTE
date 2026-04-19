@@ -63,6 +63,13 @@ public class ChatMessage {
 
     private LocalDateTime createdAt;
 
+    // --- PRIVATE UNREAD FLAGS ---
+    @Builder.Default
+    private boolean isMarkedUnreadByAdmin = false;
+
+    @Builder.Default
+    private boolean isMarkedUnreadByUser = false;
+
     @PrePersist
     protected void onCreate() {
         this.createdAt = LocalDateTime.now();

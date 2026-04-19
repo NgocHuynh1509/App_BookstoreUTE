@@ -26,6 +26,7 @@ public class ChatMessageResponse {
     private String replyToContent;
     private String replyToSender;
     private String replyToMediaUrl;
+    private MessageType replyToMessageType;
 
 
     // Thông tin Product đính kèm
@@ -38,4 +39,7 @@ public class ChatMessageResponse {
     private String orderStatus;
     private BigDecimal totalPrice;
     private String userName;
+
+    private boolean isMarkedUnreadByAdmin;
+    private boolean isMarkedUnreadByUser;
 }

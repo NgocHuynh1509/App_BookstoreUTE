@@ -3,6 +3,7 @@ class ChatThread {
   final String lastMessage;
   final DateTime lastTime;
   final int unreadCount;
+  final bool isManualUnread;
   final String? customerAvatar;
 
   ChatThread({
@@ -10,20 +11,19 @@ class ChatThread {
     required this.lastMessage,
     required this.lastTime,
     this.unreadCount = 0,
+    this.isManualUnread = false,
     this.customerAvatar,
   });
 
   factory ChatThread.fromMap(Map<String, dynamic> map) {
     return ChatThread(
-      // Entity Java là userName, không phải customerUsername
-      customerUsername: map['userName'] ?? 'Unknown User',
-      // Entity Java là content, không phải lastMessage
-      lastMessage: map['content'] ?? '',
-      // Entity Java là createdAt
-      lastTime: map['createdAt'] != null
-          ? DateTime.parse(map['createdAt'])
+      customerUsername: map['customerUsername'] ?? 'Unknown User',
+      lastMessage: map['lastMessage'] ?? '',
+      lastTime: map['lastTime'] != null
+          ? DateTime.parse(map['lastTime'])
           : DateTime.now(),
-      unreadCount: 0, // Hiện tại Backend chưa tính cái này nên mặc định là 0
+      unreadCount: map['unreadCount'] ?? 0,
+      isManualUnread: map['manualUnread'] ?? false,
       customerAvatar: null,
     );
   }

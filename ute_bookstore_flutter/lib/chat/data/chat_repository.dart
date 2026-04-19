@@ -29,46 +29,36 @@ class ChatRepository {
     return _api.uploadImage(file);
   }
 
-  void sendAdminReply(String toUser, String text, {String? mediaUrl}) {
+  void sendAdminReply(String toUser, String text, {String? mediaUrl, String? replyToId}) {
     _socket.sendMessage(
       receiverName: toUser,
       content: text,
       messageType: mediaUrl != null ? 'IMAGE' : 'TEXT',
       mediaUrl: mediaUrl,
+      replyToId: replyToId,
     );
   }
 
   // --- CÁC HÀM XỬ LÝ REALTIME ---
 
-//   void startSocketConnection(String token, Function(Map<String, dynamic>) onNewMessage) {
-//     _onMessageReceived = onNewMessage;
-//     _socket.connect(
-//       token: token,
-//       onGlobalMessage: (data) {
-//         if (_onMessageReceived != null) {
-//           _onMessageReceived!(data);
-//         }
-//       },
-//     );
-//   }
-    void startSocketConnection(
-      String token,
-      Function(Map<String, dynamic>) onNewMessage,
-      Function(Map<String, dynamic>) onReaction,
-    ) {
-      _onMessageReceived = onNewMessage;
-      _onReactionReceived = onReaction;
+  void startSocketConnection(
+    String token,
+    Function(Map<String, dynamic>) onNewMessage,
+    Function(Map<String, dynamic>) onReaction,
+  ) {
+    _onMessageReceived = onNewMessage;
+    _onReactionReceived = onReaction;
 
-      _socket.connect(
-        token: token,
-        onMessage: (data) {
-          _onMessageReceived?.call(data);
-        },
-        onReaction: (data) {
-          _onReactionReceived?.call(data);
-        },
-      );
-    }
+    _socket.connect(
+      token: token,
+      onMessage: (data) {
+        _onMessageReceived?.call(data);
+      },
+      onReaction: (data) {
+        _onReactionReceived?.call(data);
+      },
+    );
+  }
 
   // MỚI: Cập nhật callback khi đổi màn hình (ví dụ vào ChatDetail)
   void updateCallbacks({
@@ -88,5 +78,18 @@ class ChatRepository {
   void dispose() {
     _onMessageReceived = null;
     _socket.disconnect();
+  }
+
+  Future<void> markAsSeen(String customerUsername) {
+    return _api.markSeen(customerUsername);
+  }
+
+  Future<void> toggleUnread(String customerUsername, bool isUnread) {
+    return _api.toggleUnread(customerUsername, isUnread);
+  }
+
+  // Kiểm tra trạng thái có tin nhắn chưa đọc hay không
+  Future<bool> hasUnread() {
+    return _api.getUnreadStatus();
   }
 }

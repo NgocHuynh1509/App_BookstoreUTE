@@ -17,6 +17,7 @@ import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Controller;
 import com.hcmute.bookstore.Service.ChatService;
+import org.springframework.transaction.annotation.Transactional;
 
 
 import java.util.UUID;
@@ -32,6 +33,7 @@ public class ChatController {
     @Autowired
     private ChatService chatService;
     @MessageMapping("/chat.sendMessage")
+    @Transactional
     public void sendMessage(@Payload ChatMessageRequest request, java.security.Principal principal) {
         System.out.println("DEBUG: Dang gui tin nhan toi User: " + request.getReceiverName());
         // 1. KIỂM TRA TÊN NGƯỜI GỬI THỰC TẾ
@@ -85,7 +87,7 @@ public class ChatController {
                 response
         );
     }
-
+    @Transactional
     @MessageMapping("/chat.react")
     public void reactMessage(@Payload ReactionRequest request, java.security.Principal principal) {
         // 1. Xác định người thực hiện reaction thực tế từ Token/Session

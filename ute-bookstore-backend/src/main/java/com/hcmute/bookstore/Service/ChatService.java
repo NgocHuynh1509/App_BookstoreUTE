@@ -1,23 +1,24 @@
 package com.hcmute.bookstore.Service;
 
 import com.hcmute.bookstore.Entity.ChatMessage;
+import com.hcmute.bookstore.Entity.MessageStatus;
 import com.hcmute.bookstore.Repository.ChatMessageRepository;
-import com.hcmute.bookstore.Repository.ShippingAddressRepository;
 import com.hcmute.bookstore.dto.ChatMessageResponse;
-import com.hcmute.bookstore.dto.admin.ChatMessageDTO;
 import com.hcmute.bookstore.dto.admin.ChatThreadDTO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
-@Service // BẮT BUỘC PHẢI CÓ DÒNG NÀY
+@Service
 @RequiredArgsConstructor
 public class ChatService {
     @Autowired
     private ChatMessageRepository chatRepository;
-    // --- COPY HÀM NÀY VÀO TRONG CONTROLLER HOẶC SERVICE ---
+
     public ChatMessageResponse mapToResponse(ChatMessage entity) {
         ChatMessageResponse.ChatMessageResponseBuilder builder = ChatMessageResponse.builder()
                 .id(entity.getId())
@@ -27,19 +28,22 @@ public class ChatService {
                 .senderRole(entity.getSenderRole())
                 .userName(entity.getUserName())
                 .receiverName(entity.getReceiverName())
-                .createdAt(entity.getCreatedAt());
+                .createdAt(entity.getCreatedAt())
+                .isMarkedUnreadByAdmin(entity.isMarkedUnreadByAdmin())
+                .isMarkedUnreadByUser(entity.isMarkedUnreadByUser());
 
         if (entity.getReplyTo() != null) {
             builder.replyToId(entity.getReplyTo().getId());
             builder.replyToContent(entity.getReplyTo().getContent());
-            builder.replyToMediaUrl(entity.getReplyTo().getContent());
-            builder.replyToSender(entity.getReplyTo().getMediaUrl());
+            builder.replyToMediaUrl(entity.getReplyTo().getMediaUrl());
+            builder.replyToMessageType(entity.getReplyTo().getMessageType());
+            builder.replyToSender(entity.getReplyTo().getUserName());
         }
 
         if (entity.getAttachedBook() != null) {
             builder.bookId(entity.getAttachedBook().getBookId());
             builder.bookName(entity.getAttachedBook().getTitle());
-            builder.bookImage(entity.getAttachedBook().getPicture()); // Giả định có trường image
+            builder.bookImage(entity.getAttachedBook().getPicture());
         }
 
         if (entity.getAttachedOrder() != null) {
@@ -55,20 +59,64 @@ public class ChatService {
         return builder.build();
     }
 
-
-
-    // Lấy danh sách thread cho Admin
-    public List<ChatMessage> getChatThreads() {
-        return chatRepository.findAllChatThreads();
+    // Lấy danh sách thread cho Admin kèm unread count và manual flag
+    public List<ChatThreadDTO> getChatThreadsForAdmin() {
+        List<ChatMessage> latestMessages = chatRepository.findAllChatThreads();
+        return latestMessages.stream().map(msg -> {
+            long unreadCount = chatRepository.countByUserNameAndReceiverNameAndStatusNot(msg.getUserName(), "admin", MessageStatus.SEEN);
+            return ChatThreadDTO.builder()
+                    .customerUsername(msg.getUserName())
+                    .lastMessage(msg.getContent())
+                    .lastTime(msg.getCreatedAt())
+                    .unreadCount((int) unreadCount)
+                    .manualUnread(msg.isMarkedUnreadByAdmin())
+                    .build();
+        }).collect(Collectors.toList());
     }
 
-    // Lấy lịch sử chat
-    public List<ChatMessage> getChatHistory(String userName) {
-        return chatRepository.findByUserNameOrderByCreatedAtAsc(userName);
+    // Đánh dấu đã xem
+    @Transactional
+    public void markSeen(String partnerName, String role) {
+        if ("ADMIN".equalsIgnoreCase(role)) {
+            chatRepository.markAllAsSeenByAdmin(partnerName);
+        } else {
+            chatRepository.markAllAsSeenByUser(partnerName);
+        }
     }
 
-    // Lưu tin nhắn mới (Dùng cho Socket hoặc API)
-    public ChatMessage saveMessage(ChatMessage message) {
-        return chatRepository.save(message);
+    // Bật/tắt đánh dấu chưa đọc thủ công
+    @Transactional
+    public void toggleManualUnread(String customerUsername, String role, boolean isUnread) {
+        if ("ADMIN".equalsIgnoreCase(role)) {
+            ChatMessage latestMsg = chatRepository.findFirstByUserNameAndReceiverNameOrderByCreatedAtDesc(customerUsername, "admin");
+            if (latestMsg != null) {
+                latestMsg.setMarkedUnreadByAdmin(isUnread);
+                chatRepository.save(latestMsg);
+            }
+        } else {
+            ChatMessage latestMsg = chatRepository.findFirstByUserNameAndReceiverNameOrderByCreatedAtDesc("admin", customerUsername);
+            if (latestMsg != null) {
+                latestMsg.setMarkedUnreadByUser(isUnread);
+                chatRepository.save(latestMsg);
+            }
+        }
+    }
+
+    // --- Legacy and other methods ---
+    public List<ChatMessage> getChatThreads() { return chatRepository.findAllChatThreads(); }
+    public List<ChatMessageResponse> getChatHistory(String userName) {
+        return chatRepository.findByUserNameOrderByCreatedAtAsc(userName)
+                .stream().map(this::mapToResponse).collect(Collectors.toList());
+    }
+    public ChatMessage saveMessage(ChatMessage message) { return chatRepository.save(message); }
+    public void markSeenByAdmin(String customerUsername) { chatRepository.markAllAsSeenByAdmin(customerUsername); }
+    public void toggleManualUnreadByAdmin(String customerUsername, boolean isUnread) { toggleManualUnread(customerUsername, "ADMIN", isUnread); }
+
+    public boolean hasAnyUnreadMessagesForAdmin() {
+        return chatRepository.existsUnreadForAdmin();
+    }
+
+    public boolean hasAnyUnreadMessagesForUser(String userName) {
+        return chatRepository.existsUnreadForUser(userName);
     }
 }

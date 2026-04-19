@@ -5,11 +5,38 @@ import 'package:ute_bookstore_flutter/app/providers.dart';
 import 'package:ute_bookstore_flutter/chat/presentation/chat_list_screen.dart';
 import '../../customers/presentation/customers_screen.dart';
 
-class ManagementScreen extends ConsumerWidget {
+class ManagementScreen extends ConsumerStatefulWidget {
   const ManagementScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<ManagementScreen> createState() => _ManagementScreenState();
+}
+
+class _ManagementScreenState extends ConsumerState<ManagementScreen> {
+  bool _hasUnread = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _checkUnreadStatus();
+  }
+
+  Future<void> _checkUnreadStatus() async {
+    try {
+      final chatRepo = ref.read(chatRepositoryProvider);
+      final status = await chatRepo.hasUnread();
+      if (mounted) {
+        setState(() {
+          _hasUnread = status;
+        });
+      }
+    } catch (e) {
+      debugPrint("Lỗi kiểm tra trạng thái tin nhắn: $e");
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final chatRepo = ref.watch(chatRepositoryProvider);
 
     final items = [
@@ -34,6 +61,7 @@ class ManagementScreen extends ConsumerWidget {
         title: 'Tin nhắn / hỗ trợ',
         icon: Icons.chat_bubble_outline,
         builder: (_) => ChatListScreen(repository: chatRepo),
+        showDot: _hasUnread, // ✅ Chấm đỏ
       ),
     ];
 
@@ -44,6 +72,12 @@ class ManagementScreen extends ConsumerWidget {
           'Quản trị',
           style: TextStyle(fontWeight: FontWeight.w700),
         ),
+        actions: [
+          IconButton(
+            onPressed: _checkUnreadStatus,
+            icon: const Icon(Icons.refresh),
+          ),
+        ],
       ),
       body: ListView.separated(
         padding: const EdgeInsets.all(16),
@@ -62,15 +96,35 @@ class ManagementScreen extends ConsumerWidget {
               item.title,
               style: const TextStyle(fontWeight: FontWeight.w600),
             ),
-            trailing: const Icon(Icons.chevron_right),
-            onTap: () {
+            trailing: SizedBox(
+              width: 60,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  if (item.showDot)
+                    Container(
+                      width: 10,
+                      height: 10,
+                      decoration: const BoxDecoration(
+                        color: Colors.red,
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                  const SizedBox(width: 8),
+                  const Icon(Icons.chevron_right),
+                ],
+              ),
+            ),
+            onTap: () async {
               if (item.builder != null) {
-                Navigator.push(
+                await Navigator.push(
                   context,
                   MaterialPageRoute(
                     builder: item.builder!,
                   ),
                 );
+                // Khi quay lại từ màn hình khác, kiểm tra lại unread status
+                _checkUnreadStatus();
               } else {
                 debugPrint("Chưa có màn cho: ${item.title}");
               }
@@ -86,10 +140,12 @@ class _MenuItem {
   final String title;
   final IconData icon;
   final WidgetBuilder? builder;
+  final bool showDot;
 
   _MenuItem({
     required this.title,
     required this.icon,
     this.builder,
+    this.showDot = false,
   });
 }
