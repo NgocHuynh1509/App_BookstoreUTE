@@ -4,6 +4,7 @@ import '../features/dashboard/presentation/dashboard_screen.dart';
 import '../features/orders/presentation/orders_screen.dart';
 import '../features/products/presentation/products_screen.dart';
 import '../features/management/presentation/management_screen.dart';
+import '../theme/admin_theme.dart';
 
 class AdminShell extends StatefulWidget {
   const AdminShell({super.key});
@@ -33,19 +34,46 @@ class _AdminShellState extends State<AdminShell> {
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        final useRail = constraints.maxWidth >= 900;
+        final useRail = constraints.maxWidth >= 960;
+        final body = AnimatedSwitcher(
+          duration: const Duration(milliseconds: 250),
+          child: _pages[_index],
+          transitionBuilder: (child, animation) {
+            final offset = Tween<Offset>(begin: const Offset(0, 0.03), end: Offset.zero).animate(animation);
+            return FadeTransition(
+              opacity: animation,
+              child: SlideTransition(position: offset, child: child),
+            );
+          },
+        );
 
         if (useRail) {
           return Scaffold(
+            backgroundColor: AdminColors.background,
             body: Row(
               children: [
                 NavigationRail(
                   selectedIndex: _index,
                   onDestinationSelected: (value) => setState(() => _index = value),
-                  labelType: NavigationRailLabelType.all,
-                  leading: const Padding(
-                    padding: EdgeInsets.only(top: 12),
-                    child: Icon(Icons.storefront_rounded, size: 32),
+                  extended: true,
+                  minExtendedWidth: 220,
+                  leading: Padding(
+                    padding: const EdgeInsets.only(top: 16, left: 12, right: 12),
+                    child: Row(
+                      children: const [
+                        CircleAvatar(
+                          backgroundColor: AdminColors.primary,
+                          child: Icon(Icons.storefront_rounded, color: Colors.white),
+                        ),
+                        SizedBox(width: 10),
+                        Expanded(
+                          child: Text(
+                            'UTE Admin',
+                            style: TextStyle(fontWeight: FontWeight.w700),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                   destinations: _destinations
                       .map(
@@ -57,21 +85,21 @@ class _AdminShellState extends State<AdminShell> {
                       .toList(),
                 ),
                 const VerticalDivider(width: 1),
-                Expanded(child: _pages[_index]),
+                Expanded(child: SafeArea(child: body)),
               ],
             ),
           );
         }
 
         return Scaffold(
-          body: _pages[_index],
-          bottomNavigationBar: BottomNavigationBar(
-            currentIndex: _index,
-            onTap: (value) => setState(() => _index = value),
-            type: BottomNavigationBarType.fixed,
-            items: _destinations
+          backgroundColor: AdminColors.background,
+          body: SafeArea(child: body),
+          bottomNavigationBar: NavigationBar(
+            selectedIndex: _index,
+            onDestinationSelected: (value) => setState(() => _index = value),
+            destinations: _destinations
                 .map(
-                  (item) => BottomNavigationBarItem(
+                  (item) => NavigationDestination(
                     icon: Icon(item.icon),
                     label: item.label,
                   ),

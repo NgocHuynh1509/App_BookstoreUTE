@@ -7,17 +7,25 @@ import com.hcmute.bookstore.Repository.ChatMessageRepository;
 import com.hcmute.bookstore.Repository.OrderDetailRepository;
 import com.hcmute.bookstore.Repository.OrdersRepository;
 import com.hcmute.bookstore.Repository.UsersRepository;
+import com.hcmute.bookstore.Entity.MessageStatus;
+import com.hcmute.bookstore.Entity.Orders;
+import com.hcmute.bookstore.Entity.Users;
 import com.hcmute.bookstore.dto.admin.DashboardBooksResponse;
 import com.hcmute.bookstore.dto.admin.DashboardChartsResponse;
+import com.hcmute.bookstore.dto.admin.DashboardRecentActivitiesResponse;
+import com.hcmute.bookstore.dto.admin.DashboardRecentActivityResponse;
 import com.hcmute.bookstore.dto.admin.DashboardRevenuePredictionResponse;
 import com.hcmute.bookstore.dto.admin.DashboardRevenueResponse;
 import com.hcmute.bookstore.dto.admin.DashboardSeriesPoint;
 import com.hcmute.bookstore.dto.admin.DashboardStatusCountResponse;
 import com.hcmute.bookstore.dto.admin.DashboardOrdersResponse;
 import com.hcmute.bookstore.dto.admin.DashboardSummaryResponse;
+import com.hcmute.bookstore.dto.admin.DashboardTopBookResponse;
+import com.hcmute.bookstore.dto.admin.DashboardTopBooksResponse;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
@@ -36,11 +44,11 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
-import java.util.Optional;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.Optional;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -75,7 +83,7 @@ public class AdminDashboardService {
         response.setTotalUsers(usersRepository.count());
         response.setPendingOrders(ordersRepository.countByStatusIgnoreCase("PENDING"));
         response.setLowStockBooks(booksRepository.countByQuantityLessThanEqual(5));
-        response.setUnreadMessages(chatMessageRepository.countByStatusNot("SEEN"));
+        response.setUnreadMessages(chatMessageRepository.countByStatusNot(MessageStatus.SEEN));
 
         response.setRevenueDay(sumRevenueForRange(LocalDate.now(), LocalDate.now().plusDays(1)));
         response.setRevenueMonth(sumRevenueForRange(LocalDate.now().withDayOfMonth(1), LocalDate.now().plusDays(1)));
@@ -183,6 +191,94 @@ public class AdminDashboardService {
         return response;
     }
 
+    public DashboardTopBooksResponse getTopBooks(String range, int limit) {
+        RangeWindow window = resolveRange(range);
+        int safeLimit = Math.max(1, Math.min(50, limit));
+        Date fromDate = toDate(window.from);
+        Date toDate = toDate(window.toExclusive);
+
+        List<Object[]> rows = orderDetailRepository.findTopBooks(fromDate, toDate, PageRequest.of(0, safeLimit));
+        List<DashboardTopBookResponse> items = new ArrayList<>();
+        for (Object[] row : rows) {
+            DashboardTopBookResponse item = new DashboardTopBookResponse();
+            item.setBookId(safeString(row[0]));
+            item.setTitle(safeString(row[1]));
+            item.setAuthor(safeString(row[2]));
+            item.setImageUrl(row[3] != null ? row[3].toString() : null);
+            item.setSoldQuantity(row[4] != null ? ((Number) row[4]).longValue() : 0L);
+            item.setRevenue(toBigDecimal(row[5]));
+            items.add(item);
+        }
+
+        DashboardTopBooksResponse response = new DashboardTopBooksResponse();
+        response.setItems(items);
+        return response;
+    }
+
+    public DashboardRecentActivitiesResponse getRecentActivities(int limit) {
+        int safeLimit = Math.max(1, Math.min(30, limit));
+        List<ActivityEntry> entries = new ArrayList<>();
+
+        List<Orders> recentOrders = ordersRepository
+                .findAllByOrderByOrderDateDesc(PageRequest.of(0, safeLimit * 2));
+        for (Orders order : recentOrders) {
+            Date orderDate = order.getOrderDate();
+            if (orderDate == null) {
+                continue;
+            }
+            DashboardRecentActivityResponse activity = new DashboardRecentActivityResponse();
+            boolean cancelled = isCancelled(order.getStatus());
+            activity.setType(cancelled ? "ORDER_CANCELLED" : "ORDER_NEW");
+            activity.setTitle(cancelled ? "Đơn hàng bị hủy" : "Đơn hàng mới");
+
+            String amount = formatCurrency(order.getTotalAmount());
+            String subtitle = "Mã: " + order.getOrderId() + " · " + amount;
+            if (order.getCustomer() != null && order.getCustomer().getFullName() != null) {
+                subtitle = order.getCustomer().getFullName() + " · " + amount;
+            }
+            activity.setSubtitle(subtitle);
+            activity.setTime(formatActivityTime(orderDate));
+            entries.add(new ActivityEntry(orderDate, activity));
+        }
+
+        List<Users> recentUsers = usersRepository
+                .findAllByOrderByCreatedAtDesc(PageRequest.of(0, safeLimit * 2));
+        if (recentUsers.isEmpty()) {
+            recentUsers = usersRepository.findAllByOrderByRegistrationDateDesc(PageRequest.of(0, safeLimit * 2));
+        }
+        for (Users user : recentUsers) {
+            Date userTime = user.getCreatedAt();
+            if (userTime == null && user.getRegistrationDate() != null) {
+                userTime = Date.from(user.getRegistrationDate().atStartOfDay(ZoneId.systemDefault()).toInstant());
+            }
+            if (userTime == null) {
+                continue;
+            }
+            DashboardRecentActivityResponse activity = new DashboardRecentActivityResponse();
+            activity.setType("USER_NEW");
+            activity.setTitle("Khách hàng mới");
+            String subtitle = user.getFullName() != null ? user.getFullName() : user.getUserName();
+            if (subtitle == null && user.getCustomer() != null) {
+                subtitle = user.getCustomer().getFullName();
+            }
+            activity.setSubtitle(subtitle != null ? subtitle : "Tài khoản mới");
+            activity.setTime(formatActivityTime(userTime));
+            entries.add(new ActivityEntry(userTime, activity));
+        }
+
+        entries.sort((a, b) -> b.time.compareTo(a.time));
+        DashboardRecentActivitiesResponse response = new DashboardRecentActivitiesResponse();
+        List<DashboardRecentActivityResponse> items = new ArrayList<>();
+        for (ActivityEntry entry : entries) {
+            items.add(entry.activity);
+            if (items.size() >= safeLimit) {
+                break;
+            }
+        }
+        response.setItems(items);
+        return response;
+    }
+
     public String startPredictionJob() {
         String jobId = UUID.randomUUID().toString();
         CompletableFuture<DashboardRevenuePredictionResponse> future = CompletableFuture
@@ -214,7 +310,7 @@ public class AdminDashboardService {
 
     public DashboardRevenuePredictionResponse getRevenuePrediction() {
         try {
-            PredictionMetrics metrics = runPrediction(LocalDate.now().minusDays(180), LocalDate.now().plusDays(1));
+            PredictionMetrics metrics = runPrediction(resolvePredictionStart(), LocalDate.now().plusDays(1));
             return buildPredictionResponse(metrics, "model");
         } catch (RuntimeException ex) {
             return buildFallbackPrediction(ex.getMessage());
@@ -232,7 +328,12 @@ public class AdminDashboardService {
             currentMonthTotal = BigDecimal.ZERO;
         }
         double changePercent = calculateChangePercent(predictedMonthTotal, currentMonthTotal);
-        double confidence = Math.max(0.0, Math.min(1.0, metrics.r2)) * 100.0;
+        double confidence = metrics.confidence > 0
+                ? metrics.confidence
+                : Math.max(0.0, Math.min(1.0, metrics.r2)) * 100.0;
+        if (metrics.dataPoints >= 120 && confidence < 55) {
+            confidence = 55;
+        }
 
         List<DashboardSeriesPoint> series = buildPredictionSeries(currentMonth);
         String predictedLabel = nextMonth.format(DateTimeFormatter.ofPattern("yyyy-MM"));
@@ -252,7 +353,8 @@ public class AdminDashboardService {
         response.setPredictedLabel(predictedLabel);
         response.setForecastIndex(series.size() - 1);
         response.setSeries(series);
-        response.setSuggestion(buildSuggestion(changePercent, confidence) + " (" + source + ")");
+        response.setSuggestion(buildSuggestion(changePercent, confidence, metrics.dataPoints, metrics.spanDays)
+                + " (" + source + ")");
         return response;
     }
 
@@ -292,7 +394,7 @@ public class AdminDashboardService {
         response.setPredictedLabel(predictedLabel);
         response.setForecastIndex(series.size() - 1);
         response.setSeries(series);
-        response.setSuggestion("Du lieu du doan tam thoi, kiem tra cau hinh Python. Ly do: " + reason);
+        response.setSuggestion("Du lieu du doan tam thoi, he thong dang cap nhat mo hinh. Ly do: " + reason);
         return response;
     }
 
@@ -357,7 +459,14 @@ public class AdminDashboardService {
                     node.path("MSE").asDouble(0),
                     node.path("RMSE").asDouble(0),
                     node.path("R2").asDouble(0),
-                    node.path("Tomorrow_Prediction").asDouble(0)
+                    node.path("Tomorrow_Prediction").asDouble(0),
+                    node.path("DataPoints").asInt(0),
+                    node.path("SpanDays").asInt(0),
+                    node.path("Confidence").asDouble(0),
+                    node.path("ModelPrediction").asDouble(0),
+                    node.path("TrendPrediction").asDouble(0),
+                    node.path("WmaPrediction").asDouble(0),
+                    node.path("GrowthRate").asDouble(0)
             );
         } catch (IOException ex) {
             throw new IllegalStateException("Prediction process error", ex);
@@ -370,17 +479,82 @@ public class AdminDashboardService {
     }
 
     private void writePredictionCsv(Path pythonDir, LocalDate from, LocalDate toExclusive) throws IOException {
-        List<Object[]> rows = ordersRepository.sumRevenueByDay(toDate(from), toDate(toExclusive));
-        StringBuilder builder = new StringBuilder();
-        builder.append("orderDate,totalAmount\n");
+        Date fromDate = toDate(from);
+        Date toDate = toDate(toExclusive);
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-        for (Object[] row : rows) {
+
+        java.util.Map<LocalDate, DailyPredictionRow> daily = new java.util.LinkedHashMap<>();
+        for (LocalDate day = from; day.isBefore(toExclusive); day = day.plusDays(1)) {
+            daily.put(day, new DailyPredictionRow());
+        }
+
+        for (Object[] row : ordersRepository.sumRevenueByDay(fromDate, toDate)) {
             LocalDate day = toLocalDate(row[0]);
-            if (day == null) {
-                continue;
+            DailyPredictionRow target = daily.get(day);
+            if (target != null) {
+                target.revenue = toBigDecimal(row[1]);
             }
-            BigDecimal value = toBigDecimal(row[1]);
-            builder.append(formatter.format(day)).append(',').append(value).append('\n');
+        }
+
+        for (Object[] row : ordersRepository.countOrdersByDay(fromDate, toDate)) {
+            LocalDate day = toLocalDate(row[0]);
+            DailyPredictionRow target = daily.get(day);
+            if (target != null) {
+                target.orderCount = ((Number) row[1]).longValue();
+            }
+        }
+
+        for (Object[] row : orderDetailRepository.sumBookSoldByDay(fromDate, toDate)) {
+            LocalDate day = toLocalDate(row[0]);
+            DailyPredictionRow target = daily.get(day);
+            if (target != null) {
+                target.booksSold = ((Number) row[1]).longValue();
+            }
+        }
+
+        for (Object[] row : ordersRepository.countCancelledAndTotalByDay(fromDate, toDate)) {
+            LocalDate day = toLocalDate(row[0]);
+            DailyPredictionRow target = daily.get(day);
+            if (target != null) {
+                target.cancelCount = ((Number) row[1]).longValue();
+                if (target.orderCount == 0) {
+                    target.orderCount = ((Number) row[2]).longValue();
+                }
+            }
+        }
+
+        for (Object[] row : ordersRepository.countDistinctCustomersByDay(fromDate, toDate)) {
+            LocalDate day = toLocalDate(row[0]);
+            DailyPredictionRow target = daily.get(day);
+            if (target != null) {
+                target.distinctCustomers = ((Number) row[1]).longValue();
+            }
+        }
+
+        java.util.Map<LocalDate, Long> newCustomers = new java.util.HashMap<>();
+        for (Object[] row : ordersRepository.findFirstOrderDateByCustomer()) {
+            LocalDate day = toLocalDate(row[1]);
+            if (day != null && !day.isBefore(from) && day.isBefore(toExclusive)) {
+                newCustomers.merge(day, 1L, Long::sum);
+            }
+        }
+
+        StringBuilder builder = new StringBuilder();
+        builder.append("orderDate,totalAmount,orderCount,booksSold,cancelCount,distinctCustomers,newCustomers,returningCustomers\n");
+        for (java.util.Map.Entry<LocalDate, DailyPredictionRow> entry : daily.entrySet()) {
+            LocalDate day = entry.getKey();
+            DailyPredictionRow row = entry.getValue();
+            long newCustomerCount = newCustomers.getOrDefault(day, 0L);
+            long returningCustomers = Math.max(0, row.distinctCustomers - newCustomerCount);
+            builder.append(formatter.format(day))
+                    .append(',').append(row.revenue)
+                    .append(',').append(row.orderCount)
+                    .append(',').append(row.booksSold)
+                    .append(',').append(row.cancelCount)
+                    .append(',').append(row.distinctCustomers)
+                    .append(',').append(newCustomerCount)
+                    .append(',').append(returningCustomers)
+                    .append('\n');
         }
         Files.writeString(pythonDir.resolve("orders.csv"), builder.toString(), StandardCharsets.UTF_8);
     }
@@ -625,9 +799,12 @@ public class AdminDashboardService {
         return null;
     }
 
-    private String buildSuggestion(double changePercent, double confidence) {
+    private String buildSuggestion(double changePercent, double confidence, int dataPoints, int spanDays) {
+        if (dataPoints < 30 || spanDays < 30) {
+            return "Du lieu chua du day, can thu thap them giao dich truoc khi ra quyet dinh.";
+        }
         if (confidence < 50) {
-            return "Du lieu chua on dinh, can kiem tra lai xu huong don hang.";
+            return "Xu huong dang dao dong, can theo doi them trong vai tuan toi.";
         }
         if (changePercent >= 10) {
             return "Doanh thu tang, nen tang ton kho va duy tri chien dich marketing.";
@@ -636,6 +813,16 @@ public class AdminDashboardService {
             return "Doanh thu giam, xem xet tang khuyen mai va phan tich nhom san pham.";
         }
         return "Doanh thu on dinh, duy tri chat luong dich vu va theo doi sat sao.";
+    }
+
+    private LocalDate resolvePredictionStart() {
+        LocalDate defaultFrom = LocalDate.now().minusDays(365);
+        Date minOrderDate = ordersRepository.findMinOrderDate();
+        if (minOrderDate == null) {
+            return defaultFrom;
+        }
+        LocalDate minDate = minOrderDate.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+        return minDate.isBefore(defaultFrom) ? minDate : defaultFrom;
     }
 
     private BigDecimal sumRevenueForRange(LocalDate from, LocalDate toExclusive) {
@@ -720,6 +907,25 @@ public class AdminDashboardService {
         return total;
     }
 
+    private String safeString(Object value) {
+        return value != null ? value.toString() : "";
+    }
+
+    private boolean isCancelled(String status) {
+        if (status == null) {
+            return false;
+        }
+        return "CANCELLED".equalsIgnoreCase(status) || "CANCELED".equalsIgnoreCase(status);
+    }
+
+    private String formatActivityTime(Date dateTime) {
+        if (dateTime == null) {
+            return "";
+        }
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
+        return formatter.format(dateTime.toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime());
+    }
+
     private String formatCurrency(BigDecimal value) {
         BigDecimal safeValue = value == null ? BigDecimal.ZERO : value;
         DecimalFormatSymbols symbols = new DecimalFormatSymbols(new Locale("vi", "VN"));
@@ -780,14 +986,49 @@ public class AdminDashboardService {
         private final double rmse;
         private final double r2;
         private final double tomorrowPrediction;
+        private final int dataPoints;
+        private final int spanDays;
+        private final double confidence;
+        private final double modelPrediction;
+        private final double trendPrediction;
+        private final double wmaPrediction;
+        private final double growthRate;
 
-        private PredictionMetrics(double mae, double mse, double rmse, double r2, double tomorrowPrediction) {
+        private PredictionMetrics(
+                double mae,
+                double mse,
+                double rmse,
+                double r2,
+                double tomorrowPrediction,
+                int dataPoints,
+                int spanDays,
+                double confidence,
+                double modelPrediction,
+                double trendPrediction,
+                double wmaPrediction,
+                double growthRate
+        ) {
             this.mae = mae;
             this.mse = mse;
             this.rmse = rmse;
             this.r2 = r2;
             this.tomorrowPrediction = tomorrowPrediction;
+            this.dataPoints = dataPoints;
+            this.spanDays = spanDays;
+            this.confidence = confidence;
+            this.modelPrediction = modelPrediction;
+            this.trendPrediction = trendPrediction;
+            this.wmaPrediction = wmaPrediction;
+            this.growthRate = growthRate;
         }
+    }
+
+    private static class DailyPredictionRow {
+        private BigDecimal revenue = BigDecimal.ZERO;
+        private long orderCount;
+        private long booksSold;
+        private long cancelCount;
+        private long distinctCustomers;
     }
 
     private static class RangeWindow {
@@ -812,6 +1053,16 @@ public class AdminDashboardService {
             LocalDate prevTo = from;
             LocalDate prevFrom = from.minusMonths(months);
             return new RangeWindow(label, prevFrom, prevTo, bucket);
+        }
+    }
+
+    private static class ActivityEntry {
+        private final Date time;
+        private final DashboardRecentActivityResponse activity;
+
+        private ActivityEntry(Date time, DashboardRecentActivityResponse activity) {
+            this.time = time;
+            this.activity = activity;
         }
     }
 

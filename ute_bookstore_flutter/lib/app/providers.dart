@@ -11,6 +11,7 @@ import '../chat/data/chat_api.dart';
 import '../chat/data/socket_service.dart';
 import '../chat/data/chat_repository.dart';
 import '../features/customers/data/customer_api.dart';
+import '../features/coupons/data/coupon_api.dart';
 
 final sessionStorageProvider = Provider<SessionStorage>((ref) {
   throw UnimplementedError('SessionStorage override required');
@@ -35,6 +36,10 @@ final productApiProvider = Provider<ProductApi>((ref) {
 
 final orderApiProvider = Provider<OrderApi>((ref) {
   return OrderApi(ref.read(apiClientProvider));
+});
+
+final couponApiProvider = Provider<CouponApi>((ref) {
+  return CouponApi(ref.read(apiClientProvider));
 });
 
 final chatApiProvider = Provider<ChatApi>((ref) {

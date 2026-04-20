@@ -17,7 +17,7 @@ import java.util.List;
 @Repository
 public interface ChatMessageRepository extends JpaRepository<ChatMessage, String> {
 
-	long countByStatusNot(String status);
+	long countByStatusNot(MessageStatus status);
 
     @Query("SELECT COUNT(c) > 0 FROM ChatMessage c WHERE c.receiverName = 'admin' AND (c.status <> com.hcmute.bookstore.Entity.MessageStatus.SEEN OR c.isMarkedUnreadByAdmin = true)")
     boolean existsUnreadForAdmin();

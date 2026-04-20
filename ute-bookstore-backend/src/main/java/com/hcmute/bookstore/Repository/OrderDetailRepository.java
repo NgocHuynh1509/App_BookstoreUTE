@@ -3,6 +3,8 @@ package com.hcmute.bookstore.Repository;
 import com.hcmute.bookstore.Entity.OrderDetail;
 import com.hcmute.bookstore.Entity.OrderdetailId;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -35,4 +37,14 @@ public interface OrderDetailRepository extends JpaRepository<OrderDetail, Orderd
             "group by function('date_format', o.orderDate, '%Y-%m') order by function('date_format', o.orderDate, '%Y-%m')"
     )
     java.util.List<Object[]> sumBookSoldByMonth(java.util.Date from, java.util.Date to);
+
+    @Query(
+            "select b.bookId, b.title, b.author, b.picture, coalesce(sum(od.quantity), 0), " +
+            "coalesce(sum(od.quantity * od.unitPrice), 0) " +
+            "from OrderDetail od join od.book b join od.order o " +
+            "where o.orderDate >= ?1 and o.orderDate < ?2 " +
+            "group by b.bookId, b.title, b.author, b.picture " +
+            "order by sum(od.quantity) desc"
+    )
+    List<Object[]> findTopBooks(java.util.Date from, java.util.Date to, Pageable pageable);
 }

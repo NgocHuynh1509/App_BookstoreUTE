@@ -1,15 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 import 'app/admin_shell.dart';
 import 'app/providers.dart';
 import 'core/api_client.dart';
 import 'core/session_storage.dart';
 import 'features/auth/presentation/admin_login_screen.dart';
+import 'theme/admin_theme.dart';
 
 Future<void> main() async {
-  WidgetsFlutterBinding.ensureInitialized();
   runApp(const BootstrapApp());
 }
 
@@ -65,29 +64,7 @@ class MyApp extends StatelessWidget {
   }
 
   ThemeData _buildTheme(Brightness brightness) {
-    final base = ThemeData(
-      useMaterial3: true,
-      brightness: brightness,
-      colorSchemeSeed: const Color(0xFF4C6FFF),
-      scaffoldBackgroundColor:
-          brightness == Brightness.light ? const Color(0xFFF5F7FB) : null,
-    );
-
-    return base.copyWith(
-      textTheme: GoogleFonts.beVietnamProTextTheme(base.textTheme),
-      appBarTheme: base.appBarTheme.copyWith(
-        centerTitle: false,
-        titleTextStyle: GoogleFonts.beVietnamPro(
-          fontSize: 18,
-          fontWeight: FontWeight.w700,
-          color: base.colorScheme.onSurface,
-        ),
-      ),
-      bottomNavigationBarTheme: base.bottomNavigationBarTheme.copyWith(
-        selectedItemColor: base.colorScheme.primary,
-        unselectedItemColor: base.colorScheme.onSurfaceVariant,
-      ),
-    );
+    return brightness == Brightness.dark ? AdminTheme.dark() : AdminTheme.light();
   }
 
   @override
