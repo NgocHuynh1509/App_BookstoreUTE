@@ -176,6 +176,31 @@ export default function ReturnDetailScreen() {
           )}
         </View>
 
+        {/* ─── BỔ SUNG: PHẢN HỒI TỪ NGƯỜI BÁN ─── */}
+                <View style={[s.card, { borderLeftWidth: 5, borderLeftColor: returnData.reply ? C.green : C.orange }]}>
+                  <View style={s.cardHeader}>
+                    <Ionicons
+                      name="storefront-outline"
+                      size={20}
+                      color={returnData.reply ? C.green : C.orange}
+                    />
+                    <Text style={[s.sectionTitle, { color: returnData.reply ? C.green : C.orange }]}>
+                      Phản hồi từ người bán
+                    </Text>
+                  </View>
+
+                  {returnData.reply ? (
+                    <View style={s.replyBox}>
+                      <Text style={s.replyTxt}>{returnData.reply}</Text>
+                    </View>
+                  ) : (
+                    <View style={s.waitingBox}>
+                      <ActivityIndicator size="small" color={C.orange} style={{ marginRight: 8 }} />
+                      <Text style={s.waitingTxt}>Đang đợi phản hồi từ Shop...</Text>
+                    </View>
+                  )}
+                </View>
+
         <View style={s.footer}>
           <Text style={s.footerTxt}>Ngày gửi: {new Date(returnData.createdAt).toLocaleString('vi-VN')}</Text>
           <Text style={s.footerTxt}>ID yêu cầu: {returnData.returnId}</Text>
@@ -213,5 +238,31 @@ const s = StyleSheet.create({
   fullImage: { width: '100%', height: '80%' },
   footer: { alignItems: "center", marginVertical: 20 },
   footerTxt: { color: "#9EABB8", fontSize: 12 },
-  btnBackErr: { backgroundColor: C.primary, padding: 12, borderRadius: 8, marginTop: 10 }
+  btnBackErr: { backgroundColor: C.primary, padding: 12, borderRadius: 8, marginTop: 10 },
+  // STYLE MỚI BỔ SUNG
+    replyBox: {
+      backgroundColor: "#F1F8E9", // Màu xanh lá rất nhạt
+      padding: 15,
+      borderRadius: 12,
+      marginTop: 5,
+    },
+    replyTxt: {
+      fontSize: 15,
+      color: "#2E7D32",
+      lineHeight: 22,
+      fontWeight: "500",
+    },
+    waitingBox: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      backgroundColor: "#FFF3E0", // Màu cam nhạt
+      padding: 15,
+      borderRadius: 12,
+      marginTop: 5,
+    },
+    waitingTxt: {
+      fontSize: 14,
+      color: "#E65100",
+      fontStyle: "italic",
+    },
 });

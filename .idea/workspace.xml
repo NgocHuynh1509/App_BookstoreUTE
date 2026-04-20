@@ -6,13 +6,12 @@
   <component name="ChangeListManager">
     <list default="true" id="ec56e615-c574-46af-93be-dd7e99257ed6" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/my-app/screens/profile/OrderDetail.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/my-app/screens/profile/OrderDetail.tsx" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/my-app/screens/profile/ReturnDetailScreen.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/my-app/screens/profile/ReturnDetailScreen.tsx" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/my-app/screens/profile/ReturnRequestScreen.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/my-app/screens/profile/ReturnRequestScreen.tsx" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/ute-bookstore-backend/src/main/java/com/hcmute/bookstore/Controller/ReturnRequestController.java" beforeDir="false" afterPath="$PROJECT_DIR$/ute-bookstore-backend/src/main/java/com/hcmute/bookstore/Controller/ReturnRequestController.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/ute-bookstore-backend/src/main/java/com/hcmute/bookstore/Entity/ReturnRequest.java" beforeDir="false" afterPath="$PROJECT_DIR$/ute-bookstore-backend/src/main/java/com/hcmute/bookstore/Entity/ReturnRequest.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ute-bookstore-backend/src/main/java/com/hcmute/bookstore/dto/ReturnRequestDTO.java" beforeDir="false" afterPath="$PROJECT_DIR$/ute-bookstore-backend/src/main/java/com/hcmute/bookstore/dto/ReturnRequestDTO.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/ute-bookstore-backend/src/main/java/com/hcmute/bookstore/dto/ReturnResponseDTO.java" beforeDir="false" afterPath="$PROJECT_DIR$/ute-bookstore-backend/src/main/java/com/hcmute/bookstore/dto/ReturnResponseDTO.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ute_bookstore_python/books_latest.csv" beforeDir="false" afterPath="$PROJECT_DIR$/ute_bookstore_python/books_latest.csv" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />

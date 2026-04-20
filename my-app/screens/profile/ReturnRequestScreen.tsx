@@ -49,10 +49,27 @@ export default function ReturnRequestScreen() {
   };
 
   const handleSubmit = async () => {
-    if (!reason || !bankName || !accNumber) {
-      Alert.alert("Lỗi", "Vui lòng nhập đầy đủ lý do và thông tin ngân hàng");
-      return;
-    }
+    // Kiểm tra tất cả các trường: lý do, ngân hàng, chủ tài khoản, số tài khoản và mảng ảnh
+        if (!reason.trim()) {
+          Alert.alert("Thiếu thông tin", "Vui lòng nhập lý do hoàn trả.");
+          return;
+        }
+        if (images.length === 0) {
+          Alert.alert("Thiếu hình ảnh", "Vui lòng chọn ít nhất 1 hình ảnh minh chứng lỗi sản phẩm.");
+          return;
+        }
+        if (!bankName.trim()) {
+          Alert.alert("Thiếu thông tin", "Vui lòng nhập tên ngân hàng.");
+          return;
+        }
+        if (!accHolder.trim()) {
+          Alert.alert("Thiếu thông tin", "Vui lòng nhập tên chủ tài khoản.");
+          return;
+        }
+        if (!accNumber.trim()) {
+          Alert.alert("Thiếu thông tin", "Vui lòng nhập số tài khoản ngân hàng.");
+          return;
+        }
 
     setLoading(true);
     try {

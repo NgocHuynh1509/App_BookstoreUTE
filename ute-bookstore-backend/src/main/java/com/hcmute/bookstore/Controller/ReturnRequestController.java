@@ -40,6 +40,7 @@ public class ReturnRequestController {
         // Gán danh sách ảnh
         rr.setImageEvidences(dto.getImageEvidences());
         rr.setStatus("PENDING");
+        rr.setReply("");
 
 
 
@@ -65,6 +66,7 @@ public class ReturnRequestController {
                             .imageEvidences(rr.getImageEvidences())
                             .status(rr.getStatus())
                             .createdAt(LocalDateTime.now()) // Hoặc rr.getCreatedAt() nếu có
+                            .reply(rr.getReply())
                             .build();
                     return ResponseEntity.ok(response);
                 })

@@ -24,6 +24,9 @@ public class ReturnRequest {
     @NotNull
     private String reason; // Lý do hủy/hoàn hàng
 
+    @Column(name = "reply", length = 1000)
+    private String reply; // Lý do hủy/hoàn hàng
+
     // 2. Sửa trường này
     @ElementCollection
     @CollectionTable(name = "return_images", joinColumns = @JoinColumn(name = "returnId"))
@@ -60,6 +63,9 @@ public class ReturnRequest {
 
     public String getReason() { return reason; }
     public void setReason(String reason) { this.reason = reason; }
+
+    public String getReply() { return reply; }
+    public void setReply(String reply) { this.reply = reply; }
 
     // Getter và Setter cho list ảnh
     public List<String> getImageEvidences() { return imageEvidences; }

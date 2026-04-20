@@ -21,4 +21,5 @@ public class ReturnResponseDTO {
     private List<String> imageEvidences;
     private String status;
     private LocalDateTime createdAt; // Ngày gửi yêu cầu
+    private String reply;
 }
