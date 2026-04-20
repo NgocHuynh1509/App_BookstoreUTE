@@ -7,6 +7,8 @@ import { useState, useEffect } from "react";
 import api from "../services/api";
 import { getSearchHistory, saveSearchHistory } from "../services/searchHistory";
 import db from "../services/database";
+import axios from "axios"; // Đảm bảo đã import axios
+import Constants from 'expo-constants';
 
 // ─── Palette ──────────────────────────────────────────────────────────────────
 const C = {
@@ -22,6 +24,8 @@ const C = {
   text3:       "#9AA8C8",
   sale:        "#E53935",
 };
+
+const API_URL = Constants.expoConfig?.extra?.MEILI_URL;
 
 // ─── Section header ───────────────────────────────────────────────────────────
 function SectionHeader({ title, action, actionLabel }: {
@@ -61,11 +65,24 @@ export default function SearchScreen({ navigation }: any) {
   useEffect(() => { loadHistory(); }, []);
 
   const loadSuggestions = async (text: string) => {
-    if (!text.trim()) { setSuggestions([]); return; }
+    if (!text.trim()) {
+      setSuggestions([]);
+      return;
+    }
+
     try {
-      const res = await api.get("/books", { params: { search: text } });
-      setSuggestions(res.data.slice(0, 8));
-    } catch (err) { console.log("Lỗi gợi ý:", err); }
+      // Gọi trực tiếp vào endpoint search của Meilisearch
+      const res = await axios.post(`${API_URL}/indexes/books/search`, {
+        q: text,
+        limit: 8,
+        attributesToHighlight: ["title"], // Nếu muốn làm nổi bật từ khóa
+      });
+
+      // Meilisearch trả về kết quả nằm trong mảng 'hits'
+      setSuggestions(res.data.hits);
+    } catch (err) {
+      console.log("Lỗi gợi ý Meilisearch:", err);
+    }
   };
 
   const handleSearch = () => {
@@ -144,13 +161,13 @@ export default function SearchScreen({ navigation }: any) {
             <View style={s.listCard}>
               {suggestions.map((item: any, idx: number) => (
                 <TouchableOpacity
-                  key={item.id}
-                  style={[s.suggRow, idx === suggestions.length - 1 && { borderBottomWidth: 0 }]}
-                  onPress={() => {
-                    saveSearchHistory(item.title);
-                    navigation.navigate("SearchResult", { keyword: item.title });
-                  }}
-                  activeOpacity={0.75}
+                  key={item.bookId} // Đổi từ item.id thành item.bookId cho khớp với Meilisearch
+                      style={[s.suggRow, idx === suggestions.length - 1 && { borderBottomWidth: 0 }]}
+                      onPress={() => {
+                        saveSearchHistory(item.title);
+                        navigation.navigate("SearchResult", { keyword: item.title });
+                      }}
+                      activeOpacity={0.75}
                 >
                   <View style={s.suggIconWrap}>
                     <Ionicons name="book-outline" size={15} color={C.primaryMid} />
