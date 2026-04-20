@@ -243,3 +243,85 @@ class DashboardRevenuePredictionResponse {
     );
   }
 }
+
+class DashboardTopBooksResponse {
+  final List<DashboardTopBook> items;
+
+  DashboardTopBooksResponse({required this.items});
+
+  factory DashboardTopBooksResponse.fromJson(Map<String, dynamic> json) {
+    final rawItems = (json['items'] as List<dynamic>? ?? []);
+    return DashboardTopBooksResponse(
+      items: rawItems
+          .map((item) => DashboardTopBook.fromJson(item as Map<String, dynamic>))
+          .toList(),
+    );
+  }
+}
+
+class DashboardTopBook {
+  final String bookId;
+  final String title;
+  final String author;
+  final String imageUrl;
+  final int soldQuantity;
+  final double revenue;
+
+  DashboardTopBook({
+    required this.bookId,
+    required this.title,
+    required this.author,
+    required this.imageUrl,
+    required this.soldQuantity,
+    required this.revenue,
+  });
+
+  factory DashboardTopBook.fromJson(Map<String, dynamic> json) {
+    return DashboardTopBook(
+      bookId: json['bookId']?.toString() ?? '',
+      title: json['title']?.toString() ?? '',
+      author: json['author']?.toString() ?? '',
+      imageUrl: json['imageUrl']?.toString() ?? '',
+      soldQuantity: (json['soldQuantity'] as num?)?.toInt() ?? 0,
+      revenue: (json['revenue'] as num?)?.toDouble() ?? 0,
+    );
+  }
+}
+
+class DashboardRecentActivitiesResponse {
+  final List<DashboardRecentActivity> items;
+
+  DashboardRecentActivitiesResponse({required this.items});
+
+  factory DashboardRecentActivitiesResponse.fromJson(Map<String, dynamic> json) {
+    final rawItems = (json['items'] as List<dynamic>? ?? []);
+    return DashboardRecentActivitiesResponse(
+      items: rawItems
+          .map((item) => DashboardRecentActivity.fromJson(item as Map<String, dynamic>))
+          .toList(),
+    );
+  }
+}
+
+class DashboardRecentActivity {
+  final String type;
+  final String title;
+  final String subtitle;
+  final String time;
+
+  DashboardRecentActivity({
+    required this.type,
+    required this.title,
+    required this.subtitle,
+    required this.time,
+  });
+
+  factory DashboardRecentActivity.fromJson(Map<String, dynamic> json) {
+    return DashboardRecentActivity(
+      type: json['type']?.toString() ?? '',
+      title: json['title']?.toString() ?? '',
+      subtitle: json['subtitle']?.toString() ?? '',
+      time: json['time']?.toString() ?? '',
+    );
+  }
+}

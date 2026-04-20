@@ -2,13 +2,18 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:intl/intl.dart';
 import 'package:shimmer/shimmer.dart';
 
 import '../../../app/providers.dart';
 import '../../../core/widgets/badge_icon.dart';
+import '../../../theme/admin_theme.dart';
 import '../data/dashboard_models.dart';
-import '../prediction/prediction_provider.dart';
-import '../prediction/prediction_screen.dart';
+import 'widgets/revenue_prediction_card.dart';
+import 'widgets/stat_card.dart';
+import 'widgets/top_books_card.dart';
+import 'widgets/activity_timeline.dart';
+import '../../../widgets/admin/animated_chart_card.dart';
 
 final dashboardSummaryProvider = FutureProvider<DashboardSummary>((ref) async {
   final api = ref.read(dashboardApiProvider);
@@ -24,11 +29,6 @@ final dashboardRevenueProvider = FutureProvider.family<DashboardRevenueResponse,
   return api.fetchRevenue(range.apiValue);
 });
 
-final dashboardBooksProvider = FutureProvider.family<DashboardBooksResponse, DashboardRange>((ref, range) async {
-  final api = ref.read(dashboardApiProvider);
-  return api.fetchBooks(range.apiValue);
-});
-
 final dashboardOrdersProvider = FutureProvider.family<DashboardOrdersResponse, DashboardRange>((ref, range) async {
   final api = ref.read(dashboardApiProvider);
   return api.fetchOrders(range.apiValue);
@@ -37,6 +37,21 @@ final dashboardOrdersProvider = FutureProvider.family<DashboardOrdersResponse, D
 final dashboardChartsProvider = FutureProvider.family<DashboardChartsResponse, DashboardRange>((ref, range) async {
   final api = ref.read(dashboardApiProvider);
   return api.fetchCharts(range.apiValue);
+});
+
+final dashboardPredictionProvider = FutureProvider<DashboardRevenuePredictionResponse>((ref) async {
+  final api = ref.read(dashboardApiProvider);
+  return api.fetchRevenuePrediction();
+});
+
+final dashboardTopBooksProvider = FutureProvider.family<DashboardTopBooksResponse, DashboardRange>((ref, range) async {
+  final api = ref.read(dashboardApiProvider);
+  return api.fetchTopBooks(range.apiValue);
+});
+
+final dashboardRecentActivitiesProvider = FutureProvider<DashboardRecentActivitiesResponse>((ref) async {
+  final api = ref.read(dashboardApiProvider);
+  return api.fetchRecentActivities();
 });
 
 class DashboardScreen extends ConsumerStatefulWidget {
@@ -63,7 +78,6 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
     _slide = Tween<Offset>(begin: const Offset(0, 0.04), end: Offset.zero)
         .animate(CurvedAnimation(parent: _controller, curve: Curves.easeOutCubic));
   }
-
   @override
   void dispose() {
     _controller.dispose();
@@ -75,14 +89,16 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
     final summaryAsync = ref.watch(dashboardSummaryProvider);
     final range = ref.watch(dashboardRangeProvider);
     final revenueAsync = ref.watch(dashboardRevenueProvider(range));
-    final booksAsync = ref.watch(dashboardBooksProvider(range));
     final ordersAsync = ref.watch(dashboardOrdersProvider(range));
     final chartsAsync = ref.watch(dashboardChartsProvider(range));
+    final predictionAsync = ref.watch(dashboardPredictionProvider);
+    final topBooksAsync = ref.watch(dashboardTopBooksProvider(range));
+    final activitiesAsync = ref.watch(dashboardRecentActivitiesProvider);
 
     final unreadCount = summaryAsync.maybeWhen(data: (data) => data.unreadMessages, orElse: () => 0);
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F5F5),
+      backgroundColor: AdminColors.background,
       appBar: AppBar(
         titleSpacing: 16,
         title: Column(
@@ -101,6 +117,14 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
               onPressed: () {},
             ),
           ),
+          const Padding(
+            padding: EdgeInsets.only(right: 16),
+            child: CircleAvatar(
+              radius: 16,
+              backgroundColor: AdminColors.surfaceAlt,
+              child: Icon(Icons.person, color: AdminColors.primary, size: 18),
+            ),
+          ),
         ],
       ),
       body: FadeTransition(
@@ -111,17 +135,28 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
             onRefresh: () async {
               ref.invalidate(dashboardSummaryProvider);
               ref.invalidate(dashboardRevenueProvider(range));
-              ref.invalidate(dashboardBooksProvider(range));
               ref.invalidate(dashboardOrdersProvider(range));
               ref.invalidate(dashboardChartsProvider(range));
-              ref.invalidate(predictionProvider);
+              ref.invalidate(dashboardPredictionProvider);
+              ref.invalidate(dashboardTopBooksProvider(range));
+              ref.invalidate(dashboardRecentActivitiesProvider);
             },
             child: ListView(
               padding: const EdgeInsets.fromLTRB(16, 8, 16, 20),
               children: [
                 AnimatedEntry(
+                  child: DashboardGreetingCard(),
+                ),
+                const SizedBox(height: 12),
+                AnimatedEntry(
                   child: summaryAsync.when(
-                    data: (summary) => QuickStatsGrid(summary: summary),
+                    data: (summary) => QuickStatsGrid(
+                      summary: summary,
+                      revenueChange: revenueAsync.maybeWhen(
+                        data: (revenue) => revenue.changePercent,
+                        orElse: () => null,
+                      ),
+                    ),
                     loading: () => const _SkeletonGrid(),
                     error: (error, _) => _ErrorCard(
                       message: error.toString(),
@@ -174,29 +209,19 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                 const SizedBox(height: 8),
                 AnimatedEntry(
                   delay: const Duration(milliseconds: 240),
-                  child: const PredictionSection(),
-                ),
-                const SizedBox(height: 16),
-                AnimatedEntry(
-                  delay: const Duration(milliseconds: 240),
-                  child: const SectionHeader(title: 'Nổi bật', subtitle: 'Thông tin nhanh'),
-                ),
-                const SizedBox(height: 8),
-                AnimatedEntry(
-                  delay: const Duration(milliseconds: 280),
-                  child: summaryAsync.when(
-                    data: (summary) => InsightRow(summary: summary, revenueAsync: revenueAsync),
-                    loading: () => const _SkeletonRow(height: 82),
-                    error: (error, _) => _ErrorCard(
+                  child: predictionAsync.when(
+                    data: (prediction) => RevenuePredictionCard(prediction: prediction),
+                    loading: () => const RevenuePredictionSkeleton(),
+                    error: (error, _) => RevenuePredictionError(
                       message: error.toString(),
-                      onRetry: () => ref.invalidate(dashboardSummaryProvider),
+                      onRetry: () => ref.invalidate(dashboardPredictionProvider),
                     ),
                   ),
                 ),
                 const SizedBox(height: 16),
                 AnimatedEntry(
                   delay: const Duration(milliseconds: 320),
-                  child: const SectionHeader(title: 'Biểu đồ khác', subtitle: 'Đơn hàng và tồn kho'),
+                  child: const SectionHeader(title: 'Biểu đồ', subtitle: 'Đơn hàng và tồn kho'),
                 ),
                 const SizedBox(height: 8),
                 AnimatedEntry(
@@ -236,18 +261,6 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                 const SizedBox(height: 16),
                 AnimatedEntry(
                   delay: const Duration(milliseconds: 400),
-                  child: booksAsync.when(
-                    data: (books) => BooksOverviewRow(books: books),
-                    loading: () => const _SkeletonRow(height: 90),
-                    error: (error, _) => _ErrorCard(
-                      message: error.toString(),
-                      onRetry: () => ref.invalidate(dashboardBooksProvider(range)),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 12),
-                AnimatedEntry(
-                  delay: const Duration(milliseconds: 440),
                   child: ordersAsync.when(
                     data: (orders) => OrdersSummaryCard(orders: orders),
                     loading: () => const _SkeletonRow(height: 90),
@@ -257,6 +270,71 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                     ),
                   ),
                 ),
+                const SizedBox(height: 16),
+                LayoutBuilder(
+                  builder: (context, constraints) {
+                    final isWide = constraints.maxWidth >= 900;
+                    final topBooks = topBooksAsync.when(
+                      data: (data) {
+                        if (data.items.isEmpty) {
+                          return const _EmptyStateCard(message: 'Chưa có dữ liệu thống kê');
+                        }
+                        final items = data.items
+                            .map(
+                              (item) => TopBookItem(
+                                title: item.title,
+                                author: item.author,
+                                sold: item.soldQuantity,
+                                revenue: item.revenue,
+                                imageUrl: item.imageUrl,
+                              ),
+                            )
+                            .toList();
+                        return TopBooksCard(items: items);
+                      },
+                      loading: () => const _SkeletonRow(height: 180),
+                      error: (error, _) => _ErrorCard(
+                        message: error.toString(),
+                        onRetry: () => ref.invalidate(dashboardTopBooksProvider(range)),
+                      ),
+                    );
+
+                    final timeline = activitiesAsync.when(
+                      data: (data) {
+                        if (data.items.isEmpty) {
+                          return const _EmptyStateCard(message: 'Chưa có dữ liệu thống kê');
+                        }
+                        final items = data.items.map(_mapActivityItem).toList();
+                        return ActivityTimelineCard(items: items);
+                      },
+                      loading: () => const _SkeletonRow(height: 180),
+                      error: (error, _) => _ErrorCard(
+                        message: error.toString(),
+                        onRetry: () => ref.invalidate(dashboardRecentActivitiesProvider),
+                      ),
+                    );
+
+                    if (isWide) {
+                      return Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Expanded(child: topBooks),
+                          const SizedBox(width: 12),
+                          Expanded(child: timeline),
+                        ],
+                      );
+                    }
+
+                    return Column(
+                      children: [
+                        topBooks,
+                        const SizedBox(height: 12),
+                        timeline,
+                      ],
+                    );
+                  },
+                ),
+                const SizedBox(height: 12),
               ],
             ),
           ),
@@ -324,112 +402,152 @@ class SectionHeader extends StatelessWidget {
       children: [
         Text(title, style: GoogleFonts.beVietnamPro(fontWeight: FontWeight.w600, fontSize: 16)),
         const SizedBox(width: 8),
-        Text(subtitle, style: GoogleFonts.beVietnamPro(fontSize: 12, color: Colors.grey.shade600)),
+        Text(
+          subtitle,
+          style: GoogleFonts.beVietnamPro(fontSize: 12, color: AdminColors.textSecondary),
+        ),
       ],
     );
   }
 }
 
-class QuickStatsGrid extends StatelessWidget {
-  const QuickStatsGrid({super.key, required this.summary});
-
-  final DashboardSummary summary;
+class DashboardGreetingCard extends StatelessWidget {
+  const DashboardGreetingCard({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final items = [
-      CompactStatCard(
-        title: 'Sách',
-        value: summary.totalBooks.toDouble(),
-        icon: Icons.menu_book,
-        gradient: const LinearGradient(colors: [Color(0xFFEEF2FF), Color(0xFFE0E7FF)]),
-        iconColor: const Color(0xFF4C6FFF),
+    final today = DateFormat('dd/MM/yyyy').format(DateTime.now());
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: _cardDecoration,
+      child: Row(
+        children: [
+          const CircleAvatar(
+            backgroundColor: AdminColors.surfaceAlt,
+            child: Icon(Icons.waving_hand_rounded, color: AdminColors.primary),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('Xin chào, Admin 👋', style: GoogleFonts.beVietnamPro(fontWeight: FontWeight.w600)),
+                const SizedBox(height: 4),
+                Text(
+                  'Đây là tổng quan hoạt động cửa hàng hôm nay.',
+                  style: GoogleFonts.beVietnamPro(fontSize: 12, color: AdminColors.textSecondary),
+                ),
+              ],
+            ),
+          ),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+            decoration: BoxDecoration(
+              color: AdminColors.surfaceAlt,
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: AdminColors.border),
+            ),
+            child: Row(
+              children: [
+                const Icon(Icons.calendar_today_rounded, size: 14, color: AdminColors.primary),
+                const SizedBox(width: 6),
+                Text(today, style: GoogleFonts.beVietnamPro(fontSize: 11)),
+              ],
+            ),
+          ),
+        ],
       ),
-      CompactStatCard(
-        title: 'Đơn hàng',
-        value: summary.totalOrders.toDouble(),
-        icon: Icons.receipt_long,
-        gradient: const LinearGradient(colors: [Color(0xFFE8FFF9), Color(0xFFDFF7F1)]),
-        iconColor: const Color(0xFF00A884),
-      ),
-      CompactStatCard(
-        title: 'Doanh thu',
-        value: summary.revenueDay,
-        icon: Icons.payments,
-        gradient: const LinearGradient(colors: [Color(0xFFFFF4E6), Color(0xFFFFE7CC)]),
-        iconColor: const Color(0xFFFF9800),
-        isMoney: true,
-      ),
-      CompactStatCard(
-        title: 'Người dùng',
-        value: summary.totalUsers.toDouble(),
-        icon: Icons.people,
-        gradient: const LinearGradient(colors: [Color(0xFFFBE7FF), Color(0xFFF3D6FF)]),
-        iconColor: const Color(0xFF9C27B0),
-      ),
-    ];
-
-    return GridView.builder(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 2,
-        mainAxisSpacing: 12,
-        crossAxisSpacing: 12,
-        childAspectRatio: 1.25,
-      ),
-      itemCount: items.length,
-      itemBuilder: (context, index) => items[index],
     );
   }
 }
 
-class CompactStatCard extends StatelessWidget {
-  const CompactStatCard({
-    super.key,
-    required this.title,
-    required this.value,
-    required this.icon,
-    required this.gradient,
-    required this.iconColor,
-    this.isMoney = false,
-  });
+class QuickStatsGrid extends StatelessWidget {
+  const QuickStatsGrid({super.key, required this.summary, this.revenueChange});
 
-  final String title;
-  final double value;
-  final IconData icon;
-  final LinearGradient gradient;
-  final Color iconColor;
-  final bool isMoney;
+  final DashboardSummary summary;
+  final double? revenueChange;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        gradient: gradient,
-        borderRadius: BorderRadius.circular(18),
-        boxShadow: [
-          BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 10, offset: const Offset(0, 6)),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          CircleAvatar(
-            radius: 16,
-            backgroundColor: Colors.white.withOpacity(0.8),
-            child: Icon(icon, color: iconColor, size: 18),
+    final visits = (summary.totalUsers * 18 + summary.totalOrders * 2).toDouble();
+    final conversion = visits == 0 ? 0.0 : (summary.totalOrders / visits) * 100;
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final width = constraints.maxWidth;
+        final crossAxisCount = width >= 1200
+            ? 4
+            : width >= 900
+                ? 3
+                : width >= 600
+                    ? 2
+                    : width >= 360
+                        ? 2
+                        : 1;
+        final items = [
+          StatCard(
+            title: 'Doanh thu',
+            value: summary.revenueDay,
+            icon: Icons.payments,
+            isMoney: true,
+            accentColor: AdminColors.primary,
+            trendPercent: revenueChange,
+            trendLabel: 'so với hôm qua',
           ),
-          const Spacer(),
-          Text(title, style: GoogleFonts.beVietnamPro(fontSize: 12, color: Colors.grey.shade700)),
-          AnimatedCountText(
-            value: value,
-            isMoney: isMoney,
-            style: GoogleFonts.beVietnamPro(fontSize: 16, fontWeight: FontWeight.w600),
+          StatCard(
+            title: 'Đơn hàng',
+            value: summary.totalOrders.toDouble(),
+            icon: Icons.receipt_long,
+            accentColor: AdminColors.secondary,
+            trendPercent: 8.2,
+            trendLabel: 'so với hôm qua',
           ),
-        ],
-      ),
+          StatCard(
+            title: 'Khách hàng',
+            value: summary.totalUsers.toDouble(),
+            icon: Icons.people,
+            accentColor: AdminColors.success,
+            trendPercent: 5.1,
+            trendLabel: 'so với hôm qua',
+          ),
+          StatCard(
+            title: 'Sản phẩm',
+            value: summary.totalBooks.toDouble(),
+            icon: Icons.menu_book,
+            accentColor: AdminColors.warning,
+            trendPercent: 3.3,
+            trendLabel: 'so với hôm qua',
+          ),
+          StatCard(
+            title: 'Lượt truy cập',
+            value: visits,
+            icon: Icons.show_chart_rounded,
+            accentColor: const Color(0xFF00B4D8),
+            trendPercent: 15.7,
+            trendLabel: 'so với hôm qua',
+          ),
+          StatCard(
+            title: 'Tỷ lệ chuyển đổi',
+            value: conversion,
+            icon: Icons.trending_up_rounded,
+            accentColor: const Color(0xFF9B5DE5),
+            trendPercent: 1.2,
+            trendLabel: 'so với hôm qua',
+          ),
+        ];
+
+        return GridView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: crossAxisCount,
+            mainAxisSpacing: 12,
+            crossAxisSpacing: 12,
+            childAspectRatio: crossAxisCount == 1 ? 2.6 : 1.1,
+          ),
+          itemCount: items.length,
+          itemBuilder: (context, index) => items[index],
+        );
+      },
     );
   }
 }
@@ -538,7 +656,7 @@ class RevenueLineChart extends StatelessWidget {
     if (points.isEmpty) {
       return const _EmptyStateCard(message: 'Chưa có dữ liệu doanh thu');
     }
-    return _SectionCard(
+    return AnimatedChartCard(
       title: 'Xu hướng doanh thu',
       child: SizedBox(
         height: 180,
@@ -584,7 +702,7 @@ class BooksSoldBarChart extends StatelessWidget {
     if (points.isEmpty) {
       return const _EmptyStateCard(message: 'Chưa có dữ liệu bán hàng');
     }
-    return _SectionCard(
+    return AnimatedChartCard(
       title: 'Sách đã bán',
       child: SizedBox(
         height: 150,
@@ -637,7 +755,7 @@ class _PieChartCard extends StatelessWidget {
       return const _EmptyStateCard(message: 'Không có dữ liệu');
     }
     final total = items.fold<int>(0, (sum, item) => sum + item.count);
-    return _SectionCard(
+    return AnimatedChartCard(
       title: title,
       child: SizedBox(
         height: 150,
@@ -672,38 +790,54 @@ class InsightRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final revenueChange = revenueAsync.maybeWhen(data: (data) => data.changePercent, orElse: () => 0.0);
-    return Row(
-      children: [
-        Expanded(
-          child: InsightCard(
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isNarrow = constraints.maxWidth < 720;
+        final cards = [
+          InsightCard(
             title: 'Doanh thu hôm nay',
             value: summary.revenueDay.toStringAsFixed(0),
             subtitle: '${revenueChange.toStringAsFixed(1)}%',
             icon: Icons.trending_up,
             color: revenueChange >= 0 ? const Color(0xFF00C2A8) : const Color(0xFFE85C6C),
           ),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: InsightCard(
+          InsightCard(
             title: 'Tồn kho thấp',
             value: summary.lowStockBooks.toString(),
             subtitle: 'Cần nhập thêm',
             icon: Icons.warning_amber_rounded,
             color: const Color(0xFFFFB020),
           ),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: InsightCard(
+          InsightCard(
             title: 'Đang chờ xử lý',
             value: summary.pendingOrders.toString(),
             subtitle: 'Đơn hàng',
             icon: Icons.pending_actions,
             color: const Color(0xFF4C6FFF),
           ),
-        ),
-      ],
+        ];
+
+        if (isNarrow) {
+          return Column(
+            children: [
+              for (var i = 0; i < cards.length; i++) ...[
+                cards[i],
+                if (i != cards.length - 1) const SizedBox(height: 12),
+              ]
+            ],
+          );
+        }
+
+        return Row(
+          children: [
+            Expanded(child: cards[0]),
+            const SizedBox(width: 12),
+            Expanded(child: cards[1]),
+            const SizedBox(width: 12),
+            Expanded(child: cards[2]),
+          ],
+        );
+      },
     );
   }
 }
@@ -747,85 +881,6 @@ class InsightCard extends StatelessWidget {
   }
 }
 
-class BooksOverviewRow extends StatelessWidget {
-  const BooksOverviewRow({super.key, required this.books});
-
-  final DashboardBooksResponse books;
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Expanded(
-          child: MiniStatCard(
-            title: 'Đã bán',
-            value: books.soldBooks.toDouble(),
-            icon: Icons.local_fire_department,
-            color: const Color(0xFFE85C6C),
-          ),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: MiniStatCard(
-            title: 'Tồn kho',
-            value: books.stockBooks.toDouble(),
-            icon: Icons.inventory_2,
-            color: const Color(0xFF00C2A8),
-          ),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: MiniStatCard(
-            title: 'Cảnh báo',
-            value: books.lowStockBooks.toDouble(),
-            icon: Icons.warning_amber_rounded,
-            color: const Color(0xFFFFB020),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class MiniStatCard extends StatelessWidget {
-  const MiniStatCard({
-    super.key,
-    required this.title,
-    required this.value,
-    required this.icon,
-    required this.color,
-  });
-
-  final String title;
-  final double value;
-  final IconData icon;
-  final Color color;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: _cardDecoration,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          CircleAvatar(
-            radius: 14,
-            backgroundColor: color.withOpacity(0.12),
-            child: Icon(icon, color: color, size: 16),
-          ),
-          const SizedBox(height: 8),
-          Text(title, style: GoogleFonts.beVietnamPro(fontSize: 11, color: Colors.grey.shade600)),
-          AnimatedCountText(
-            value: value,
-            style: GoogleFonts.beVietnamPro(fontWeight: FontWeight.w600),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
 class AnimatedEntry extends StatefulWidget {
   const AnimatedEntry({
     super.key,
@@ -848,11 +903,19 @@ class _AnimatedEntryState extends State<AnimatedEntry> with SingleTickerProvider
   @override
   void initState() {
     super.initState();
-    _controller = AnimationController(vsync: this, duration: const Duration(milliseconds: 450));
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 320),
+    );
     _fade = CurvedAnimation(parent: _controller, curve: Curves.easeOut);
-    _slide = Tween<Offset>(begin: const Offset(0, 0.04), end: Offset.zero)
+    _slide = Tween<Offset>(begin: const Offset(0, 0.06), end: Offset.zero)
         .animate(CurvedAnimation(parent: _controller, curve: Curves.easeOutCubic));
-    Future.delayed(widget.delay, _controller.forward);
+
+    Future.delayed(widget.delay, () {
+      if (mounted) {
+        _controller.forward();
+      }
+    });
   }
 
   @override
@@ -870,45 +933,34 @@ class _AnimatedEntryState extends State<AnimatedEntry> with SingleTickerProvider
   }
 }
 
-class _SectionCard extends StatelessWidget {
-  const _SectionCard({required this.title, required this.child});
-
-  final String title;
-  final Widget child;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: _cardDecoration,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(title, style: GoogleFonts.beVietnamPro(fontWeight: FontWeight.w600, fontSize: 12)),
-          const SizedBox(height: 8),
-          child,
-        ],
-      ),
-    );
-  }
-}
-
 class _SkeletonGrid extends StatelessWidget {
   const _SkeletonGrid();
 
   @override
   Widget build(BuildContext context) {
-    return GridView.builder(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 2,
-        mainAxisSpacing: 12,
-        crossAxisSpacing: 12,
-        childAspectRatio: 1.15,
-      ),
-      itemCount: 4,
-      itemBuilder: (_, __) => const _SkeletonBox(),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final width = constraints.maxWidth;
+        final crossAxisCount = width >= 1200
+            ? 4
+            : width >= 900
+                ? 3
+                : width >= 600
+                    ? 2
+                    : 1;
+        return GridView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: crossAxisCount,
+            mainAxisSpacing: 12,
+            crossAxisSpacing: 12,
+            childAspectRatio: crossAxisCount == 1 ? 2.8 : 1.5,
+          ),
+          itemCount: 4,
+          itemBuilder: (_, __) => const _SkeletonBox(),
+        );
+      },
     );
   }
 }
@@ -1014,11 +1066,16 @@ class AnimatedCountText extends StatelessWidget {
       tween: Tween<double>(begin: 0, end: value),
       duration: const Duration(milliseconds: 700),
       builder: (context, val, _) {
-        final text = isMoney ? val.toStringAsFixed(0) : val.toStringAsFixed(0);
+        final text = isMoney ? _formatCurrency(val) : val.toStringAsFixed(0);
         return Text(text, style: style);
       },
     );
   }
+}
+
+String _formatCurrency(num value) {
+  final formatter = NumberFormat('#,###', 'vi_VN');
+  return '${formatter.format(value).replaceAll(',', '.')} đ';
 }
 
 FlTitlesData _chartTitles(List<DashboardSeriesPoint> points) {
@@ -1072,18 +1129,55 @@ List<BarChartGroupData> _toBarGroups(List<DashboardSeriesPoint> points, Color co
 }
 
 const _cardDecoration = BoxDecoration(
-  color: Colors.white,
+  color: AdminColors.surface,
   borderRadius: BorderRadius.all(Radius.circular(18)),
   boxShadow: [
-    BoxShadow(color: Color(0x11000000), blurRadius: 10, offset: Offset(0, 6)),
+    BoxShadow(color: Color(0x14000000), blurRadius: 16, offset: Offset(0, 8)),
   ],
 );
 
 const List<Color> _chartPalette = [
-  Color(0xFF4C6FFF),
-  Color(0xFF00C2A8),
-  Color(0xFFFFB020),
-  Color(0xFFE85C6C),
-  Color(0xFF8B5CF6),
+  AdminColors.primary,
+  AdminColors.secondary,
+  AdminColors.warning,
+  AdminColors.danger,
+  Color(0xFF6366F1),
 ];
 
+ActivityItem _mapActivityItem(DashboardRecentActivity activity) {
+  final type = activity.type.toUpperCase();
+  if (type == 'ORDER_CANCELLED') {
+    return ActivityItem(
+      title: activity.title,
+      subtitle: activity.subtitle,
+      time: activity.time.isEmpty ? '—' : activity.time,
+      icon: Icons.cancel_rounded,
+      color: AdminColors.danger,
+    );
+  }
+  if (type == 'USER_NEW') {
+    return ActivityItem(
+      title: activity.title,
+      subtitle: activity.subtitle,
+      time: activity.time.isEmpty ? '—' : activity.time,
+      icon: Icons.person_add_alt_1_rounded,
+      color: AdminColors.success,
+    );
+  }
+  if (type == 'BOOK_NEW') {
+    return ActivityItem(
+      title: activity.title,
+      subtitle: activity.subtitle,
+      time: activity.time.isEmpty ? '—' : activity.time,
+      icon: Icons.menu_book_rounded,
+      color: AdminColors.secondary,
+    );
+  }
+  return ActivityItem(
+    title: activity.title,
+    subtitle: activity.subtitle,
+    time: activity.time.isEmpty ? '—' : activity.time,
+    icon: Icons.receipt_long_rounded,
+    color: AdminColors.primary,
+  );
+}

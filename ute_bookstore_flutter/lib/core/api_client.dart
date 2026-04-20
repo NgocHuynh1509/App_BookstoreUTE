@@ -5,11 +5,14 @@ import '../api_config.dart';
 import 'session_storage.dart';
 
 class ApiClient {
-  ApiClient._(this._dio);
+  ApiClient._(this._dio, this._storage);
 
   final Dio _dio;
+  final SessionStorage _storage;
 
   Dio get dio => _dio;
+
+  Future<String?> getToken() => _storage.getToken();
 
   static Future<ApiClient> create(SessionStorage storage) async {
     final dio = Dio(
@@ -46,7 +49,11 @@ class ApiClient {
         onError: (error, handler) async {
           if (!kReleaseMode) {
             debugPrint('HTTP ERROR ${error.response?.statusCode} ${error.requestOptions.uri}');
-            debugPrint('BODY: ${error.response?.data}');
+            debugPrint('REQUEST ${error.requestOptions.method} ${error.requestOptions.uri}');
+            debugPrint('REQUEST HEADERS: ${error.requestOptions.headers}');
+            debugPrint('REQUEST QUERY: ${error.requestOptions.queryParameters}');
+            debugPrint('REQUEST BODY: ${error.requestOptions.data}');
+            debugPrint('RESPONSE BODY: ${error.response?.data}');
           }
           if (error.response?.statusCode == 401 ||
               error.response?.statusCode == 403) {
@@ -57,6 +64,6 @@ class ApiClient {
       ),
     );
 
-    return ApiClient._(dio);
+    return ApiClient._(dio, storage);
   }
 }

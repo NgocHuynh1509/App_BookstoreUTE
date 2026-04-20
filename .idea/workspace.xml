@@ -5,27 +5,75 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="90f2e1e5-d5bd-4083-a96e-40142505842d" name="Changes" comment="create order">
-      <change afterPath="$PROJECT_DIR$/.idea/shelf/Uncommitted_changes_before_Update_at_4_19_2026_11_34_PM_[Changes]/shelved.patch" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/shelf/Uncommitted_changes_before_Update_at_4_19_2026_11_34_PM__Changes_.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/shelf/Uncommitted_changes_before_Update_at_4_20_2026_2_25_AM_[Changes]/shelved.patch" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/ute-bookstore-backend/src/main/java/com/hcmute/bookstore/Exception/AlreadyReviewedException.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/ute-bookstore-backend/src/main/java/com/hcmute/bookstore/dto/MyReviewResponse.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.idea/copilotDiffState.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/ute-bookstore-backend/src/main/java/com/hcmute/bookstore/Controller/Admin/AdminCouponController.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/ute-bookstore-backend/src/main/java/com/hcmute/bookstore/Service/AdminCouponService.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/ute-bookstore-backend/src/main/java/com/hcmute/bookstore/dto/admin/AdminCouponRequest.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/ute-bookstore-backend/src/main/java/com/hcmute/bookstore/dto/admin/AdminCouponResponse.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/ute-bookstore-backend/src/main/java/com/hcmute/bookstore/dto/admin/AdminCouponStatsResponse.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/ute-bookstore-backend/src/main/java/com/hcmute/bookstore/dto/admin/DashboardRecentActivitiesResponse.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/ute-bookstore-backend/src/main/java/com/hcmute/bookstore/dto/admin/DashboardRecentActivityResponse.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/ute-bookstore-backend/src/main/java/com/hcmute/bookstore/dto/admin/DashboardTopBookResponse.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/ute-bookstore-backend/src/main/java/com/hcmute/bookstore/dto/admin/DashboardTopBooksResponse.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/ute_bookstore_flutter/lib/features/coupons/README.md" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/ute_bookstore_flutter/lib/features/coupons/data/coupon_api.dart" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/ute_bookstore_flutter/lib/features/coupons/data/coupon_models.dart" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/ute_bookstore_flutter/lib/features/coupons/data/coupon_repository.dart" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/ute_bookstore_flutter/lib/features/coupons/presentation/coupon_state.dart" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/ute_bookstore_flutter/lib/features/coupons/presentation/coupons_screen.dart" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/ute_bookstore_flutter/lib/features/dashboard/presentation/widgets/activity_timeline.dart" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/ute_bookstore_flutter/lib/features/dashboard/presentation/widgets/channel_breakdown_card.dart" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/ute_bookstore_flutter/lib/features/dashboard/presentation/widgets/stat_card.dart" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/ute_bookstore_flutter/lib/features/dashboard/presentation/widgets/top_books_card.dart" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/ute_bookstore_flutter/lib/theme/admin_theme.dart" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/ute_bookstore_flutter/lib/widgets/admin/admin_button.dart" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/ute_bookstore_flutter/lib/widgets/admin/animated_chart_card.dart" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/ute_bookstore_flutter/lib/widgets/admin/dashboard_card.dart" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/ute_bookstore_flutter/lib/widgets/admin/search_bar_widget.dart" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/ute_bookstore_flutter/test/coupons/coupon_models_test.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/caches/deviceStreaming.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/compiler.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/compiler.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/copilot.data.migration.edit.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/libraries/Dart_SDK.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/mobie-nangcao.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/mobie-nangcao.iml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/modules.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/modules.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/my-app/app.json" beforeDir="false" afterPath="$PROJECT_DIR$/my-app/app.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/my-app/screens/ReviewScreen.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/my-app/screens/ReviewScreen.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/my-app/screens/index.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/my-app/screens/index.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/my-app/screens/profile/CartScreen.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/my-app/screens/profile/CartScreen.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ute-bookstore-backend/src/main/java/com/hcmute/bookstore/Controller/ReviewController.java" beforeDir="false" afterPath="$PROJECT_DIR$/ute-bookstore-backend/src/main/java/com/hcmute/bookstore/Controller/ReviewController.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ute-bookstore-backend/src/main/java/com/hcmute/bookstore/Exception/GlobalExceptionHandler.java" beforeDir="false" afterPath="$PROJECT_DIR$/ute-bookstore-backend/src/main/java/com/hcmute/bookstore/Exception/GlobalExceptionHandler.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ute-bookstore-backend/.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/ute-bookstore-backend/.gitignore" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ute-bookstore-backend/src/main/java/com/hcmute/bookstore/Controller/Admin/AdminDashboardController.java" beforeDir="false" afterPath="$PROJECT_DIR$/ute-bookstore-backend/src/main/java/com/hcmute/bookstore/Controller/Admin/AdminDashboardController.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ute-bookstore-backend/src/main/java/com/hcmute/bookstore/Repository/ChatMessageRepository.java" beforeDir="false" afterPath="$PROJECT_DIR$/ute-bookstore-backend/src/main/java/com/hcmute/bookstore/Repository/ChatMessageRepository.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ute-bookstore-backend/src/main/java/com/hcmute/bookstore/Repository/CouponRepository.java" beforeDir="false" afterPath="$PROJECT_DIR$/ute-bookstore-backend/src/main/java/com/hcmute/bookstore/Repository/CouponRepository.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ute-bookstore-backend/src/main/java/com/hcmute/bookstore/Repository/OrderDetailRepository.java" beforeDir="false" afterPath="$PROJECT_DIR$/ute-bookstore-backend/src/main/java/com/hcmute/bookstore/Repository/OrderDetailRepository.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ute-bookstore-backend/src/main/java/com/hcmute/bookstore/Repository/OrdersRepository.java" beforeDir="false" afterPath="$PROJECT_DIR$/ute-bookstore-backend/src/main/java/com/hcmute/bookstore/Repository/OrdersRepository.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ute-bookstore-backend/src/main/java/com/hcmute/bookstore/Repository/UsersRepository.java" beforeDir="false" afterPath="$PROJECT_DIR$/ute-bookstore-backend/src/main/java/com/hcmute/bookstore/Repository/UsersRepository.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/ute-bookstore-backend/src/main/java/com/hcmute/bookstore/Security/SecurityConfig.java" beforeDir="false" afterPath="$PROJECT_DIR$/ute-bookstore-backend/src/main/java/com/hcmute/bookstore/Security/SecurityConfig.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ute-bookstore-backend/src/main/java/com/hcmute/bookstore/Service/ReviewService.java" beforeDir="false" afterPath="$PROJECT_DIR$/ute-bookstore-backend/src/main/java/com/hcmute/bookstore/Service/ReviewService.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ute-bookstore-backend/src/main/java/com/hcmute/bookstore/Service/AdminOrderService.java" beforeDir="false" afterPath="$PROJECT_DIR$/ute-bookstore-backend/src/main/java/com/hcmute/bookstore/Service/AdminOrderService.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ute-bookstore-backend/src/main/java/com/hcmute/bookstore/dto/admin/AdminOrderDetailResponse.java" beforeDir="false" afterPath="$PROJECT_DIR$/ute-bookstore-backend/src/main/java/com/hcmute/bookstore/dto/admin/AdminOrderDetailResponse.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ute_bookstore_flutter/lib/features/orders/data/order_detail_model.dart" beforeDir="false" afterPath="$PROJECT_DIR$/ute_bookstore_flutter/lib/features/orders/data/order_detail_model.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ute_bookstore_flutter/lib/features/orders/data/order_models.dart" beforeDir="false" afterPath="$PROJECT_DIR$/ute_bookstore_flutter/lib/features/orders/data/order_models.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ute_bookstore_flutter/lib/features/orders/presentation/order_detail_screen.dart" beforeDir="false" afterPath="$PROJECT_DIR$/ute_bookstore_flutter/lib/features/orders/presentation/order_detail_screen.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ute-bookstore-backend/src/main/java/com/hcmute/bookstore/Service/AdminDashboardService.java" beforeDir="false" afterPath="$PROJECT_DIR$/ute-bookstore-backend/src/main/java/com/hcmute/bookstore/Service/AdminDashboardService.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ute-bookstore-backend/src/main/java/com/hcmute/bookstore/config/FirebaseConfig.java" beforeDir="false" afterPath="$PROJECT_DIR$/ute-bookstore-backend/src/main/java/com/hcmute/bookstore/config/FirebaseConfig.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ute_bookstore_flutter/lib/app/admin_shell.dart" beforeDir="false" afterPath="$PROJECT_DIR$/ute_bookstore_flutter/lib/app/admin_shell.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ute_bookstore_flutter/lib/app/providers.dart" beforeDir="false" afterPath="$PROJECT_DIR$/ute_bookstore_flutter/lib/app/providers.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ute_bookstore_flutter/lib/core/api_client.dart" beforeDir="false" afterPath="$PROJECT_DIR$/ute_bookstore_flutter/lib/core/api_client.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ute_bookstore_flutter/lib/features/auth/presentation/admin_login_screen.dart" beforeDir="false" afterPath="$PROJECT_DIR$/ute_bookstore_flutter/lib/features/auth/presentation/admin_login_screen.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ute_bookstore_flutter/lib/features/dashboard/data/dashboard_api.dart" beforeDir="false" afterPath="$PROJECT_DIR$/ute_bookstore_flutter/lib/features/dashboard/data/dashboard_api.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ute_bookstore_flutter/lib/features/dashboard/data/dashboard_models.dart" beforeDir="false" afterPath="$PROJECT_DIR$/ute_bookstore_flutter/lib/features/dashboard/data/dashboard_models.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ute_bookstore_flutter/lib/features/dashboard/presentation/dashboard_screen.dart" beforeDir="false" afterPath="$PROJECT_DIR$/ute_bookstore_flutter/lib/features/dashboard/presentation/dashboard_screen.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ute_bookstore_flutter/lib/features/dashboard/presentation/widgets/revenue_prediction_card.dart" beforeDir="false" afterPath="$PROJECT_DIR$/ute_bookstore_flutter/lib/features/dashboard/presentation/widgets/revenue_prediction_card.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ute_bookstore_flutter/lib/features/management/presentation/management_screen.dart" beforeDir="false" afterPath="$PROJECT_DIR$/ute_bookstore_flutter/lib/features/management/presentation/management_screen.dart" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/ute_bookstore_flutter/lib/features/orders/presentation/orders_screen.dart" beforeDir="false" afterPath="$PROJECT_DIR$/ute_bookstore_flutter/lib/features/orders/presentation/orders_screen.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ute_bookstore_flutter/lib/features/products/presentation/products_screen.dart" beforeDir="false" afterPath="$PROJECT_DIR$/ute_bookstore_flutter/lib/features/products/presentation/products_screen.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ute_bookstore_flutter/lib/main.dart" beforeDir="false" afterPath="$PROJECT_DIR$/ute_bookstore_flutter/lib/main.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ute_bookstore_flutter/lib/screens/admin_login_screen.dart" beforeDir="false" afterPath="$PROJECT_DIR$/ute_bookstore_flutter/lib/screens/admin_login_screen.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ute_bookstore_flutter/linux/flutter/generated_plugin_registrant.cc" beforeDir="false" afterPath="$PROJECT_DIR$/ute_bookstore_flutter/linux/flutter/generated_plugin_registrant.cc" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ute_bookstore_flutter/linux/flutter/generated_plugins.cmake" beforeDir="false" afterPath="$PROJECT_DIR$/ute_bookstore_flutter/linux/flutter/generated_plugins.cmake" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ute_bookstore_flutter/macos/Flutter/GeneratedPluginRegistrant.swift" beforeDir="false" afterPath="$PROJECT_DIR$/ute_bookstore_flutter/macos/Flutter/GeneratedPluginRegistrant.swift" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ute_bookstore_flutter/pubspec.lock" beforeDir="false" afterPath="$PROJECT_DIR$/ute_bookstore_flutter/pubspec.lock" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ute_bookstore_flutter/pubspec.yaml" beforeDir="false" afterPath="$PROJECT_DIR$/ute_bookstore_flutter/pubspec.yaml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ute_bookstore_flutter/test/widget_test.dart" beforeDir="false" afterPath="$PROJECT_DIR$/ute_bookstore_flutter/test/widget_test.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ute_bookstore_flutter/windows/flutter/generated_plugin_registrant.cc" beforeDir="false" afterPath="$PROJECT_DIR$/ute_bookstore_flutter/windows/flutter/generated_plugin_registrant.cc" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ute_bookstore_flutter/windows/flutter/generated_plugins.cmake" beforeDir="false" afterPath="$PROJECT_DIR$/ute_bookstore_flutter/windows/flutter/generated_plugins.cmake" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ute_bookstore_python/linear_regression.joblib" beforeDir="false" afterPath="$PROJECT_DIR$/ute_bookstore_python/linear_regression.joblib" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/ute_bookstore_python/orders.csv" beforeDir="false" afterPath="$PROJECT_DIR$/ute_bookstore_python/orders.csv" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ute_bookstore_python/output.png" beforeDir="false" afterPath="$PROJECT_DIR$/ute_bookstore_python/output.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ute_bookstore_python/predict.py" beforeDir="false" afterPath="$PROJECT_DIR$/ute_bookstore_python/predict.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -35,12 +83,29 @@
   <component name="ClangdSettings">
     <option name="formatViaClangd" value="false" />
   </component>
+  <component name="CopilotPersistence">
+    <persistenceIdMap>
+      <entry key="_C:/2025-2026HocKy2/LapTrinhDiDongNangCao/Flutter/App_BookstoreUTE" value="3CFVKEb7P5qEjgp28aHGQThaggA" />
+    </persistenceIdMap>
+  </component>
+  <component name="CopilotUserSelectedChatMode">
+    <option name="chatModeId" value="Agent" />
+  </component>
+  <component name="CopilotUserSelectedModel">
+    <selectedModels>
+      <entry key="chat-panel" value="GPT-5.2-Codex" />
+      <entry key="agent-panel" value="GPT-5.2-Codex" />
+    </selectedModels>
+  </component>
+  <component name="EmbeddingIndexingInfo">
+    <option name="cachedIndexableFilesCount" value="1679" />
+    <option name="fileBasedEmbeddingIndicesEnabled" value="true" />
+  </component>
   <component name="FileTemplateManagerImpl">
     <option name="RECENT_TEMPLATES">
       <list>
         <option value="Enum" />
         <option value="Class" />
-        <option value="Exception" />
       </list>
     </option>
   </component>
@@ -56,10 +121,21 @@
 }</component>
   <component name="GithubPullRequestsUISettings">{
   &quot;selectedUrlAndAccountId&quot;: {
-    &quot;url&quot;: &quot;https://github.com/NgocHuynh1509/App_BookstoreUTE&quot;,
+    &quot;url&quot;: &quot;https://github.com/NgocHuynh1509/App_BookstoreUTE.git&quot;,
     &quot;accountId&quot;: &quot;6b9bdd18-e36a-48cf-a862-048d0fb41bd2&quot;
   }
 }</component>
+  <component name="MavenImportPreferences">
+    <option name="generalSettings">
+      <MavenGeneralSettings>
+        <option name="mavenHomeTypeForPersistence" value="WRAPPER" />
+      </MavenGeneralSettings>
+    </option>
+  </component>
+  <component name="McpProjectServerCommands">
+    <commands />
+    <urls />
+  </component>
   <component name="ProjectColorInfo">{
   &quot;associatedIndex&quot;: 8
 }</component>
@@ -68,56 +144,57 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent">{
-  &quot;keyToString&quot;: {
-    &quot;Downloaded.Files.Path.Enabled&quot;: &quot;false&quot;,
-    &quot;ModuleVcsDetector.initialDetectionPerformed&quot;: &quot;true&quot;,
-    &quot;Repository.Attach.Annotations&quot;: &quot;false&quot;,
-    &quot;Repository.Attach.JavaDocs&quot;: &quot;false&quot;,
-    &quot;Repository.Attach.Sources&quot;: &quot;false&quot;,
-    &quot;RequestMappingsPanelOrder0&quot;: &quot;0&quot;,
-    &quot;RequestMappingsPanelOrder1&quot;: &quot;1&quot;,
-    &quot;RequestMappingsPanelWidth0&quot;: &quot;75&quot;,
-    &quot;RequestMappingsPanelWidth1&quot;: &quot;75&quot;,
-    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.cidr.known.project.marker&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.readMode.enableVisualFormatting&quot;: &quot;true&quot;,
-    &quot;SHARE_PROJECT_CONFIGURATION_FILES&quot;: &quot;true&quot;,
-    &quot;Spring Boot.UteBookstoreBackendApplication.executor&quot;: &quot;Run&quot;,
-    &quot;cf.first.check.clang-format&quot;: &quot;false&quot;,
-    &quot;cidr.known.project.marker&quot;: &quot;true&quot;,
-    &quot;com.google.services.firebase.aqiPopupShown&quot;: &quot;true&quot;,
-    &quot;git-widget-placeholder&quot;: &quot;main&quot;,
-    &quot;ignore.virus.scanning.warn.message&quot;: &quot;true&quot;,
-    &quot;kotlin-language-version-configured&quot;: &quot;true&quot;,
-    &quot;last_opened_file_path&quot;: &quot;D:/CNTT25-26/Mobile_Advance/DoAn/App_BookstoreUTE&quot;,
-    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
-    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
-    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
-    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
-    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
-    &quot;settings.editor.selected.configurable&quot;: &quot;preferences.pluginManager&quot;,
-    &quot;ts.external.directory.path&quot;: &quot;D:\\oD\\data o D\\HKII nam3\\LTDD Nang cao\\Project_cuoi_ky\\MoiNhat\\App_BookstoreUTE\\my-app\\node_modules\\typescript\\lib&quot;,
-    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "Downloaded.Files.Path.Enabled": "false",
+    "ModuleVcsDetector.initialDetectionPerformed": "true",
+    "Repository.Attach.Annotations": "false",
+    "Repository.Attach.JavaDocs": "false",
+    "Repository.Attach.Sources": "false",
+    "RequestMappingsPanelOrder0": "0",
+    "RequestMappingsPanelOrder1": "1",
+    "RequestMappingsPanelWidth0": "75",
+    "RequestMappingsPanelWidth1": "75",
+    "RunOnceActivity.MCP Project settings loaded": "true",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252": "true",
+    "RunOnceActivity.cidr.known.project.marker": "true",
+    "RunOnceActivity.git.unshallow": "true",
+    "RunOnceActivity.readMode.enableVisualFormatting": "true",
+    "RunOnceActivity.typescript.service.memoryLimit.init": "true",
+    "SHARE_PROJECT_CONFIGURATION_FILES": "true",
+    "Spring Boot.UteBookstoreBackendApplication.executor": "Run",
+    "cf.first.check.clang-format": "false",
+    "cidr.known.project.marker": "true",
+    "com.google.services.firebase.aqiPopupShown": "true",
+    "com.intellij.ml.llm.matterhorn.ej.ui.settings.DefaultModelSelectionForGA.v1": "true",
+    "dart.analysis.tool.window.visible": "false",
+    "git-widget-placeholder": "quanlyvoucher",
+    "ignore.virus.scanning.warn.message": "true",
+    "junie.onboarding.icon.badge.shown": "true",
+    "kotlin-language-version-configured": "true",
+    "last_opened_file_path": "C:/Users/AnPhat/Desktop/mobie-nangcao",
+    "node.js.detected.package.eslint": "true",
+    "node.js.detected.package.tslint": "true",
+    "node.js.selected.package.eslint": "(autodetect)",
+    "node.js.selected.package.tslint": "(autodetect)",
+    "nodejs_package_manager_path": "npm",
+    "project.structure.last.edited": "Project",
+    "project.structure.proportion": "0.15",
+    "project.structure.side.proportion": "0.2",
+    "settings.editor.selected.configurable": "flutter.settings",
+    "show.migrate.to.gradle.popup": "false",
+    "to.speed.mode.migration.done": "true",
+    "vue.rearranger.settings.migration": "true"
   }
-}</component>
+}]]></component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
-      <recent name="D:\CNTT25-26\Mobile_Advance\DoAn\App_BookstoreUTE\ute-bookstore-backend\src\main" />
       <recent name="D:\CNTT25-26\Mobile_Advance\mobie-nangcao\mobie-nangcao\ute_bookstore_flutter\upload" />
     </key>
     <key name="MoveFile.RECENT_KEYS">
       <recent name="D:\CNTT25-26\Mobile_Advance\mobie-nangcao\mobie-nangcao\ute_bookstore_flutter\lib" />
       <recent name="D:\CNTT25-26\Mobile_Advance\mobie-nangcao\mobie-nangcao\ute_bookstore_flutter\lib\features\chat\models" />
-    </key>
-    <key name="CopyClassDialog.RECENTS_KEY">
-      <recent name="com.hcmute.bookstore.Service" />
-      <recent name="com.hcmute.bookstore.Repository" />
-      <recent name="com.hcmute.bookstore.Entity" />
-      <recent name="com.hcmute.bookstore.dto.notification" />
-      <recent name="com.hcmute.bookstore.Controller" />
     </key>
   </component>
   <component name="RunManager">
@@ -132,12 +209,11 @@
   <component name="SharedIndexes">
     <attachedChunks>
       <set>
-        <option value="bundled-jdk-9823dce3aa75-b114ca120d71-intellij.indexing.shared.core-IU-242.21829.142" />
-        <option value="bundled-js-predefined-d6986cc7102b-7c0b70fcd90d-JavaScript-IU-242.21829.142" />
+        <option value="bundled-jdk-30f59d01ecdd-2fc7cc6b9a17-intellij.indexing.shared.core-IU-253.32098.37" />
+        <option value="bundled-js-predefined-d6986cc7102b-9b0f141eb926-JavaScript-IU-253.32098.37" />
       </set>
     </attachedChunks>
   </component>
-  <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
   <component name="TaskManager">
     <task active="true" id="Default" summary="Default task">
       <changelist id="90f2e1e5-d5bd-4083-a96e-40142505842d" name="Changes" comment="" />
@@ -156,11 +232,9 @@
       <workItem from="1776407976075" duration="26757000" />
       <workItem from="1776439087854" duration="8914000" />
       <workItem from="1776491683742" duration="996000" />
-      <workItem from="1776595864593" duration="7428000" />
-      <workItem from="1776616400582" duration="3991000" />
-      <workItem from="1776594814876" duration="358000" />
-      <workItem from="1776613692855" duration="9517000" />
-      <workItem from="1776616400582" duration="9584000" />
+      <workItem from="1776608279255" duration="9309000" />
+      <workItem from="1776656529751" duration="12209000" />
+      <workItem from="1776671323732" duration="2783000" />
     </task>
     <task id="LOCAL-00001" summary="sql">
       <option name="closed" value="true" />
@@ -180,6 +254,10 @@
     <MESSAGE value="sql" />
     <MESSAGE value="create order" />
     <option name="LAST_COMMIT_MESSAGE" value="create order" />
+  </component>
+  <component name="XSLT-Support.FileAssociations.UIState">
+    <expand />
+    <select />
   </component>
   <component name="github-copilot-workspace">
     <instructionFileLocations>

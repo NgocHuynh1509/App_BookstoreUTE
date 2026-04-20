@@ -14,10 +14,20 @@ public interface CouponRepository extends JpaRepository<Coupon, String> {
     // Thêm dòng này để tìm kiếm Coupon theo mã code
     Optional<Coupon> findByCode(String code);
 
+    Optional<Coupon> findByCodeIgnoreCase(String code);
+
+    boolean existsByCodeIgnoreCase(String code);
+
     // Coupon riêng của user
     List<Coupon> findByCustomer_CustomerIdAndExpiryDateAfter(String customerId, LocalDateTime now);
 
     // Coupon public (customer = null)
     List<Coupon> findByCustomerIsNullAndExpiryDateAfter(LocalDateTime now);
+
+    List<Coupon> findByCodeContainingIgnoreCase(String code);
+
+    List<Coupon> findByCustomerIsNull();
+
+    List<Coupon> findByCustomerIsNotNull();
 
 }

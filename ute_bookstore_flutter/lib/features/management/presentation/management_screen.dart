@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 
 import '../../../app/providers.dart';
 import '../../../widgets/placeholder_screen.dart';
+import '../../../theme/admin_theme.dart';
 import '../../customers/presentation/customers_screen.dart';
 import '../../auth/presentation/admin_login_screen.dart';
-// Giả định import cho ChatListScreen nếu bạn đã có file này
 import '../../../../chat/presentation/chat_list_screen.dart';
+import '../../coupons/presentation/coupons_screen.dart';
 
 class ManagementScreen extends ConsumerStatefulWidget {
   const ManagementScreen({super.key});
@@ -80,29 +82,22 @@ class _ManagementScreenState extends ConsumerState<ManagementScreen> {
       _MenuItem(
         'Tin nhắn / hỗ trợ',
         Icons.chat_bubble_outline,
-//         builder: (_) => ChatListScreen(repository: chatRepo), // Sử dụng builder nếu cần truyền repo
-//         screen: const PlaceholderScreen(title: 'Tin nhắn / hỗ trợ'), // Thay thế bằng ChatListScreen thực tế
         screen: ChatListScreen(repository: chatRepo),
         showDot: _hasUnread,
       ),
       _MenuItem('Danh mục', Icons.category_outlined, screen: const PlaceholderScreen(title: 'Danh mục')),
-      _MenuItem('Mã giảm giá', Icons.local_offer_outlined, screen: const PlaceholderScreen(title: 'Mã giảm giá')),
-      _MenuItem('Nhân viên', Icons.badge_outlined, screen: const PlaceholderScreen(title: 'Nhân viên')),
-      _MenuItem('Đánh giá', Icons.star_outline, screen: const PlaceholderScreen(title: 'Đánh giá')),
+      _MenuItem('Mã giảm giá', Icons.local_offer_outlined, screen: const CouponsScreen()),
       _MenuItem('Thông báo', Icons.notifications_none_rounded, screen: const PlaceholderScreen(title: 'Thông báo')),
-      _MenuItem('Báo cáo', Icons.summarize_outlined, screen: const PlaceholderScreen(title: 'Báo cáo')),
-      _MenuItem('Thống kê', Icons.insights_outlined, screen: const PlaceholderScreen(title: 'Thống kê')),
-      _MenuItem('Cài đặt', Icons.settings_outlined, screen: const PlaceholderScreen(title: 'Cài đặt')),
-      _MenuItem('Hồ sơ', Icons.account_circle_outlined, screen: const PlaceholderScreen(title: 'Hồ sơ')),
       _MenuItem(
         'Đăng xuất',
         Icons.logout,
         onTap: () => _logout(context, ref),
+        isDestructive: true,
       ),
     ];
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF6F8FC),
+      backgroundColor: AdminColors.background,
       appBar: AppBar(
         title: const Text(
           'Quản trị',
@@ -115,58 +110,124 @@ class _ManagementScreenState extends ConsumerState<ManagementScreen> {
           ),
         ],
       ),
-      body: ListView.separated(
-        padding: const EdgeInsets.all(16),
-        itemCount: items.length,
-        separatorBuilder: (_, __) => const SizedBox(height: 10),
-        itemBuilder: (context, index) {
-          final item = items[index];
-
-          return ListTile(
-            tileColor: Colors.white,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(16),
+      body: LayoutBuilder(
+        builder: (context, constraints) {
+          final width = constraints.maxWidth;
+          final crossAxisCount = width >= 1100
+              ? 4
+              : width >= 800
+                  ? 3
+                  : width >= 600
+                      ? 2
+                      : 1;
+          return GridView.builder(
+            padding: const EdgeInsets.all(16),
+            itemCount: items.length,
+            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: crossAxisCount,
+              crossAxisSpacing: 12,
+              mainAxisSpacing: 12,
+              childAspectRatio: crossAxisCount == 1 ? 3.4 : 1.4,
             ),
-            leading: Icon(item.icon, color: const Color(0xFF4C6FFF)),
-            title: Text(
-              item.title,
-              style: const TextStyle(fontWeight: FontWeight.w600),
-            ),
-            trailing: SizedBox(
-              width: 60,
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  if (item.showDot)
-                    Container(
-                      width: 10,
-                      height: 10,
-                      decoration: const BoxDecoration(
-                        color: Colors.red,
-                        shape: BoxShape.circle,
-                      ),
-                    ),
-                  const SizedBox(width: 8),
-                  const Icon(Icons.chevron_right),
-                ],
-              ),
-            ),
-            onTap: () async {
-              if (item.onTap != null) {
-                item.onTap!();
-                return;
-              }
-              if (item.screen != null) {
-                await Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => item.screen!),
-                );
-                // Refresh unread status when coming back
-                _checkUnreadStatus();
-              }
+            itemBuilder: (context, index) {
+              final item = items[index];
+              return _MenuCard(
+                item: item,
+                onTap: () async {
+                  if (item.onTap != null) {
+                    item.onTap!();
+                    return;
+                  }
+                  if (item.screen != null) {
+                    await Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => item.screen!),
+                    );
+                    _checkUnreadStatus();
+                  }
+                },
+              )
+                  .animate()
+                  .fadeIn(duration: 220.ms, delay: (index * 25).ms)
+                  .slideY(begin: 0.06, end: 0, duration: 220.ms, curve: Curves.easeOutCubic);
             },
           );
         },
+      ),
+    );
+  }
+}
+
+class _MenuCard extends StatelessWidget {
+  const _MenuCard({required this.item, required this.onTap});
+
+  final _MenuItem item;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final accentColor = item.isDestructive ? AdminColors.danger : AdminColors.primary;
+    final accentBackground = accentColor.withOpacity(0.12);
+
+    return InkWell(
+      borderRadius: BorderRadius.circular(16),
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: AdminColors.surface,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: AdminColors.border),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.04),
+              blurRadius: 12,
+              offset: const Offset(0, 6),
+            ),
+          ],
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 44,
+              height: 44,
+              decoration: BoxDecoration(
+                color: accentBackground,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Icon(item.icon, color: accentColor),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    item.title,
+                    style: const TextStyle(fontWeight: FontWeight.w600),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'Truy cập nhanh',
+                    style: const TextStyle(color: AdminColors.textSecondary, fontSize: 12),
+                  ),
+                ],
+              ),
+            ),
+            if (item.showDot)
+              Container(
+                width: 10,
+                height: 10,
+                margin: const EdgeInsets.only(right: 8),
+                decoration: const BoxDecoration(
+                  color: Colors.red,
+                  shape: BoxShape.circle,
+                ),
+              ),
+            const Icon(Icons.chevron_right, color: AdminColors.textSecondary),
+          ],
+        ),
       ),
     );
   }
@@ -178,6 +239,7 @@ class _MenuItem {
   final Widget? screen;
   final VoidCallback? onTap;
   final bool showDot;
+  final bool isDestructive;
 
   _MenuItem(
     this.title,
@@ -185,5 +247,6 @@ class _MenuItem {
     this.screen,
     this.onTap,
     this.showDot = false,
+    this.isDestructive = false,
   });
 }
