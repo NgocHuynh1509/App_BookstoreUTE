@@ -10,7 +10,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useAuth } from "../../hooks/useAuth";
 import Constants from "expo-constants";
 
-const BASE_URL = Constants.expoConfig?.extra?.BASE_URL;
+const BASE_URL = Constants.expoConfig?.extra?.API_URL;
 
 // ─── Palette ──────────────────────────────────────────────────────────────────
 const C = {
@@ -45,7 +45,7 @@ const AddressList = () => {
     if (!user?.id) return;
     try {
       const token    = await AsyncStorage.getItem('token');
-      const response = await fetch(`${BASE_URL}/api/addresses/${user.id}`, {
+      const response = await fetch(`${BASE_URL}/addresses/user/${user.id}`, {
         headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
       });
       const data = await response.json();
@@ -59,25 +59,63 @@ const AddressList = () => {
     }
   };
 
-  useFocusEffect(useCallback(() => { fetchAddresses(); }, [user?.id]));
+  // Trong AddressList.tsx
+  useFocusEffect(
+    useCallback(() => {
+      setLoading(true); // Thêm cái này để xóa data cũ trước khi fetch mới
+      fetchAddresses();
+    }, [user?.id])
+  );
 
-  const handleDelete = async (id: number, isDefault: number) => {
-    if (isDefault === 1) return Alert.alert("Thông báo", "Không thể xóa địa chỉ mặc định");
-    Alert.alert("Xác nhận", "Xóa địa chỉ này?", [
+  const handleDelete = async (id: string, isDefault: boolean) => {
+    if (isDefault) {
+      return Alert.alert("Thông báo", "Không thể xóa địa chỉ mặc định.");
+    }
+
+    Alert.alert("Xác nhận", "Bạn có chắc chắn muốn xóa địa chỉ này không?", [
       { text: "Hủy", style: "cancel" },
       {
-        text: "Xóa", style: "destructive",
+        text: "Xóa",
+        style: "destructive",
         onPress: async () => {
-          const token = await AsyncStorage.getItem('token');
-          await fetch(`${BASE_URL}/api/addresses/${id}`, {
-            method: 'DELETE',
-            headers: { Authorization: `Bearer ${token}` },
-          });
-          fetchAddresses();
+          try {
+            const token = await AsyncStorage.getItem('token');
+            const response = await fetch(`${BASE_URL}/addresses/${id}`, {
+              method: 'DELETE',
+              headers: {
+                Authorization: `Bearer ${token}`,
+                'Content-Type': 'application/json'
+              },
+            });
+
+            if (response.ok) {
+              // Trường hợp xóa thành công
+              Alert.alert("Thành công", "Địa chỉ đã được xóa.");
+              fetchAddresses();
+            } else {
+              // Trường hợp Server trả về lỗi (400, 403, 500...)
+              const errorData = await response.text();
+              // Thử parse JSON nếu server trả về Object, nếu không thì lấy text thuần
+              let displayMessage = "Không thể xóa địa chỉ vào lúc này.";
+              try {
+                const parsed = JSON.parse(errorData);
+                displayMessage = parsed.message || displayMessage;
+              } catch (e) {
+                displayMessage = errorData || displayMessage;
+              }
+
+              Alert.alert("Lỗi xóa địa chỉ", displayMessage);
+            }
+          } catch (err) {
+            // Trường hợp lỗi mạng hoặc mất kết nối
+            console.error("Lỗi xóa:", err);
+            Alert.alert("Lỗi kết nối", "Vui lòng kiểm tra lại mạng và thử lại.");
+          }
         },
       },
     ]);
   };
+
 
   // ─── Loading ──────────────────────────────────────────────────────────────
   if (loading) return (
@@ -88,8 +126,9 @@ const AddressList = () => {
     </View>
   );
 
-  const defaultAddr  = addresses.find(a => a.is_default === 1);
-  const otherAddrs   = addresses.filter(a => a.is_default !== 1);
+  // Tìm địa chỉ mặc định dựa trên field isDefault (kiểu Boolean từ DTO)
+  const defaultAddr  = addresses.find(a => a.isDefault === true);
+  const otherAddrs   = addresses.filter(a => a.isDefault !== true);
   const sortedList   = defaultAddr ? [defaultAddr, ...otherAddrs] : otherAddrs;
 
   return (
@@ -160,16 +199,18 @@ const AddressList = () => {
           </View>
         ) : (
           sortedList.map((item, index) => {
-            const isDefault = item.is_default === 1;
+            // DTO trả về isDefault là Boolean (true/false)
+            const isDefault = item.isDefault === true;
+
             return (
               <View key={item.id} style={[s.card, isDefault && s.cardDefault]}>
-                {/* left accent */}
+                {/* Vạch màu bên trái */}
                 <View style={[s.cardAccent, { backgroundColor: isDefault ? C.primaryMid : C.border }]} />
 
                 <View style={s.cardBody}>
-                  {/* Name row */}
+                  {/* Tên người nhận (recipientName từ DTO) */}
                   <View style={s.nameRow}>
-                    <Text style={s.nameTxt}>{item.recipient_name}</Text>
+                    <Text style={s.nameTxt}>{item.recipientName}</Text>
                     {isDefault && (
                       <View style={s.defaultBadge}>
                         <Ionicons name="star" size={9} color={C.primaryMid} />
@@ -178,42 +219,32 @@ const AddressList = () => {
                     )}
                   </View>
 
-                  {/* Phone */}
+                  {/* Số điện thoại (phoneNumber từ DTO) */}
                   <View style={s.metaRow}>
                     <Ionicons name="call-outline" size={13} color={C.text3} />
-                    <Text style={s.phoneTxt}>{item.phone_number}</Text>
+                    <Text style={s.phoneTxt}>{item.phoneNumber}</Text>
                   </View>
 
-                  {/* Address */}
+                  {/* Địa chỉ (Các field camelCase từ DTO) */}
                   <View style={s.metaRow}>
                     <Ionicons name="location-outline" size={13} color={C.text3} />
                     <Text style={s.addressTxt}>
-                      {[item.specific_address, item.ward, item.district, item.province]
+                      {[item.specificAddress, item.ward, item.district, item.province]
                         .filter(Boolean).join(", ")}
                     </Text>
                   </View>
 
-                  {/* Actions */}
+                  {/* Nút hành động */}
                   <View style={s.actions}>
                     <TouchableOpacity
                       style={s.editBtn}
                       onPress={() => navigation.navigate('AddressForm', { id: item.id })}
-                      activeOpacity={0.8}
                     >
                       <Ionicons name="pencil-outline" size={14} color={C.primaryMid} />
                       <Text style={s.editBtnTxt}>Chỉnh sửa</Text>
                     </TouchableOpacity>
 
-                    {!isDefault && (
-                      <TouchableOpacity
-                        style={s.deleteBtn}
-                        onPress={() => handleDelete(item.id, item.is_default)}
-                        activeOpacity={0.8}
-                      >
-                        <Ionicons name="trash-outline" size={14} color={C.sale} />
-                        <Text style={s.deleteBtnTxt}>Xóa</Text>
-                      </TouchableOpacity>
-                    )}
+
                   </View>
                 </View>
               </View>

@@ -5,17 +5,11 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="ec56e615-c574-46af-93be-dd7e99257ed6" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/.idea/caches/deviceStreaming.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/copilot.data.migration.ask.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/copilot.data.migration.edit.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/ute-bookstore-backend/src/main/java/com/hcmute/bookstore/Export/CsvAutoScheduler.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/ute-bookstore-backend/src/main/java/com/hcmute/bookstore/Export/CsvExportService.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/copilotDiffState.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/my-app/app.json" beforeDir="false" afterPath="$PROJECT_DIR$/my-app/app.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/my-app/screens/SearchScreen.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/my-app/screens/SearchScreen.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ute-bookstore-backend/pom.xml" beforeDir="false" afterPath="$PROJECT_DIR$/ute-bookstore-backend/pom.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/my-app/screens/profile/AddressForm.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/my-app/screens/profile/AddressForm.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/my-app/screens/profile/AddressList.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/my-app/screens/profile/AddressList.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ute-bookstore-backend/src/main/java/com/hcmute/bookstore/Controller/ShippingAddressController.java" beforeDir="false" afterPath="$PROJECT_DIR$/ute-bookstore-backend/src/main/java/com/hcmute/bookstore/Controller/ShippingAddressController.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ute_bookstore_python/books_latest.csv" beforeDir="false" afterPath="$PROJECT_DIR$/ute_bookstore_python/books_latest.csv" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />

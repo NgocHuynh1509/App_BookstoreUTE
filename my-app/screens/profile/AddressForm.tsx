@@ -1,16 +1,7 @@
 import React, { useEffect, useState } from "react";
 import {
-  View,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  StyleSheet,
-  Alert,
-  ScrollView,
-  Switch,
-  SafeAreaView,
-  StatusBar,
-  Platform,
+  View, Text, TextInput, TouchableOpacity, StyleSheet, Alert,
+  ScrollView, Switch, SafeAreaView, StatusBar, Platform, Modal, FlatList
 } from "react-native";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import { useAuth } from "../../hooks/useAuth";
@@ -18,7 +9,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import Constants from "expo-constants";
 import { Ionicons } from "@expo/vector-icons";
 
-const BASE_URL = Constants.expoConfig?.extra?.BASE_URL;
+const BASE_URL = Constants.expoConfig?.extra?.API_URL;
 
 // ─── Palette ──────────────────────────────────────────────────────────────────
 const C = {
@@ -73,48 +64,84 @@ function SInput({ value, onChangeText, placeholder, keyboardType = "default", mu
   );
 }
 
-// ─── MAIN ─────────────────────────────────────────────────────────────────────
 export default function AddressForm() {
   const navigation = useNavigation<any>();
   const route = useRoute<any>();
   const { id } = route.params || {};
   const { user } = useAuth();
 
+  // CHỖ 1: State sử dụng CamelCase hoàn toàn để khớp DTO
   const [formData, setFormData] = useState({
-    recipient_name: "",
-    phone_number:   "",
+    recipientName: "",
+    phoneNumber:   "",
     province:       "",
     district:       "",
     ward:           "",
-    specific_address: "",
-    is_default: false,
+    specificAddress: "",
+    isDefault: false,
   });
+    // Trạng thái điều khiển Modal chọn tỉnh
+      const [showProvinceModal, setShowProvinceModal] = useState(false);
+
+    const provinceData = [
+        { label: 'Thành phố Hà Nội', value: 'Hà Nội' },
+        { label: 'Thành phố Hồ Chí Minh', value: 'Hồ Chí Minh' },
+        { label: 'Thành phố Hải Phòng', value: 'Hải Phòng' },
+        { label: 'Thành phố Đà Nẵng', value: 'Đà Nẵng' },
+        { label: 'Thành phố Cần Thơ', value: 'Cần Thơ' },
+        { label: 'Thành phố Huế', value: 'Huế' },
+        { label: 'Tỉnh Tuyên Quang', value: 'Tuyên Quang' },
+        { label: 'Tỉnh Lào Cai', value: 'Lào Cai' },
+        { label: 'Tỉnh Thái Nguyên', value: 'Thái Nguyên' },
+        { label: 'Tỉnh Phú Thọ', value: 'Phú Thọ' },
+        { label: 'Tỉnh Bắc Ninh', value: 'Bắc Ninh' },
+        { label: 'Tỉnh Hưng Yên', value: 'Hưng Yên' },
+        { label: 'Tỉnh Ninh Bình', value: 'Ninh Bình' },
+        { label: 'Tỉnh Quảng Trị', value: 'Quảng Trị' },
+        { label: 'Tỉnh Quảng Ngãi', value: 'Quảng Ngãi' },
+        { label: 'Tỉnh Gia Lai', value: 'Gia Lai' },
+        { label: 'Tỉnh Khánh Hòa', value: 'Khánh Hòa' },
+        { label: 'Tỉnh Lâm Đồng', value: 'Lâm Đồng' },
+        { label: 'Tỉnh Đắk Lắk', value: 'Đắk Lắk' },
+        { label: 'Tỉnh Đồng Nai', value: 'Đồng Nai' },
+        { label: 'Tỉnh Tây Ninh', value: 'Tây Ninh' },
+        { label: 'Tỉnh Vĩnh Long', value: 'Vĩnh Long' },
+        { label: 'Tỉnh Đồng Tháp', value: 'Đồng Tháp' },
+        { label: 'Tỉnh Cà Mau', value: 'Cà Mau' },
+        { label: 'Tỉnh An Giang', value: 'An Giang' },
+        { label: 'Tỉnh Lai Châu', value: 'Lai Châu' },
+        { label: 'Tỉnh Điện Biên', value: 'Điện Biên' },
+        { label: 'Tỉnh Sơn La', value: 'Sơn La' },
+        { label: 'Tỉnh Lạng Sơn', value: 'Lạng Sơn' },
+        { label: 'Tỉnh Quảng Ninh', value: 'Quảng Ninh' },
+        { label: 'Tỉnh Thanh Hóa', value: 'Thanh Hóa' },
+        { label: 'Tỉnh Nghệ An', value: 'Nghệ An' },
+        { label: 'Tỉnh Hà Tĩnh', value: 'Hà Tĩnh' },
+        { label: 'Tỉnh Cao Bằng', value: 'Cao Bằng' },
+      ];
 
   const set = (key: string, val: any) =>
     setFormData(prev => ({ ...prev, [key]: val }));
 
-  // ==========================
-  // LOAD OLD DATA (unchanged)
-  // ==========================
+  // CHỖ 2: Load dữ liệu cũ gán vào đúng key CamelCase
   useEffect(() => {
-    if (id && user?.id) {
+    if (id) {
       const fetchOldData = async () => {
         try {
           const token = await AsyncStorage.getItem("token");
-          const res   = await fetch(`${BASE_URL}/api/addresses/${user.id}`, {
+          const res = await fetch(`${BASE_URL}/addresses/${id}`, {
             headers: { Authorization: `Bearer ${token}` },
           });
-          const list    = await res.json();
-          const current = list.find((a: any) => a.id === Number(id));
-          if (current) {
+          if (res.ok) {
+            const current = await res.json();
             setFormData({
-              recipient_name:   current.recipient_name   || "",
-              phone_number:     current.phone_number     || "",
-              province:         current.province         || "",
-              district:         current.district         || "",
-              ward:             current.ward             || "",
-              specific_address: current.specific_address || "",
-              is_default:       !!current.is_default,
+              recipientName:   current.recipientName || "",
+              phoneNumber:     current.phoneNumber   || "",
+              province:         current.province      || "",
+              district:         current.district      || "",
+              ward:             current.ward          || "",
+              specificAddress: current.specificAddress || "",
+              isDefault:       !!current.isDefault,
             });
           }
         } catch (error) {
@@ -123,24 +150,24 @@ export default function AddressForm() {
       };
       fetchOldData();
     }
-  }, [id, user?.id]);
+  }, [id]);
 
-  // ==========================
-  // SUBMIT (unchanged)
-  // ==========================
+  // CHỖ 3: Submit dữ liệu lên Backend
   const handleSubmit = async () => {
-    if (!formData.recipient_name.trim() || !formData.phone_number.trim()) {
+    if (!formData.recipientName.trim() || !formData.phoneNumber.trim()) {
       return Alert.alert("Lỗi", "Vui lòng nhập họ tên và số điện thoại!");
-    }
-    const phoneRegex = /^(0|84)(3|5|7|8|9)([0-9]{8})$/;
-    if (!phoneRegex.test(formData.phone_number)) {
-      return Alert.alert("Lỗi", "Số điện thoại không hợp lệ!");
     }
 
     try {
       const token  = await AsyncStorage.getItem("token");
-      const url    = id ? `${BASE_URL}/api/addresses/${id}` : `${BASE_URL}/api/addresses`;
+      const url    = id ? `${BASE_URL}/addresses/${id}` : `${BASE_URL}/addresses/add`;
       const method = id ? "PUT" : "POST";
+
+      const bodyPayload = {
+        ...formData,
+        id: id || null,
+        customer: { customerId: user?.id }
+      };
 
       const response = await fetch(url, {
         method,
@@ -148,7 +175,7 @@ export default function AddressForm() {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ ...formData, userId: user?.id }),
+        body: JSON.stringify(bodyPayload),
       });
 
       if (response.ok) {
@@ -166,23 +193,18 @@ export default function AddressForm() {
     <SafeAreaView style={s.safe}>
       <StatusBar barStyle="light-content" backgroundColor={C.primaryMid} />
 
-      {/* ── Top bar ───────────────────────────────────────────────── */}
+      {/* Top Bar giữ nguyên */}
       <View style={s.topBar}>
         <TouchableOpacity style={s.backBtn} onPress={() => navigation.goBack()}>
           <Ionicons name="chevron-back" size={22} color="#FFF" />
         </TouchableOpacity>
-        <Text style={s.topBarTitle}>
-          {isEdit ? "Cập nhật địa chỉ" : "Thêm địa chỉ mới"}
-        </Text>
+        <Text style={s.topBarTitle}>{isEdit ? "Cập nhật địa chỉ" : "Thêm địa chỉ mới"}</Text>
         <View style={{ width: 38 }} />
       </View>
 
-      <ScrollView
-        contentContainerStyle={s.scroll}
-        showsVerticalScrollIndicator={false}
-        keyboardShouldPersistTaps="handled"
-      >
-        {/* ── Info card ────────────────────────────────────────────── */}
+      <ScrollView contentContainerStyle={s.scroll} keyboardShouldPersistTaps="handled">
+
+        {/* Info Card - ĐÃ SỬA TÊN BIẾN */}
         <View style={s.card}>
           <View style={s.cardHeader}>
             <Ionicons name="person-circle-outline" size={20} color={C.primaryMid} />
@@ -191,108 +213,123 @@ export default function AddressForm() {
 
           <Field label="Họ và tên" icon="person-outline">
             <SInput
-              value={formData.recipient_name}
-              onChangeText={t => set("recipient_name", t)}
+              value={formData.recipientName} // <-- Đã sửa
+              onChangeText={t => set("recipientName", t)} // <-- Đã sửa
               placeholder="Nguyễn Văn A"
             />
           </Field>
 
           <Field label="Số điện thoại" icon="call-outline">
             <SInput
-              value={formData.phone_number}
-              onChangeText={t => set("phone_number", t)}
+              value={formData.phoneNumber} // <-- Đã sửa
+              onChangeText={t => set("phoneNumber", t)} // <-- Đã sửa
               placeholder="0901234567"
               keyboardType="phone-pad"
             />
           </Field>
         </View>
 
-        {/* ── Address card ─────────────────────────────────────────── */}
+        {/* Address Card - ĐÃ SỬA TÊN BIẾN */}
         <View style={s.card}>
           <View style={s.cardHeader}>
             <Ionicons name="location-outline" size={20} color={C.primaryMid} />
             <Text style={s.cardHeaderTxt}>Địa chỉ giao hàng</Text>
           </View>
 
-          {/* Province / District / Ward — 3 cols */}
           <View style={s.row3}>
-            <View style={{ flex: 1 }}>
+{/* CỘT TỈNH/TP - CHUYỂN THÀNH NÚT CHỌN */}
+            <View style={{ flex: 1.2 }}>
               <Text style={s.miniLabel}>Tỉnh / TP</Text>
-              <SInput
-                value={formData.province}
-                onChangeText={t => set("province", t)}
-                placeholder="Hồ Chí Minh"
-              />
+              <TouchableOpacity
+                style={[s.input, { justifyContent: 'center', minHeight: 48 }]}
+                onPress={() => setShowProvinceModal(true)}
+              >
+                <Text style={{ color: formData.province ? C.text1 : C.placeholder, fontSize: 14 }}>
+                  {formData.province || "Chọn tỉnh"}
+                </Text>
+                <Ionicons name="chevron-down" size={14} color={C.text3} style={{ position: 'absolute', right: 8 }} />
+              </TouchableOpacity>
             </View>
-            <View style={{ flex: 1, marginHorizontal: 8 }}>
-              <Text style={s.miniLabel}>Quận / Huyện</Text>
-              <SInput
-                value={formData.district}
-                onChangeText={t => set("district", t)}
-                placeholder="Quận 10"
-              />
-            </View>
-            <View style={{ flex: 1 }}>
-              <Text style={s.miniLabel}>Phường / Xã</Text>
-              <SInput
-                value={formData.ward}
-                onChangeText={t => set("ward", t)}
-                placeholder="P.14"
-              />
-            </View>
+
+
           </View>
+
+          <View style={s.row3}>
+
+                      <View style={{ flex: 1.2 }}>
+                        <Text style={s.miniLabel}>Phường / Xã</Text>
+                        <SInput value={formData.district} onChangeText={t => set("district", t)} placeholder="Quận 10" />
+                      </View>
+
+                    </View>
 
           <Field label="Địa chỉ cụ thể" icon="home-outline">
             <SInput
-              value={formData.specific_address}
-              onChangeText={t => set("specific_address", t)}
+              value={formData.specificAddress} // <-- Đã sửa
+              onChangeText={t => set("specificAddress", t)} // <-- Đã sửa
               placeholder="Số nhà, tên đường, tòa nhà..."
               multiline
             />
           </Field>
         </View>
 
-        {/* ── Default toggle card ───────────────────────────────────── */}
+        {/* Toggle Card - ĐÃ SỬA TÊN BIẾN */}
         <View style={s.toggleCard}>
           <View style={s.toggleLeft}>
-            <View style={s.toggleIconWrap}>
-              <Ionicons name="star-outline" size={18} color={C.primaryMid} />
-            </View>
+            <View style={s.toggleIconWrap}><Ionicons name="star-outline" size={18} color={C.primaryMid} /></View>
             <View>
               <Text style={s.toggleTitle}>Địa chỉ mặc định</Text>
               <Text style={s.toggleSub}>Tự động chọn khi thanh toán</Text>
             </View>
           </View>
           <Switch
-            value={formData.is_default}
-            onValueChange={v => set("is_default", v)}
+            value={formData.isDefault} // <-- Đã sửa
+            onValueChange={v => set("isDefault", v)} // <-- Đã sửa
             trackColor={{ false: "#D0DCF0", true: C.primaryMid }}
-            thumbColor={formData.is_default ? "#FFF" : "#FFF"}
-            ios_backgroundColor="#D0DCF0"
+            thumbColor="#FFF"
           />
         </View>
 
-        {/* ── Action buttons ────────────────────────────────────────── */}
+        {/* Action Buttons giữ nguyên */}
         <View style={s.btnRow}>
-          <TouchableOpacity
-            style={s.btnCancel}
-            onPress={() => navigation.goBack()}
-            activeOpacity={0.8}
-          >
-            <Ionicons name="close-outline" size={18} color={C.text2} />
+          <TouchableOpacity style={s.btnCancel} onPress={() => navigation.goBack()}>
             <Text style={s.btnCancelTxt}>Hủy</Text>
           </TouchableOpacity>
-
-          <TouchableOpacity
-            style={s.btnSave}
-            onPress={handleSubmit}
-            activeOpacity={0.85}
-          >
-            <Ionicons name={isEdit ? "checkmark-outline" : "add-outline"} size={18} color="#FFF" />
+          <TouchableOpacity style={s.btnSave} onPress={handleSubmit}>
             <Text style={s.btnSaveTxt}>{isEdit ? "Cập nhật" : "Lưu địa chỉ"}</Text>
           </TouchableOpacity>
         </View>
       </ScrollView>
+
+      {/* MODAL CHỌN TỈNH */}
+            <Modal visible={showProvinceModal} animationType="slide" transparent={true}>
+              <View style={s.modalOverlay}>
+                <View style={s.modalContent}>
+                  <View style={s.modalHeader}>
+                    <Text style={s.modalTitle}>Chọn Tỉnh / Thành phố</Text>
+                    <TouchableOpacity onPress={() => setShowProvinceModal(false)}>
+                      <Ionicons name="close" size={24} color={C.text1} />
+                    </TouchableOpacity>
+                  </View>
+                  <FlatList
+                    data={provinceData}
+                    keyExtractor={(item) => item.value}
+                    renderItem={({ item }) => (
+                      <TouchableOpacity
+                        style={s.provinceItem}
+                        onPress={() => {
+                          set("province", item.value);
+                          setShowProvinceModal(false);
+                        }}
+                      >
+                        <Text style={s.provinceItemTxt}>{item.label}</Text>
+                        {formData.province === item.value && <Ionicons name="checkmark" size={20} color={C.primaryMid} />}
+                      </TouchableOpacity>
+                    )}
+                  />
+                </View>
+              </View>
+            </Modal>
     </SafeAreaView>
   );
 }
@@ -417,4 +454,44 @@ const s = StyleSheet.create({
     shadowOpacity: 0.30, shadowRadius: 10,
   },
   btnSaveTxt: { fontSize: 15, fontWeight: "800", color: "#FFF" },
+
+  // Style cho Modal chọn tỉnh
+    modalOverlay: {
+      flex: 1,
+      backgroundColor: 'rgba(0,0,0,0.5)',
+      justifyContent: 'flex-end',
+    },
+    modalContent: {
+      backgroundColor: '#FFF',
+      borderTopLeftRadius: 24,
+      borderTopRightRadius: 24,
+      height: '70%',
+      padding: 20,
+    },
+    modalHeader: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      marginBottom: 20,
+      paddingBottom: 10,
+      borderBottomWidth: 1,
+      borderBottomColor: '#EEE',
+    },
+    modalTitle: {
+      fontSize: 18,
+      fontWeight: '800',
+      color: C.text1,
+    },
+    provinceItem: {
+      paddingVertical: 15,
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      borderBottomWidth: 1,
+      borderBottomColor: '#F5F5F5',
+    },
+    provinceItemTxt: {
+      fontSize: 16,
+      color: C.text1,
+    },
 });
