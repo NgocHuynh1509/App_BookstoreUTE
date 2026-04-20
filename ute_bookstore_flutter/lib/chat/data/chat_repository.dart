@@ -29,13 +29,14 @@ class ChatRepository {
     return _api.uploadImage(file);
   }
 
-  void sendAdminReply(String toUser, String text, {String? mediaUrl, String? replyToId}) {
+  void sendAdminReply(String toUser, String text, {String? mediaUrl, String? replyToId, String? orderId}) {
     _socket.sendMessage(
       receiverName: toUser,
       content: text,
       messageType: mediaUrl != null ? 'IMAGE' : 'TEXT',
       mediaUrl: mediaUrl,
       replyToId: replyToId,
+      orderId: orderId,
     );
   }
 

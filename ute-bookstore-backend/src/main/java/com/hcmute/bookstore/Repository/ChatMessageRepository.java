@@ -44,12 +44,13 @@ public interface ChatMessageRepository extends JpaRepository<ChatMessage, String
     List<ChatMessage> findByUserNameOrderByCreatedAtAsc(@Param("userName") String userName);
 
     @Query("SELECT c FROM ChatMessage c WHERE c.createdAt IN " +
-            "(SELECT MAX(m.createdAt) FROM ChatMessage m " + 
-            " WHERE m.userName != 'admin' " + 
+            "(SELECT MAX(m.createdAt) FROM ChatMessage m " +
+            " WHERE m.userName != 'admin' " +
             " GROUP BY m.userName) " +
-            "AND c.userName != 'admin' " +      
+            "AND c.userName != 'admin' " +
             "ORDER BY c.createdAt DESC")
     List<ChatMessage> findAllChatThreads();
+
 
     // Đếm số tin nhắn chưa đọc từ một user cụ thể gửi cho admin
     long countByUserNameAndReceiverNameAndStatusNot(String userName, String receiverName, MessageStatus status);

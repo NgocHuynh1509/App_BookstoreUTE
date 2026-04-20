@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:stomp_dart_client/stomp_dart_client.dart';
 import '../../core/api_client.dart';
 
+
 class SocketService {
   final ApiClient _apiClient;
   StompClient? _client;
@@ -54,6 +55,7 @@ class SocketService {
       _client = StompClient(
         config: StompConfig(
           url: socketUrl,
+
           onConnect: (StompFrame frame) {
             print("✅ [Socket] KẾT NỐI THÀNH CÔNG! Đang lắng nghe...");
 
@@ -79,6 +81,7 @@ class SocketService {
               },
             );
           },
+
 
           // --- SỬA KHÚC NÀY ---
                     // 1. Thêm cả Authorization viết hoa và thường để bypass các Proxy/Server kén header
@@ -120,6 +123,7 @@ class SocketService {
       String messageType = 'TEXT',
       String? mediaUrl,
       String? replyToId,
+      String? orderId
     }) {
       if (_client != null && _client!.connected) {
         final payload = {
@@ -131,6 +135,7 @@ class SocketService {
           if (mediaUrl != null) 'mediaUrl': mediaUrl,
           if (replyToId != null) 'replyToId': replyToId,
           'timestamp': DateTime.now().toIso8601String(),
+          if (orderId != null) 'orderId': orderId,
         };
 
         _client?.send(

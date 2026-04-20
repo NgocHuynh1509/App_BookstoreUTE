@@ -7,6 +7,7 @@ import '../data/order_detail_model.dart';
 import 'orders_screen.dart';
 import '../../../chat/presentation/chat_detail_screen.dart';
 import '../../../chat/data/chat_repository.dart';
+import '../../../core/session_storage.dart'; // Đường dẫn tới file SessionStorage của bạn
 
 final orderDetailProvider =
 FutureProvider.family<OrderDetailModel, String>((ref, orderId) async {
@@ -98,7 +99,17 @@ Future<void> updateOrderStatus(
   }
 }
 
-class OrderDetailScreen extends ConsumerWidget {
+// class OrderDetailScreen extends ConsumerWidget {
+//   const OrderDetailScreen({
+//     super.key,
+//     required this.orderId,
+//     required this.chatRepository,
+//   });
+//
+//   final String orderId;
+//   final ChatRepository chatRepository;
+// 1. Sửa tên thành ConsumerStatefulWidget
+class OrderDetailScreen extends ConsumerStatefulWidget {
   const OrderDetailScreen({
     super.key,
     required this.orderId,
@@ -109,8 +120,23 @@ class OrderDetailScreen extends ConsumerWidget {
   final ChatRepository chatRepository;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final detailAsync = ref.watch(orderDetailProvider(orderId));
+  ConsumerState<OrderDetailScreen> createState() => _OrderDetailScreenState();
+}
+
+class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
+
+  @override
+  void dispose() {
+    print("🔌 [OrderDetail] Đang thực hiện ngắt kết nối Socket...");
+    widget.chatRepository.dispose();
+    super.dispose();
+  }
+
+  @override
+  // 2. Sửa hàm build: bỏ tham số WidgetRef ref
+  Widget build(BuildContext context) {
+    // 3. Sử dụng widget.orderId thay vì orderId
+    final detailAsync = ref.watch(orderDetailProvider(widget.orderId));
 
     return Scaffold(
       backgroundColor: const Color(0xFFF3F6FB),
@@ -136,6 +162,8 @@ class OrderDetailScreen extends ConsumerWidget {
           ),
         ),
         data: (order) {
+        // SỬA DÒNG NÀY: chatRepository -> widget.chatRepository
+                  Future.microtask(() => _ensureSocketConnected(ref, widget.chatRepository));
           print("USERNAME: ${order.customerUsername}");
 
           final subtotal = order.items.fold<double>(
@@ -361,7 +389,12 @@ class OrderDetailScreen extends ConsumerWidget {
                         MaterialPageRoute(
                           builder: (_) => ChatDetailScreen(
                             customerUsername: order.customerUsername,
-                            repository: chatRepository,
+                            repository: widget.chatRepository,
+                  // Truyền thông tin đơn hàng qua đây
+                            initialOrderId: order.orderId,
+                            initialOrderPrice: order.totalAmount,
+                            initialOrderItemCount: order.items.length,
+                            initialOrderImage: order.items.isNotEmpty ? order.items.first.image : null,
                           ),
                         ),
                       );
@@ -507,6 +540,8 @@ class _OrderActionSection extends ConsumerWidget {
       ),
     );
   }
+
+
 }
 
 class _InfoCard extends StatelessWidget {
@@ -614,3 +649,20 @@ class _DetailRow extends StatelessWidget {
     );
   }
 }
+
+Future<void> _ensureSocketConnected(WidgetRef ref, ChatRepository repository) async {
+    if (!repository.socket.isConnected) {
+      final storage = SessionStorage(); // Hãy đảm bảo đã import SessionStorage
+      String? token = await storage.getToken();
+      if (token != null) {
+        repository.startSocketConnection(
+          token,
+          (newMessage) {
+            // Xử lý khi có tin nhắn mới (ví dụ hiện Notification nhỏ)
+            print("📩 Có tin nhắn mới từ: ${newMessage['userName']}");
+          },
+          (reaction) => print("Reactions updated"),
+        );
+      }
+    }
+  }

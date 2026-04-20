@@ -4,15 +4,27 @@ import 'widgets/message_bubble.dart';
 import '../data/chat_repository.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../../api_config.dart';
+import 'package:intl/intl.dart';
+import '../../core/session_storage.dart';
 
 class ChatDetailScreen extends StatefulWidget {
   final String customerUsername;
   final ChatRepository repository;
 
+  // Thêm các thuộc tính phục vụ việc hiển thị banner
+    final String? initialOrderId;
+    final double? initialOrderPrice;
+    final int? initialOrderItemCount;
+    final String? initialOrderImage;
+
   const ChatDetailScreen({
     super.key,
     required this.customerUsername,
-    required this.repository
+    required this.repository,
+    this.initialOrderId,      // Mã đơn hàng
+        this.initialOrderPrice,   // Tổng tiền
+        this.initialOrderItemCount, // Số lượng món
+        this.initialOrderImage,    // Ảnh đại diện đơn hàng
   });
 
   @override
@@ -24,14 +36,18 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
   final TextEditingController _controller = TextEditingController();
   final ImagePicker _picker = ImagePicker();
   ChatMessage? _replyMessage; // ✅ THÊM
+  String? _pendingOrderId;
 
   @override
   void initState() {
     super.initState();
     _loadHistory();
     _initSocketListener();
+    _pendingOrderId = widget.initialOrderId;
     widget.repository.markAsSeen(widget.customerUsername);
   }
+
+
 
   void _loadHistory() async {
     try {
@@ -90,7 +106,7 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
       if (image != null) {
         final mediaUrl = await widget.repository.uploadImage(image);
         widget.repository.sendAdminReply(
-          widget.customerUsername, "", 
+          widget.customerUsername, "",
           mediaUrl: mediaUrl,
           replyToId: _replyMessage?.id
         );
@@ -104,6 +120,11 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
   void _onSend() {
     final text = _controller.text.trim();
     if (text.isEmpty) return;
+    // Sửa điều kiện check: Cho phép gửi nếu có text HOẶC có orderId
+        if (text.isEmpty && _pendingOrderId == null) return;
+
+        // BƯỚC 1: QUAN TRỌNG - Lưu lại giá trị vào biến cục bộ
+        final String? orderIdToSend = _pendingOrderId;
 
     final tempMsg = ChatMessage(
       id: 'temp_${DateTime.now().microsecondsSinceEpoch}',
@@ -118,16 +139,24 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
       replyToMessageType: _replyMessage?.messageType,
       replyToMediaUrl: _replyMessage?.mediaUrl,
       replyToSender: _replyMessage?.userName,
+// Đính kèm dữ liệu order để UI hiện Card ngay lập tức
+      orderId: orderIdToSend,
+      totalPrice: widget.initialOrderPrice,
+      orderItemCount: widget.initialOrderItemCount,
+      image: widget.initialOrderImage,
+      orderStatus: 'Đang xử lý',
     );
 
     setState(() {
       _messages.insert(0, tempMsg);
+      _pendingOrderId = null;
     });
 
     widget.repository.sendAdminReply(
-      widget.customerUsername, 
-      text, 
-      replyToId: _replyMessage?.id
+      widget.customerUsername,
+      text,
+      replyToId: _replyMessage?.id,
+      orderId: orderIdToSend,
     );
 
     _controller.clear();
@@ -149,6 +178,8 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
       appBar: AppBar(title: Text("Chat với ${widget.customerUsername}")),
       body: Column(
         children: [
+          // HIỂN THỊ BANNER ĐƠN HÀNG Ở ĐÂY
+          if (_pendingOrderId != null) _buildOrderBanner(),
           Expanded(
             child: ListView.builder(
               reverse: true,
@@ -245,6 +276,55 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
           IconButton(
             icon: const Icon(Icons.close, size: 20),
             onPressed: () => setState(() => _replyMessage = null),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildOrderBanner() {
+    final formatter = NumberFormat('#,###', 'vi_VN');
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.orange.shade50,
+        border: Border(bottom: BorderSide(color: Colors.orange.shade200)),
+      ),
+      child: Row(
+        children: [
+          // Ảnh đơn hàng
+          ClipRRect(
+            borderRadius: BorderRadius.circular(8),
+            child: widget.initialOrderImage != null
+                ? Image.network(
+                    widget.initialOrderImage!.startsWith('http')
+                      ? widget.initialOrderImage!
+                      : 'http://10.0.2.2:8080/uploads/${widget.initialOrderImage}',
+                    width: 50, height: 50, fit: BoxFit.cover,
+                  )
+                : Container(width: 50, height: 50, color: Colors.orange.shade100),
+          ),
+          const SizedBox(width: 12),
+          // Thông tin đơn hàng
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  "Bạn đang phản hồi về Đơn hàng #${widget.initialOrderId}",
+                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Colors.orange),
+                ),
+                Text(
+                  "${widget.initialOrderItemCount} sản phẩm - Tổng: ${formatter.format(widget.initialOrderPrice)}đ",
+                  style: TextStyle(fontSize: 12, color: Colors.grey.shade700),
+                ),
+              ],
+            ),
+          ),
+          // Nút đóng banner
+          IconButton(
+            icon: const Icon(Icons.close, size: 20, color: Colors.grey),
+            onPressed: () => setState(() => _pendingOrderId = null),
           ),
         ],
       ),
