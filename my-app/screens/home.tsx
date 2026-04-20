@@ -345,6 +345,24 @@ function BookCardG({ item, onPress, onLongPress, showDiscount, onAddToCart, onBu
 export default function HomeScreen({ navigation }: any) {
   const { user } = useAuth();
 
+  const requireLogin = (message = "Vui lòng đăng nhập để tiếp tục") => {
+    if (user) return true;
+
+    Alert.alert(
+        "Yêu cầu đăng nhập",
+        message,
+        [
+          { text: "Để sau", style: "cancel" },
+          {
+            text: "Đăng nhập",
+            onPress: () => navigation.navigate("Login"),
+          },
+        ]
+    );
+
+    return false;
+  };
+
   const [books, setBooks]                         = useState([]);
   const [categories, setCategories]               = useState([]);
   const [loadingBooks, setLoadingBooks]           = useState(true);
@@ -364,8 +382,15 @@ const [showQtyModal, setShowQtyModal] = useState(false);
 const [showBuyQtyModal, setShowBuyQtyModal] = useState(false);  const [selectedItem, setSelectedItem] = useState<any>(null);
   const [quantity, setQuantity] = useState(1);
 
+  // const handleOpenModal = (item: any) => {
+  //   console.log("Dữ liệu sách chọn:", item); // Xem trong terminal xem nó là 'quantity' hay 'stock'
+  //   setSelectedItem(item);
+  //   setQuantity(1);
+  //   setShowQtyModal(true);
+  // };
   const handleOpenModal = (item: any) => {
-    console.log("Dữ liệu sách chọn:", item); // Xem trong terminal xem nó là 'quantity' hay 'stock'
+    if (!requireLogin("Bạn cần đăng nhập để thêm sản phẩm vào giỏ hàng")) return;
+
     setSelectedItem(item);
     setQuantity(1);
     setShowQtyModal(true);
@@ -376,13 +401,18 @@ const [showBuyQtyModal, setShowBuyQtyModal] = useState(false);  const [selectedI
   const [hasUnreadChat, setHasUnreadChat] = useState(false);
 
   useFocusEffect(
-    useCallback(() => {
-      setRecentBooks(getRecentlyViewed(10));
-      checkUnreadStatus();
-      
-      const interval = setInterval(checkUnreadStatus, 15000); // Tự động kiểm tra mỗi 15 giây
-      return () => clearInterval(interval);
-    }, [user])
+      useCallback(() => {
+        if (user) {
+          setRecentBooks(getRecentlyViewed(10));
+          checkUnreadStatus();
+
+          const interval = setInterval(checkUnreadStatus, 15000);
+          return () => clearInterval(interval);
+        } else {
+          setRecentBooks([]);
+          setHasUnreadChat(false);
+        }
+      }, [user])
   );
 
   const checkUnreadStatus = async () => {
@@ -410,17 +440,23 @@ const [showBuyQtyModal, setShowBuyQtyModal] = useState(false);  const [selectedI
   const confirmAddToCart = async () => {
     try {
       const token = await AsyncStorage.getItem("token");
-      if (!token) {
-        Alert.alert("Lỗi", "Bạn cần đăng nhập để thực hiện thao tác này");
+      if (!token || !user) {
+        setShowQtyModal(false);
+        Alert.alert(
+            "Yêu cầu đăng nhập",
+            "Bạn cần đăng nhập để thêm sản phẩm vào giỏ hàng",
+            [
+              { text: "Để sau", style: "cancel" },
+              { text: "Đăng nhập", onPress: () => navigation.navigate("Login") },
+            ]
+        );
         return;
       }
 
       const payload = {
-        bookId: selectedItem.id, // Đã đổi sang .id cho khớp với log
+        bookId: selectedItem.id,
         quantity: quantity,
       };
-
-      console.log("Đang gửi payload:", payload);
 
       const response = await axios.post(`${API_URL}/cart/add`, payload, {
         headers: { Authorization: `Bearer ${token}` },
@@ -431,44 +467,62 @@ const [showBuyQtyModal, setShowBuyQtyModal] = useState(false);  const [selectedI
         setShowQtyModal(false);
       }
     } catch (err: any) {
-      // CHỈ KHAI BÁO MỘT LẦN DUY NHẤT Ở ĐÂY
-      console.log("Chi tiết lỗi API:", err.response?.data);
-
-      const errorMsg = err.response?.data?.error ||
-                       err.response?.data?.message ||
-                       "Không thể thêm vào giỏ hàng";
+      const errorMsg =
+          err.response?.data?.error ||
+          err.response?.data?.message ||
+          "Không thể thêm vào giỏ hàng";
 
       Alert.alert("Lỗi", errorMsg);
     }
   };
 
+  // const handleBuyNow = (item: any) => {
+  //   console.log("Dữ liệu sách chọn:", item); // Xem trong terminal xem nó là 'quantity' hay 'stock'
+  //       setSelectedItem(item);
+  //       setQuantity(1);
+  //       setShowBuyQtyModal(true);
+  // };
   const handleBuyNow = (item: any) => {
-    console.log("Dữ liệu sách chọn:", item); // Xem trong terminal xem nó là 'quantity' hay 'stock'
-        setSelectedItem(item);
-        setQuantity(1);
-        setShowBuyQtyModal(true);
+    if (!requireLogin("Bạn cần đăng nhập để mua hàng")) return;
+
+    setSelectedItem(item);
+    setQuantity(1);
+    setShowBuyQtyModal(true);
   };
-    const confirmBuyNow = () => {
-      if (!selectedItem) return;
-
-      const itemForCheckout = {
-        id: selectedItem.id, // Dùng cho Key render
-        book_id: selectedItem.id, // Backend dùng cái này
-        title: selectedItem.title,
-        price: selectedItem.price,
-        quantity: quantity,
-        cover_image: selectedItem.cover_image,
-        stock: selectedItem.stock
-      };
-
+  const confirmBuyNow = () => {
+    if (!user) {
       setShowBuyQtyModal(false);
+      Alert.alert(
+          "Yêu cầu đăng nhập",
+          "Bạn cần đăng nhập để mua hàng",
+          [
+            { text: "Để sau", style: "cancel" },
+            { text: "Đăng nhập", onPress: () => navigation.navigate("Login") },
+          ]
+      );
+      return;
+    }
 
-      navigation.navigate("Checkout", {
-        selectedItems: [itemForCheckout],
-        totalPrice: selectedItem.price * quantity,
-        isBuyNow: true, // Để rẽ nhánh endpoint
-      });
+    if (!selectedItem) return;
+
+    const itemForCheckout = {
+      id: selectedItem.id,
+      book_id: selectedItem.id,
+      title: selectedItem.title,
+      price: selectedItem.price,
+      quantity: quantity,
+      cover_image: selectedItem.cover_image,
+      stock: selectedItem.stock,
     };
+
+    setShowBuyQtyModal(false);
+
+    navigation.navigate("Checkout", {
+      selectedItems: [itemForCheckout],
+      totalPrice: selectedItem.price * quantity,
+      isBuyNow: true,
+    });
+  };
   // ==========================
   // DATA LOADING (all unchanged)
   // ==========================
@@ -549,15 +603,13 @@ const [showBuyQtyModal, setShowBuyQtyModal] = useState(false);  const [selectedI
             <View style={{ flexDirection: "row", gap: 10 }}>
               <TouchableOpacity
                   style={s.headerIconBtn}
-                  onPress={() => navigation.navigate("Chat")}
+                  onPress={() => {
+                    if (!requireLogin("Bạn cần đăng nhập để nhắn tin với shop")) return;
+                    navigation.navigate("Chat");
+                  }}
               >
                 <Ionicons name="chatbubble-ellipses-outline" size={22} color="#FFF" />
                 {hasUnreadChat && <View style={s.notifDot} />}
-              </TouchableOpacity>
-
-              <TouchableOpacity style={s.headerIconBtn}>
-                <Ionicons name="notifications-outline" size={22} color="#FFF" />
-                <View style={s.notifDot} />
               </TouchableOpacity>
             </View>
           </View>
@@ -586,11 +638,13 @@ const [showBuyQtyModal, setShowBuyQtyModal] = useState(false);  const [selectedI
         </View>
 
         {/* ── 🕐 RECENTLY VIEWED — hiện ngay sau banner ────────── */}
-        <RecentlyViewedSection
-          items={recentBooks}
-          onPress={id => navigation.navigate("BookDetail", { id })}
-          onClear={handleClearRecent}
-        />
+        {user && (
+            <RecentlyViewedSection
+                items={recentBooks}
+                onPress={id => navigation.navigate("BookDetail", { id })}
+                onClear={handleClearRecent}
+            />
+        )}
 
         {/* ── CATEGORIES ───────────────────────────────────────── */}
         <SectionTitle title="Danh mục" />

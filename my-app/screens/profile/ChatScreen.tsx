@@ -1,325 +1,197 @@
-import { useRoute, useNavigation } from "@react-navigation/native"; // FIX: Thêm useNavigation
+import { useRoute, useNavigation } from "@react-navigation/native";
 import React, { useState, useEffect, useRef } from "react";
-import { View, Text, StyleSheet, TouchableOpacity, FlatList, TextInput, KeyboardAvoidingView, Platform, ActivityIndicator, Alert, Image } from "react-native";
+import {
+    View, Text, StyleSheet, TouchableOpacity, FlatList,
+    TextInput, KeyboardAvoidingView, Platform, ActivityIndicator,
+    Alert, Image, Modal, Animated,
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Modal } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import * as ImagePicker from 'expo-image-picker';
+import * as ImagePicker from "expo-image-picker";
 import { Client } from "@stomp/stompjs";
 import axios from "axios";
 import Constants from "expo-constants";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import SockJS from 'sockjs-client';
-import { useHeaderHeight } from '@react-navigation/elements';
-import { Animated } from "react-native";
+import SockJS from "sockjs-client";
+import { useHeaderHeight } from "@react-navigation/elements";
 
-
+// ─── Types ────────────────────────────────────────────────────────────────────
 interface Message {
     id: string;
     content: string;
     mediaUrl?: string;
-    messageType: 'TEXT' | 'IMAGE' | 'VIDEO' | 'PRODUCT' | 'ORDER';
-    senderRole: 'USER' | 'ADMIN';
+    messageType: "TEXT" | "IMAGE" | "VIDEO" | "PRODUCT" | "ORDER";
+    senderRole: "USER" | "ADMIN";
     createdAt: string;
     reaction?: string;
-    
-    // REPLY FIELDS
     replyToId?: string;
     replyToContent?: string;
     replyToMediaUrl?: string;
-    replyToMessageType?: 'TEXT' | 'IMAGE' | 'VIDEO' | 'PRODUCT' | 'ORDER';
+    replyToMessageType?: "TEXT" | "IMAGE" | "VIDEO" | "PRODUCT" | "ORDER";
     replyToSender?: string;
-// Thêm các trường này
     bookId?: string;
     bookName?: string;
     bookImage?: string;
-    bookPrice?: number; // Hoặc dùng totalPrice nếu bạn map vào đó
-// ... các trường cũ
+    bookPrice?: number;
     orderId?: string;
     orderStatus?: string;
     totalPrice?: number;
-    orderItemCount?: number; // <--- Thêm dòng này để chứa số lượng mặt hàng
+    orderItemCount?: number;
     image?: string;
+    userName?: string;
 }
 
+// ─── Constants ────────────────────────────────────────────────────────────────
 const BASE_URL = Constants.expoConfig?.extra?.API_URL || "http://192.168.1.22:8080";
 
+const C = {
+    primary:    "#1565C0",
+    mid:        "#1E88E5",
+    light:      "#42A5F5",
+    soft:       "#E3F2FD",
+    tint:       "#BBDEFB",
+    bg:         "#F0F6FF",
+    surface:    "#FFFFFF",
+    border:     "#DDEEFF",
+    text1:      "#0D1B3E",
+    text2:      "#4A5980",
+    text3:      "#9AA8C8",
+    orange:     "#FF8A00",
+    red:        "#E53935",
+    msgMe:      "#1E88E5",
+    msgOther:   "#FFFFFF",
+};
+
+const REACTIONS = [
+    { type: "LIKE",  emoji: "👍" },
+    { type: "LOVE",  emoji: "❤️" },
+    { type: "HAHA",  emoji: "😆" },
+    { type: "WOW",   emoji: "😮" },
+    { type: "SAD",   emoji: "😢" },
+    { type: "ANGRY", emoji: "😡" },
+];
+
+// ─── Component ────────────────────────────────────────────────────────────────
 const ChatScreen: React.FC = () => {
-    const route = useRoute<any>();
-        const navigation = useNavigation<any>(); // Thêm navigation để dùng goBack
-    const [activeTab, setActiveTab] = useState<'seller' | 'ai'>('seller');
-    const [messages, setMessages] = useState<Message[]>([]);
-    const [inputText, setInputText] = useState("");
-    const [loading, setLoading] = useState(true);
-    const [userData, setUserData] = useState<{username: string, token: string} | null>(null);
-    const stompClient = useRef<Client | null>(null);
+    const route      = useRoute<any>();
+    const navigation = useNavigation<any>();
     const headerHeight = useHeaderHeight();
+
+    const [activeTab, setActiveTab]           = useState<"seller" | "ai">("seller");
+    const [messages, setMessages]             = useState<Message[]>([]);
+    const [inputText, setInputText]           = useState("");
+    const [loading, setLoading]               = useState(true);
+    const [userData, setUserData]             = useState<{ username: string; token: string } | null>(null);
     const [reactionModalVisible, setReactionModalVisible] = useState(false);
     const [selectedMessage, setSelectedMessage] = useState<Message | null>(null);
-    const REACTIONS = [
-        { type: 'LIKE', emoji: '👍' },
-        { type: 'LOVE', emoji: '❤️' },
-        { type: 'HAHA', emoji: '😆' },
-        { type: 'WOW', emoji: '😮' },
-        { type: 'SAD', emoji: '😢' },
-        { type: 'ANGRY', emoji: '😡' },
-    ];
-    const [page, setPage] = useState(0);
-    const [hasMore, setHasMore] = useState(true);
-    const [loadingMore, setLoadingMore] = useState(false);
-    const [showTimeId, setShowTimeId] = useState<string | null>(null);
-    const reactionAnim = useRef<{[key: string]: Animated.Value}>({});
-    const [replyMessage, setReplyMessage] = useState<Message | null>(null);
-// Nhận cả productPreview (từ màn chi tiết sách) và orderPreview (từ màn đơn hàng)
+    const [page, setPage]                     = useState(0);
+    const [hasMore, setHasMore]               = useState(true);
+    const [loadingMore, setLoadingMore]       = useState(false);
+    const [showTimeId, setShowTimeId]         = useState<string | null>(null);
+    const [replyMessage, setReplyMessage]     = useState<Message | null>(null);
+
+    const stompClient  = useRef<Client | null>(null);
+    const reactionAnim = useRef<{ [key: string]: Animated.Value }>({});
+
     const { productPreview, orderPreview } = route.params || {};
-
-    // Sử dụng state này để điều khiển việc hiển thị/ẩn banner
     const [previewItem, setPreviewItem] = useState(productPreview);
-    const [orderInfo, setOrderInfo] = useState(orderPreview); // State cho đơn hàng
+    const [orderInfo,   setOrderInfo]   = useState(orderPreview);
 
-
-    const formatTime = (dateStr: string) => {
-        const date = new Date(dateStr);
-        return date.toLocaleTimeString('vi-VN', {
-            hour: '2-digit',
-            minute: '2-digit'
-        });
-    };
+    // ── Formatters ──────────────────────────────────────────────────────────────
+    const formatTime = (dateStr: string) =>
+        new Date(dateStr).toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" });
 
     const formatDateLabel = (dateStr: string) => {
         const date = new Date(dateStr);
-        const now = new Date();
-
-        const isToday =
-            date.getDate() === now.getDate() &&
-            date.getMonth() === now.getMonth() &&
-            date.getFullYear() === now.getFullYear();
-
-        const yesterday = new Date();
-        yesterday.setDate(now.getDate() - 1);
-
-        const isYesterday =
-            date.getDate() === yesterday.getDate() &&
-            date.getMonth() === yesterday.getMonth() &&
-            date.getFullYear() === yesterday.getFullYear();
-
-        if (isToday) return "Hôm nay";
-        if (isYesterday) return "Hôm qua";
-
+        const now  = new Date();
+        const yesterday = new Date(); yesterday.setDate(now.getDate() - 1);
+        const sameDay = (a: Date, b: Date) =>
+            a.getDate() === b.getDate() && a.getMonth() === b.getMonth() && a.getFullYear() === b.getFullYear();
+        if (sameDay(date, now))       return "Hôm nay";
+        if (sameDay(date, yesterday)) return "Hôm qua";
         return date.toLocaleDateString("vi-VN");
     };
 
+    // ── Data loading ─────────────────────────────────────────────────────────────
     useEffect(() => {
         const getUserData = async () => {
             try {
                 const savedUser = await AsyncStorage.getItem("user");
-                const token = await AsyncStorage.getItem("token");
+                const token     = await AsyncStorage.getItem("token");
                 if (savedUser) {
-                    const parsedUser = JSON.parse(savedUser);
-                    setUserData({
-                        username: parsedUser.username,
-                        token: token || parsedUser.token
-                    });
+                    const p = JSON.parse(savedUser);
+                    setUserData({ username: p.username, token: token || p.token });
                 }
-            } catch (e) {
-                console.error("Lỗi lấy thông tin user:", e);
-            }
+            } catch (e) { console.error("Lỗi lấy thông tin user:", e); }
         };
         getUserData();
     }, []);
 
     useEffect(() => {
-        if (activeTab === 'seller' && userData) {
-            initChat();
-        } else {
-            disconnectWebSocket();
-        }
+        if (activeTab === "seller" && userData) initChat();
+        else disconnectWebSocket();
         return () => disconnectWebSocket();
     }, [activeTab, userData]);
 
     const initChat = async () => {
         setLoading(true);
-        setMessages([]);
-        setPage(0);
-        setHasMore(true);
-
+        setMessages([]); setPage(0); setHasMore(true);
         await loadHistory(0);
         await connectWebSocket();
-
         setLoading(false);
     };
 
     const loadHistory = async (nextPage = 0) => {
         if (!userData || !hasMore) return;
-
-        if (nextPage !== 0) {
-            setLoadingMore(true);
-        }
-
+        if (nextPage !== 0) setLoadingMore(true);
         try {
             const res = await axios.get(
                 `${BASE_URL}/chat/history/${userData.username}?page=${nextPage}&size=20`,
-                {
-                    headers: { Authorization: `Bearer ${userData.token}` }
-                }
-            );
-
-            await axios.post(
-                `${BASE_URL}/chat/mark-seen/${userData.username}`,
-                {},
                 { headers: { Authorization: `Bearer ${userData.token}` } }
-            ).catch(err => console.log("Mark seen error:", err));
-
+            );
+            await axios.post(
+                `${BASE_URL}/chat/mark-seen/${userData.username}`, {},
+                { headers: { Authorization: `Bearer ${userData.token}` } }
+            ).catch(() => {});
             const newMessages = res.data;
-
             if (newMessages.length === 0) {
                 setHasMore(false);
             } else {
                 setMessages(prev => {
                     const merged = [...prev, ...newMessages];
-                    const unique = merged.filter(
-                        (msg, index, self) =>
-                            index === self.findIndex(m => m.id === msg.id)
-                    );
-                    return unique;
+                    return merged.filter((msg, i, self) => i === self.findIndex(m => m.id === msg.id));
                 });
                 setPage(nextPage);
             }
-
-        } catch (e) {
-            console.error("History Error", e);
-        } finally {
-            setLoadingMore(false);
-        }
+        } catch (e) { console.error("History Error", e); }
+        finally { setLoadingMore(false); }
     };
 
-    const sendMessage = async () => {
-        if (!inputText.trim() || !userData || !stompClient.current?.connected) return;
-
-        const currentBookId = previewItem?.id || null;
-        const currentOrderId = orderInfo?.orderId || null; // Lấy Order ID từ banner
-
-
-        const chatRequest = {
-            userName: userData.username,
-            receiverName: "admin",
-            senderRole: "USER",
-            content: inputText.trim(),
-            messageType: "TEXT",
-            replyToId: replyMessage?.id || null,
-            bookId: currentBookId, // <--- TRUYỀN ID THẬT Ở ĐÂY
-            orderId: currentOrderId, // Gửi Order ID lên Backend
-        };
-
-        stompClient.current.publish({
-            destination: "/app/chat.sendMessage",
-            body: JSON.stringify(chatRequest),
-        });
-
-        const localMsg: Message = {
-            id: `temp-${Date.now()}`,
-            content: inputText.trim(),
-            senderRole: 'USER',
-            messageType: 'TEXT',
-            createdAt: new Date().toISOString(),
-            replyToId: replyMessage?.id,
-            replyToContent: replyMessage?.content,
-            replyToMediaUrl: replyMessage?.mediaUrl,
-            replyToMessageType: replyMessage?.messageType,
-            replyToSender: replyMessage?.senderRole === 'ADMIN' ? 'Admin' : replyMessage?.userName,
-            bookId: currentBookId,
-            orderId: currentOrderId,
-        };
-
-        setMessages(prev => [localMsg, ...prev]);
-        setInputText("");
-        setReplyMessage(null);
-        // Tùy chọn: Ẩn banner sau khi đã gửi tin nhắn trao đổi về món đó
-            if (previewItem) setPreviewItem(null);
-// ... phần còn lại giữ nguyên
-        if (orderInfo) setOrderInfo(null); // Gửi xong thì ẩn banner đơn hàng
-    };
-
-    const sendReaction = (type: string) => {
-        if (!selectedMessage || !stompClient.current?.connected || !userData) return;
-
-        if (selectedMessage.id.startsWith("temp-")) {
-            Alert.alert("Thông báo", "Tin nhắn chưa gửi xong");
-            return;
-        }
-
-        const payload = {
-            messageId: selectedMessage.id,
-            partnerName: "admin",
-            reaction: type
-        };
-
-        stompClient.current.publish({
-            destination: "/app/chat.react",
-            body: JSON.stringify(payload),
-        });
-
-        setMessages(prev =>
-            prev.map(msg =>
-                msg.id === selectedMessage.id
-                    ? { ...msg, reaction: type }
-                    : msg
-            )
-        );
-
-        if (!reactionAnim.current[selectedMessage.id]) {
-            reactionAnim.current[selectedMessage.id] = new Animated.Value(0);
-        }
-
-        reactionAnim.current[selectedMessage.id].setValue(0);
-        Animated.spring(reactionAnim.current[selectedMessage.id], {
-            toValue: 1,
-            friction: 3,
-            tension: 200,
-            useNativeDriver: true,
-        }).start();
-
-        setReactionModalVisible(false);
-    };
-
+    // ── WebSocket ────────────────────────────────────────────────────────────────
     const connectWebSocket = async () => {
         if (!userData) return;
-        const socketUrl = `${BASE_URL}/ws-bookstore`;
         const client = new Client({
-            webSocketFactory: () => new SockJS(socketUrl),
+            webSocketFactory: () => new SockJS(`${BASE_URL}/ws-bookstore`),
             connectHeaders: { Authorization: `Bearer ${userData.token}` },
-            debug: (str) => console.log("--- STOMP DEBUG ---", str),
             onConnect: () => {
-                client.subscribe(`/user/queue/messages`, (message) => {
-                    const newMessage = JSON.parse(message.body);
-                    setMessages((prev) => {
-                        const tempIndex = prev.findIndex(
-                            m =>
-                                m.id.startsWith("temp-") &&
-                                Math.abs(new Date(m.createdAt).getTime() - new Date(newMessage.createdAt).getTime()) < 5000
+                client.subscribe("/user/queue/messages", (message) => {
+                    const newMsg = JSON.parse(message.body);
+                    setMessages(prev => {
+                        const tempIdx = prev.findIndex(
+                            m => m.id.startsWith("temp-") &&
+                                Math.abs(new Date(m.createdAt).getTime() - new Date(newMsg.createdAt).getTime()) < 5000
                         );
-                        if (tempIndex !== -1) {
-                            const updated = [...prev];
-                            updated[tempIndex] = newMessage;
-                            return updated;
-                        }
-                        const isExist = prev.some(m => m.id === newMessage.id);
-                        if (isExist) return prev;
-                        return [newMessage, ...prev];
+                        if (tempIdx !== -1) { const u = [...prev]; u[tempIdx] = newMsg; return u; }
+                        if (prev.some(m => m.id === newMsg.id)) return prev;
+                        return [newMsg, ...prev];
                     });
                 });
-                client.subscribe(`/user/queue/reactions`, (data) => {
-                    const updatedMessage = JSON.parse(data.body);
-                    setMessages((prev) =>
-                        prev.map(msg =>
-                            msg.id === updatedMessage.id
-                            ? { ...msg, reaction: updatedMessage.reaction }
-                            : msg
-                        )
-                    );
+                client.subscribe("/user/queue/reactions", (data) => {
+                    const updated = JSON.parse(data.body);
+                    setMessages(prev => prev.map(m => m.id === updated.id ? { ...m, reaction: updated.reaction } : m));
                 });
             },
-            onStompError: (frame) => console.log("❌ LỖI BROKER:", frame.headers['message']),
+            onStompError: (f) => console.log("STOMP ERROR:", f.headers["message"]),
             reconnectDelay: 5000,
         });
         client.activate();
@@ -330,80 +202,110 @@ const ChatScreen: React.FC = () => {
         if (stompClient.current) stompClient.current.deactivate();
     };
 
-    const pickImage = async () => {
-        const result = await ImagePicker.launchImageLibraryAsync({
-            mediaTypes: ['images'],
-            allowsEditing: true,
-            quality: 0.8,
+    // ── Sending ───────────────────────────────────────────────────────────────────
+    const sendMessage = async () => {
+        if (!inputText.trim() || !userData || !stompClient.current?.connected) return;
+        const currentBookId  = previewItem?.id  || null;
+        const currentOrderId = orderInfo?.orderId || null;
+
+        stompClient.current.publish({
+            destination: "/app/chat.sendMessage",
+            body: JSON.stringify({
+                userName: userData.username, receiverName: "admin", senderRole: "USER",
+                content: inputText.trim(), messageType: "TEXT",
+                replyToId: replyMessage?.id || null,
+                bookId: currentBookId, orderId: currentOrderId,
+            }),
         });
 
-        if (!result.canceled && result.assets && result.assets.length > 0) {
-            uploadAndSendImage(result.assets[0]);
+        const localMsg: Message = {
+            id: `temp-${Date.now()}`,
+            content: inputText.trim(),
+            senderRole: "USER", messageType: "TEXT",
+            createdAt: new Date().toISOString(),
+            replyToId: replyMessage?.id,
+            replyToContent: replyMessage?.content,
+            replyToMediaUrl: replyMessage?.mediaUrl,
+            replyToMessageType: replyMessage?.messageType,
+            replyToSender: replyMessage?.senderRole === "ADMIN" ? "Admin" : replyMessage?.userName,
+            bookId: currentBookId ?? undefined,
+            orderId: currentOrderId ?? undefined,
+        };
+
+        setMessages(prev => [localMsg, ...prev]);
+        setInputText("");
+        setReplyMessage(null);
+        if (previewItem)  setPreviewItem(null);
+        if (orderInfo)    setOrderInfo(null);
+    };
+
+    const sendReaction = (type: string) => {
+        if (!selectedMessage || !stompClient.current?.connected || !userData) return;
+        if (selectedMessage.id.startsWith("temp-")) {
+            Alert.alert("Thông báo", "Tin nhắn chưa gửi xong"); return;
         }
+        stompClient.current.publish({
+            destination: "/app/chat.react",
+            body: JSON.stringify({ messageId: selectedMessage.id, partnerName: "admin", reaction: type }),
+        });
+        setMessages(prev => prev.map(m => m.id === selectedMessage.id ? { ...m, reaction: type } : m));
+
+        if (!reactionAnim.current[selectedMessage.id])
+            reactionAnim.current[selectedMessage.id] = new Animated.Value(0);
+        reactionAnim.current[selectedMessage.id].setValue(0);
+        Animated.spring(reactionAnim.current[selectedMessage.id], {
+            toValue: 1, friction: 3, tension: 200, useNativeDriver: true,
+        }).start();
+        setReactionModalVisible(false);
+    };
+
+    const pickImage = async () => {
+        const result = await ImagePicker.launchImageLibraryAsync({
+            mediaTypes: ["images"], allowsEditing: true, quality: 0.8,
+        });
+        if (!result.canceled && result.assets?.length > 0) uploadAndSendImage(result.assets[0]);
     };
 
     const uploadAndSendImage = async (asset: any) => {
         if (!userData || !stompClient.current?.connected) return;
-
         const formData = new FormData();
-        const uri = Platform.OS === 'ios' ? asset.uri.replace('file://', '') : asset.uri;
-
-        formData.append('file', {
-            uri: uri,
-            name: asset.fileName || uri.split('/').pop() || 'image.jpg',
-            type: asset.mimeType || 'image/jpeg',
-        } as any);
-
+        const uri = Platform.OS === "ios" ? asset.uri.replace("file://", "") : asset.uri;
+        formData.append("file", { uri, name: asset.fileName || "image.jpg", type: asset.mimeType || "image/jpeg" } as any);
         try {
-            const uploadRes = await fetch(`${BASE_URL}/chat/upload`, {
-                method: 'POST',
-                headers: { 'Authorization': `Bearer ${userData.token}` },
-                body: formData,
+            const res = await fetch(`${BASE_URL}/chat/upload`, {
+                method: "POST", headers: { Authorization: `Bearer ${userData.token}` }, body: formData,
             });
-
-            if (!uploadRes.ok) throw new Error("Upload failed");
-
-            const mediaUrl = await uploadRes.text();
-
-            const chatRequest = {
-                userName: userData.username,
-                receiverName: "admin",
-                senderRole: "USER",
-                content: "",
-                mediaUrl: mediaUrl,
-                messageType: "IMAGE",
-                replyToId: replyMessage?.id || null,
-            };
-
+            if (!res.ok) throw new Error("Upload failed");
+            const mediaUrl = await res.text();
             stompClient.current.publish({
                 destination: "/app/chat.sendMessage",
-                body: JSON.stringify(chatRequest),
+                body: JSON.stringify({
+                    userName: userData.username, receiverName: "admin", senderRole: "USER",
+                    content: "", mediaUrl, messageType: "IMAGE", replyToId: replyMessage?.id || null,
+                }),
             });
-            
             setReplyMessage(null);
-
-        } catch (error) {
-            console.error("Upload Image Error:", error);
+        } catch (e) {
+            console.error("Upload error:", e);
             Alert.alert("Lỗi", "Không thể tải ảnh lên. Vui lòng thử lại.");
         }
     };
 
+    // ── Sub-renders ───────────────────────────────────────────────────────────────
     const renderReplyContent = (msg: Message) => {
         if (!msg.replyToId) return null;
-        const isImage = msg.replyToMessageType === 'IMAGE';
+        const isImage = msg.replyToMessageType === "IMAGE";
+        const isMe    = msg.senderRole === "USER";
         return (
-            <View style={styles.replyBubble}>
-                <Text style={styles.replySender}>
-                    {msg.replyToSender || (msg.senderRole === 'USER' ? 'Admin' : 'Bạn')}
+            <View style={[s.replyBubble, isMe ? s.replyBubbleMe : s.replyBubbleOther]}>
+                <Text style={[s.replySender, isMe ? s.replySenderMe : s.replySenderOther]}>
+                    {msg.replyToSender || (msg.senderRole === "USER" ? "Admin" : "Bạn")}
                 </Text>
-                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                <View style={{ flexDirection: "row", alignItems: "center" }}>
                     {isImage && msg.replyToMediaUrl && (
-                        <Image 
-                            source={{ uri: `${BASE_URL}${msg.replyToMediaUrl}` }} 
-                            style={styles.replyThumb} 
-                        />
+                        <Image source={{ uri: `${BASE_URL}${msg.replyToMediaUrl}` }} style={s.replyThumb} />
                     )}
-                    <Text numberOfLines={1} style={styles.replyText}>
+                    <Text numberOfLines={1} style={[s.replyText, isMe ? s.replyTextMe : s.replyTextOther]}>
                         {isImage ? "[Hình ảnh]" : msg.replyToContent}
                     </Text>
                 </View>
@@ -411,16 +313,152 @@ const ChatScreen: React.FC = () => {
         );
     };
 
+    const renderMessage = ({ item, index }: { item: Message; index: number }) => {
+        const isMe     = item.senderRole === "USER";
+        const prev     = messages[index + 1];
+        const showDate = !prev || formatDateLabel(prev.createdAt) !== formatDateLabel(item.createdAt);
+        const reactionEmoji = REACTIONS.find(r => r.type === item.reaction)?.emoji;
+
+        return (
+            <View style={{ marginBottom: 6 }}>
+                {showDate && (
+                    <View style={s.dateLabelWrap}>
+                        <Text style={s.dateLabel}>{formatDateLabel(item.createdAt)}</Text>
+                    </View>
+                )}
+
+                <TouchableOpacity
+                    onPress={() => setShowTimeId(prev => prev === item.id ? null : item.id)}
+                    onLongPress={() => {
+                        if (item.senderRole !== "ADMIN") return;
+                        setSelectedMessage(item);
+                        setReactionModalVisible(true);
+                    }}
+                    activeOpacity={0.85}
+                >
+                    <View style={[s.msgWrapper, isMe ? s.msgWrapperMe : s.msgWrapperOther]}>
+                        {/* Reply preview */}
+                        {renderReplyContent(item)}
+
+                        {/* Book card */}
+                        {item.bookId && (
+                            <TouchableOpacity
+                                onPress={() => navigation.navigate("BookDetail", { id: item.bookId })}
+                                style={[s.productCard, { alignSelf: isMe ? "flex-end" : "flex-start" }]}
+                                activeOpacity={0.88}
+                            >
+                                <Image source={{ uri: item.bookImage }} style={s.productCardImg} />
+                                <View style={s.productCardInfo}>
+                                    <Text style={s.productCardTitle} numberOfLines={2}>{item.bookName}</Text>
+                                    <Text style={s.productCardPrice}>
+                                        {(item.bookPrice || item.totalPrice)
+                                            ? `${Number(item.bookPrice || item.totalPrice).toLocaleString("vi-VN")}đ`
+                                            : "Liên hệ"}
+                                    </Text>
+                                    <View style={s.productCardFooter}>
+                                        <Ionicons name="book-outline" size={11} color={C.text3} />
+                                        <Text style={s.productCardFooterText}> Xem chi tiết</Text>
+                                    </View>
+                                </View>
+                            </TouchableOpacity>
+                        )}
+
+                        {/* Order card */}
+                        {item.orderId && (
+                            <TouchableOpacity
+                                onPress={() => navigation.navigate("OrderDetail", { orderId: item.orderId })}
+                                style={[s.orderCard, { alignSelf: isMe ? "flex-end" : "flex-start" }]}
+                                activeOpacity={0.88}
+                            >
+                                <View style={s.orderCardHeader}>
+                                    <Ionicons name="receipt-outline" size={13} color={C.orange} />
+                                    <Text style={s.orderCardId}> Đơn #{item.orderId}</Text>
+                                    <View style={[s.orderStatusDot, { backgroundColor: item.orderStatus === "completed" ? "#4CAF50" : C.orange }]} />
+                                    <Text style={s.orderStatusText}>{item.orderStatus}</Text>
+                                </View>
+                                <View style={s.orderCardBody}>
+                                    {(item.image || item.bookImage) && (
+                                        <Image source={{ uri: item.image || item.bookImage }} style={s.orderCardImg} />
+                                    )}
+                                    <View style={{ flex: 1, marginLeft: 10 }}>
+                                        <Text style={s.orderCardItems}>{item.orderItemCount || 0} mặt hàng</Text>
+                                        <Text style={s.orderCardTotal}>
+                                            {Number(item.totalPrice).toLocaleString("vi-VN")}đ
+                                        </Text>
+                                    </View>
+                                </View>
+                            </TouchableOpacity>
+                        )}
+
+                        {/* Image */}
+                        {item.messageType === "IMAGE" && item.mediaUrl && (
+                            <Image
+                                source={{ uri: `${BASE_URL}${item.mediaUrl}` }}
+                                style={[s.msgImage, { alignSelf: isMe ? "flex-end" : "flex-start" }]}
+                                resizeMode="cover"
+                            />
+                        )}
+
+                        {/* Text bubble */}
+                        {item.content ? (
+                            <View style={[
+                                s.bubble,
+                                isMe ? s.bubbleMe : s.bubbleOther,
+                                { alignSelf: isMe ? "flex-end" : "flex-start" },
+                            ]}>
+                                <Text style={isMe ? s.bubbleTextMe : s.bubbleTextOther}>{item.content}</Text>
+                                {reactionEmoji && (
+                                    <View style={[s.reactionBadge, { [isMe ? "left" : "right"]: -8 }]}>
+                                        <Text style={{ fontSize: 11 }}>{reactionEmoji}</Text>
+                                    </View>
+                                )}
+                            </View>
+                        ) : (
+                            reactionEmoji && (
+                                <View style={[s.reactionBadgeImg, { alignSelf: isMe ? "flex-end" : "flex-start" }]}>
+                                    <Text style={{ fontSize: 11 }}>{reactionEmoji}</Text>
+                                </View>
+                            )
+                        )}
+
+                        {/* Timestamp */}
+                        {showTimeId === item.id && (
+                            <Text style={[s.timeLabel, { textAlign: isMe ? "right" : "left" }]}>
+                                {formatTime(item.createdAt)}
+                            </Text>
+                        )}
+                    </View>
+                </TouchableOpacity>
+            </View>
+        );
+    };
+
+    // ── Main render ───────────────────────────────────────────────────────────────
     return (
-        <SafeAreaView style={styles.container} edges={['top']}>
-            <View style={styles.header}><Text style={styles.title}>Tin nhắn</Text></View>
-            <View style={styles.tabContainer}>
-                <TouchableOpacity style={[styles.tab, activeTab === 'seller' && styles.activeTab]} onPress={() => setActiveTab('seller')}>
-                    <Text style={[styles.tabText, activeTab === 'seller' && styles.activeTabText]}>Người bán</Text>
+        <SafeAreaView style={s.root} edges={["top"]}>
+
+            {/* Header */}
+            <View style={s.header}>
+                <TouchableOpacity onPress={() => navigation.goBack()} style={s.backBtn}>
+                    <Ionicons name="chevron-back" size={22} color={C.primary} />
                 </TouchableOpacity>
-                <TouchableOpacity style={[styles.tab, activeTab === 'ai' && styles.activeTab]} onPress={() => setActiveTab('ai')}>
-                    <Text style={[styles.tabText, activeTab === 'ai' && styles.activeTabText]}>Trợ lý AI</Text>
-                </TouchableOpacity>
+                <Text style={s.headerTitle}>Tin nhắn</Text>
+                <View style={{ width: 36 }} />
+            </View>
+
+            {/* Tabs */}
+            <View style={s.tabBar}>
+                {(["seller", "ai"] as const).map(tab => (
+                    <TouchableOpacity
+                        key={tab}
+                        style={[s.tabItem, activeTab === tab && s.tabItemActive]}
+                        onPress={() => setActiveTab(tab)}
+                    >
+                        <Text style={[s.tabText, activeTab === tab && s.tabTextActive]}>
+                            {tab === "seller" ? "Người bán" : "Trợ lý AI"}
+                        </Text>
+                    </TouchableOpacity>
+                ))}
             </View>
 
             <KeyboardAvoidingView
@@ -428,475 +466,292 @@ const ChatScreen: React.FC = () => {
                 style={{ flex: 1 }}
                 keyboardVerticalOffset={headerHeight + (Platform.OS === "ios" ? 0 : 20)}
             >
-                <View style={styles.content}>
-                    {activeTab === 'seller' ? (
-                        loading ? <ActivityIndicator size="large" color="#007AFF" style={{ flex: 1 }} /> : (
-                            <>
-                                {/* Banner sản phẩm đang trao đổi */}
-                                {previewItem && (
-                                    <View style={styles.productBanner}>
-                                        <View style={styles.bannerHeader}>
-                                            <Text style={styles.bannerHeaderText}>Bạn đang trao đổi với Người bán về mặt hàng này</Text>
-                                            {/* SỬA TẠI ĐÂY: Khi đóng banner thì set previewItem về null */}
-                                                <TouchableOpacity onPress={() => setPreviewItem(null)}>
-                                                    <Ionicons name="close" size={18} color="#999" />
-                                                </TouchableOpacity>
-                                        </View>
-
-                                        <View style={styles.bannerBody}>
-                                            <Image source={{ uri: previewItem.cover_image }} style={styles.bannerImg} />
-                                            <View style={styles.bannerInfo}>
-                                                <Text numberOfLines={1} style={styles.bannerTitle}>{previewItem.title}</Text>
-                                                <Text style={styles.bannerPrice}>{previewItem.price?.toLocaleString('vi-VN')}đ</Text>
-                                            </View>
-                                            <TouchableOpacity
-                                                style={styles.changeBtn}
-                                                onPress={() => navigation.goBack()}
-                                            >
-                                                <Text style={styles.changeBtnText}>Thay đổi</Text>
-                                            </TouchableOpacity>
-                                        </View>
-                                    </View>
-                                )}
-
-                                {/* Banner đơn hàng đang trao đổi */}
-                                {!!orderInfo && (
-                                    <View style={[styles.productBanner, { borderLeftColor: '#F57C00', borderLeftWidth: 4 }]}>
-                                        <View style={styles.bannerHeader}>
-                                            <Text style={[styles.bannerHeaderText, { color: '#F57C00' }]}>
-                                                Bạn đang hỏi về đơn hàng #{orderInfo.orderId}
-                                            </Text>
-                                            <TouchableOpacity onPress={() => setOrderInfo(null)}>
-                                                <Ionicons name="close" size={18} color="#999" />
-                                            </TouchableOpacity>
-                                        </View>
-
-                                        <View style={styles.bannerBody}> {/* Đã sửa s thành styles */}
-                                            <Image source={{ uri: orderInfo.image }} style={styles.bannerImg} />
-                                            <View style={styles.bannerInfo}>
-                                                <Text style={styles.bannerTitle}>Đơn hàng gồm {orderInfo.productCount} sản phẩm</Text>
-                                                <Text style={styles.bannerPrice}>Tổng: {orderInfo.totalPrice?.toLocaleString('vi-VN')}đ</Text>
-                                                <Text style={{ fontSize: 12, color: '#666' }}>Trạng thái: {orderInfo.status}</Text>
-                                            </View>
-                                            <TouchableOpacity
-                                                style={[styles.changeBtn, { backgroundColor: '#FFF3E0' }]}
-                                                onPress={() => navigation.goBack()}
-                                            >
-                                                <Text style={[styles.changeBtnText, { color: '#F57C00' }]}>Xem đơn</Text>
-                                            </TouchableOpacity>
-                                        </View>
-                                    </View>
-                                )}
-                                <FlatList
-                                    data={messages}
-                                    keyExtractor={(item, index) => item.id + "-" + index}
-                                    renderItem={({ item, index }) => {
-                                        const isMe = item.senderRole === "USER";
-                                        const prev = messages[index + 1];
-                                        const showDate = !prev || formatDateLabel(prev.createdAt) !== formatDateLabel(item.createdAt);
-
-                                        return (
-                                            <View key={item.id} style={{ marginBottom: 10 }}> {/* Thêm margin ở đây để các tin nhắn không dính nhau */}
-                                                {showDate && (
-                                                    <View style={{ alignItems: 'center', marginVertical: 15 }}>
-                                                        <Text style={styles.dateLabel}>{formatDateLabel(item.createdAt)}</Text>
-                                                    </View>
-                                                )}
-
-                                                <TouchableOpacity
-                                                    onPress={() => setShowTimeId(prev => prev === item.id ? null : item.id)}
-                                                    onLongPress={() => {
-                                                        // 1. Chặn tin nhắn của chính mình
-                                                            if (item.senderRole !== "ADMIN") return;
-                                                        setSelectedMessage(item);
-                                                        setReactionModalVisible(true);
-                                                    }}
-                                                    activeOpacity={0.8}
-                                                >
-                                                    <View style={[styles.messageWrapper, isMe ? styles.myMsg : styles.otherMsg]}>
-                                                        {renderReplyContent(item)}
-
-                                                        {/* 1. CARD SẢN PHẨM */}
-                                                        {item.bookId && (
-                                                            <TouchableOpacity
-                                                                activeOpacity={0.9}
-                                                                onPress={() => navigation.navigate("BookDetail", { id: item.bookId })}
-                                                                style={{ alignSelf: isMe ? 'flex-end' : 'flex-start', marginBottom: 6 }}
-                                                            >
-                                                                <View style={styles.productMessageCard}>
-                                                                    <Image source={{ uri: item.bookImage }} style={styles.productMsgImg} />
-                                                                    <View style={styles.productMsgInfo}>
-                                                                        <Text style={styles.productMsgTitle}>{item.bookName}</Text>
-                                                                        <Text style={styles.productMsgPrice}>
-                                                                            {item.bookPrice || item.totalPrice
-                                                                                ? `${Number(item.bookPrice || item.totalPrice).toLocaleString('vi-VN')}đ`
-                                                                                : "Liên hệ"}
-                                                                        </Text>
-                                                                    </View>
-                                                                </View>
-                                                            </TouchableOpacity>
-                                                        )}
-
-                                                        {item.orderId && (
-                                                            <TouchableOpacity
-                                                                activeOpacity={0.9}
-                                                                onPress={() => navigation.navigate("OrderDetail", { orderId: item.orderId })}
-                                                                style={{ alignSelf: isMe ? 'flex-end' : 'flex-start', marginBottom: 6 }}
-                                                            >
-                                                                <View style={[styles.productMessageCard, { borderLeftColor: '#F57C00', borderLeftWidth: 4 }]}>
-                                                                    <Image
-                                                                        source={{ uri: item.image || item.bookImage }}
-                                                                        style={styles.productMsgImg}
-                                                                    />
-                                                                    <View style={styles.productMsgInfo}>
-                                                                        <Text style={[styles.productMsgTitle, { color: '#F57C00' }]}>
-                                                                            Đơn hàng #{item.orderId}
-                                                                        </Text>
-
-                                                                        {/* Dòng hiển thị số lượng mặt hàng nè */}
-                                                                        <Text style={{ fontSize: 12, color: '#666', fontWeight: '500' }}>
-                                                                            Số lượng: {item.orderItemCount || 0} mặt hàng
-                                                                        </Text>
-
-                                                                        <Text style={styles.productMsgPrice}>
-                                                                            Tổng: {Number(item.totalPrice).toLocaleString('vi-VN')}đ
-                                                                        </Text>
-
-                                                                        <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 2 }}>
-                                                                            <Ionicons name="ellipse" size={8} color={item.orderStatus === 'completed' ? '#4CAF50' : '#F57C00'} />
-                                                                            <Text style={{ fontSize: 11, color: '#888', marginLeft: 4 }}>
-                                                                                {item.orderStatus}
-                                                                            </Text>
-                                                                        </View>
-                                                                    </View>
-                                                                </View>
-                                                            </TouchableOpacity>
-                                                        )}
-
-                                                        {/* 2. HÌNH ẢNH */}
-                                                        {item.messageType === 'IMAGE' && item.mediaUrl && (
-                                                            <Image
-                                                                source={{ uri: `${BASE_URL}${item.mediaUrl}` }}
-                                                                style={[styles.messageImage, { alignSelf: isMe ? 'flex-end' : 'flex-start', marginBottom: 4 }]}
-                                                                resizeMode="cover"
-                                                            />
-                                                        )}
-
-                                                        {/* 3. BUBBLE VĂN BẢN (CHỈ RENDER 1 LẦN) */}
-                                                        {item.content ? (
-                                                            <View style={[
-                                                                styles.messageBubble,
-                                                                isMe ? styles.myBubble : styles.otherBubble,
-                                                                {
-                                                                    alignSelf: isMe ? 'flex-end' : 'flex-start',
-                                                                    marginTop: (item.bookId || item.mediaUrl) ? 2 : 0
-                                                                }
-                                                            ]}>
-                                                                <Text style={isMe ? styles.myText : styles.otherText}>
-                                                                    {item.content}
-                                                                </Text>
-
-                                                                {/* REACTION CHO TIN NHẮN CÓ CHỮ */}
-                                                                {item.reaction && (
-                                                                    <View style={[
-                                                                        styles.reactionOutside,
-                                                                        { [isMe ? 'left' : 'right']: -10, bottom: -5 }
-                                                                    ]}>
-                                                                        <Text style={{ fontSize: 12 }}>
-                                                                            {REACTIONS.find(r => r.type === item.reaction)?.emoji}
-                                                                        </Text>
-                                                                    </View>
-                                                                )}
-                                                            </View>
-                                                        ) : (
-                                                            /* REACTION CHO TIN NHẮN CHỈ CÓ ẢNH/CARD */
-                                                            item.reaction && (
-                                                                <View style={[
-                                                                    styles.reactionOutside,
-                                                                    { alignSelf: isMe ? 'flex-end' : 'flex-start', [isMe ? 'marginRight' : 'marginLeft']: 5 }
-                                                                ]}>
-                                                                    <Text style={{ fontSize: 12 }}>
-                                                                        {REACTIONS.find(r => r.type === item.reaction)?.emoji}
-                                                                    </Text>
-                                                                </View>
-                                                            )
-                                                        )}
-                                                    {/* --- THÊM PHẦN NÀY VÀO ĐỂ HIỆN GIỜ KHI NHẤN --- */}
-                                                    {showTimeId === item.id && (
-                                                        <View style={{
-                                                            alignSelf: isMe ? 'flex-end' : 'flex-start',
-                                                            marginTop: 4,
-                                                            marginHorizontal: 12
-                                                        }}>
-                                                            <Text style={{ fontSize: 10, color: '#999' }}>
-                                                                {formatTime(item.createdAt)}
-                                                            </Text>
-                                                        </View>
-                                                    )}
-                                                    </View>
+                <View style={s.chatArea}>
+                    {activeTab === "seller" ? (
+                        loading
+                            ? <ActivityIndicator size="large" color={C.mid} style={{ flex: 1 }} />
+                            : (
+                                <>
+                                    {/* Product banner */}
+                                    {previewItem && (
+                                        <View style={s.banner}>
+                                            <View style={s.bannerRow}>
+                                                <Ionicons name="information-circle-outline" size={14} color={C.mid} />
+                                                <Text style={s.bannerLabel}> Đang trao đổi về sản phẩm này</Text>
+                                                <TouchableOpacity onPress={() => setPreviewItem(null)} hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}>
+                                                    <Ionicons name="close" size={16} color={C.text3} />
                                                 </TouchableOpacity>
                                             </View>
-                                        );
-                                    }}
+                                            <View style={s.bannerBody}>
+                                                <Image source={{ uri: previewItem.cover_image }} style={s.bannerImg} />
+                                                <View style={{ flex: 1, marginLeft: 10 }}>
+                                                    <Text numberOfLines={1} style={s.bannerTitle}>{previewItem.title}</Text>
+                                                    <Text style={s.bannerPrice}>{previewItem.price?.toLocaleString("vi-VN")}đ</Text>
+                                                </View>
+                                                <TouchableOpacity style={s.bannerBtn} onPress={() => navigation.goBack()}>
+                                                    <Text style={s.bannerBtnText}>Đổi</Text>
+                                                </TouchableOpacity>
+                                            </View>
+                                        </View>
+                                    )}
 
-                                    inverted
-                                    onEndReached={() => {
-                                        if (!loadingMore && hasMore && messages.length >= 20) loadHistory(page + 1);
-                                    }}
-                                    onEndReachedThreshold={0.1}
-                                    contentContainerStyle={{ padding: 16 }}
-                                />
-                                <View>
+                                    {/* Order banner */}
+                                    {!!orderInfo && (
+                                        <View style={[s.banner, s.bannerOrange]}>
+                                            <View style={s.bannerRow}>
+                                                <Ionicons name="receipt-outline" size={14} color={C.orange} />
+                                                <Text style={[s.bannerLabel, { color: C.orange }]}> Hỏi về đơn #{orderInfo.orderId}</Text>
+                                                <TouchableOpacity onPress={() => setOrderInfo(null)} hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}>
+                                                    <Ionicons name="close" size={16} color={C.text3} />
+                                                </TouchableOpacity>
+                                            </View>
+                                            <View style={s.bannerBody}>
+                                                {orderInfo.image && <Image source={{ uri: orderInfo.image }} style={s.bannerImg} />}
+                                                <View style={{ flex: 1, marginLeft: 10 }}>
+                                                    <Text style={s.bannerTitle}>{orderInfo.productCount} sản phẩm</Text>
+                                                    <Text style={s.bannerPrice}>{orderInfo.totalPrice?.toLocaleString("vi-VN")}đ</Text>
+                                                </View>
+                                                <TouchableOpacity style={[s.bannerBtn, s.bannerBtnOrange]} onPress={() => navigation.goBack()}>
+                                                    <Text style={[s.bannerBtnText, { color: C.orange }]}>Xem</Text>
+                                                </TouchableOpacity>
+                                            </View>
+                                        </View>
+                                    )}
+
+                                    {/* Messages */}
+                                    <FlatList
+                                        data={messages}
+                                        keyExtractor={(item, idx) => `${item.id}-${idx}`}
+                                        renderItem={renderMessage}
+                                        inverted
+                                        onEndReached={() => {
+                                            if (!loadingMore && hasMore && messages.length >= 20) loadHistory(page + 1);
+                                        }}
+                                        onEndReachedThreshold={0.1}
+                                        contentContainerStyle={{ paddingHorizontal: 14, paddingVertical: 12 }}
+                                        ListFooterComponent={loadingMore ? <ActivityIndicator size="small" color={C.mid} style={{ padding: 10 }} /> : null}
+                                    />
+
+                                    {/* Reply preview bar */}
                                     {replyMessage && (
-                                        <View style={styles.replyPreviewBar}>
-                                            <View style={{ flex: 1 }}>
-                                                <Text style={styles.replyPreviewHeader}>Đang trả lời {replyMessage.senderRole === 'ADMIN' ? 'Admin' : 'Bạn'}</Text>
-                                                <Text numberOfLines={1} style={styles.replyPreviewText}>
-                                                    {replyMessage.messageType === 'IMAGE' ? "[Hình ảnh]" : replyMessage.content}
+                                        <View style={s.replyBar}>
+                                            <View style={s.replyBarAccent} />
+                                            <View style={{ flex: 1, marginLeft: 10 }}>
+                                                <Text style={s.replyBarHeader}>
+                                                    Trả lời {replyMessage.senderRole === "ADMIN" ? "Admin" : "Bạn"}
+                                                </Text>
+                                                <Text numberOfLines={1} style={s.replyBarText}>
+                                                    {replyMessage.messageType === "IMAGE" ? "[Hình ảnh]" : replyMessage.content}
                                                 </Text>
                                             </View>
-                                            {replyMessage.messageType === 'IMAGE' && (
-                                                <Image source={{ uri: `${BASE_URL}${replyMessage.mediaUrl}` }} style={styles.replyPreviewThumb} />
+                                            {replyMessage.messageType === "IMAGE" && (
+                                                <Image source={{ uri: `${BASE_URL}${replyMessage.mediaUrl}` }} style={s.replyBarThumb} />
                                             )}
-                                            <TouchableOpacity onPress={() => setReplyMessage(null)}>
-                                                <Ionicons name="close-circle" size={20} color="red" />
+                                            <TouchableOpacity onPress={() => setReplyMessage(null)} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+                                                <Ionicons name="close-circle" size={20} color={C.text3} />
                                             </TouchableOpacity>
                                         </View>
                                     )}
-                                    <View style={styles.inputArea}>
-                                        <TouchableOpacity onPress={pickImage} style={{ marginRight: 10 }}>
-                                            <Ionicons name="image-outline" size={28} color="#007AFF" />
+
+                                    {/* Input area */}
+                                    <View style={s.inputArea}>
+                                        <TouchableOpacity onPress={pickImage} style={s.inputIconBtn}>
+                                            <Ionicons name="image-outline" size={24} color={C.mid} />
                                         </TouchableOpacity>
-                                        <TextInput style={styles.input} placeholder="Nhập tin nhắn..." value={inputText} onChangeText={setInputText} />
-                                        <TouchableOpacity onPress={sendMessage}>
-                                            <Ionicons name="send" size={24} color="#007AFF" />
+                                        <TextInput
+                                            style={s.input}
+                                            placeholder="Nhập tin nhắn..."
+                                            placeholderTextColor={C.text3}
+                                            value={inputText}
+                                            onChangeText={setInputText}
+                                            multiline
+                                        />
+                                        <TouchableOpacity
+                                            onPress={sendMessage}
+                                            style={[s.sendBtn, !inputText.trim() && s.sendBtnDisabled]}
+                                            disabled={!inputText.trim()}
+                                        >
+                                            <Ionicons name="send" size={18} color="#FFF" />
                                         </TouchableOpacity>
                                     </View>
-                                </View>
-                            </>
-                        )
+                                </>
+                            )
                     ) : (
-                        <View style={styles.emptyBox}><Text>Giao diện AI đang cập nhật...</Text></View>
+                        <View style={s.emptyBox}>
+                            <Ionicons name="sparkles-outline" size={48} color={C.tint} />
+                            <Text style={s.emptyText}>Giao diện AI đang cập nhật...</Text>
+                        </View>
                     )}
                 </View>
             </KeyboardAvoidingView>
+
+            {/* Reaction modal */}
             <Modal visible={reactionModalVisible} transparent animationType="fade">
-                <View style={styles.modalOverlay}>
-                    <View style={styles.modalBox}>
-                        <Text style={{ fontWeight: "bold", marginBottom: 10 }}>Chọn cảm xúc</Text>
-                        <View style={{ flexDirection: "row" }}>
-                            {REACTIONS.map((item) => (
-                                <TouchableOpacity key={item.type} onPress={() => sendReaction(item.type)} style={styles.reactionItem}>
-                                    <Text style={{ fontSize: 22 }}>{item.emoji}</Text>
+                <TouchableOpacity
+                    style={s.modalOverlay}
+                    activeOpacity={1}
+                    onPress={() => { setReactionModalVisible(false); setSelectedMessage(null); }}
+                >
+                    <View style={s.modalBox}>
+                        <Text style={s.modalTitle}>Cảm xúc</Text>
+                        <View style={s.reactionsRow}>
+                            {REACTIONS.map(item => (
+                                <TouchableOpacity key={item.type} onPress={() => sendReaction(item.type)} style={s.reactionItem}>
+                                    <Text style={{ fontSize: 26 }}>{item.emoji}</Text>
                                 </TouchableOpacity>
                             ))}
                         </View>
-                        <View style={{ marginTop: 15, width: "100%" }}>
-                            <TouchableOpacity onPress={() => { setReplyMessage(selectedMessage); setReactionModalVisible(false); setSelectedMessage(null); }} style={styles.modalButton}>
-                                <Text style={{ color: "#007AFF", fontWeight: "600" }}>↩ Trả lời</Text>
-                            </TouchableOpacity>
-                            <TouchableOpacity onPress={() => { setReactionModalVisible(false); setSelectedMessage(null); }} style={styles.modalButton}>
-                                <Text style={{ color: "red" }}>Đóng</Text>
-                            </TouchableOpacity>
-                        </View>
+                        <View style={s.modalDivider} />
+                        <TouchableOpacity
+                            onPress={() => {
+                                setReplyMessage(selectedMessage);
+                                setReactionModalVisible(false);
+                                setSelectedMessage(null);
+                            }}
+                            style={s.modalAction}
+                        >
+                            <Ionicons name="return-down-back-outline" size={16} color={C.mid} />
+                            <Text style={s.modalActionText}> Trả lời</Text>
+                        </TouchableOpacity>
                     </View>
-                </View>
+                </TouchableOpacity>
             </Modal>
         </SafeAreaView>
     );
 };
 
-const styles = StyleSheet.create({
-    container: { flex: 1, backgroundColor: "#FFF" },
-    header: { padding: 16 },
-    title: { fontSize: 22, fontWeight: "800" },
-    tabContainer: { flexDirection: "row", paddingHorizontal: 16, borderBottomWidth: 1, borderColor: "#EEE" },
-    tab: { marginRight: 24, paddingVertical: 12 },
-    activeTab: { borderBottomColor: "#007AFF", borderBottomWidth: 2 },
-    tabText: { fontSize: 16, color: "#888" },
-    activeTabText: { color: "#007AFF", fontWeight: "600" },
-    content: { flex: 1, backgroundColor: "#F5F7FB" },
-    messageWrapper: { marginBottom: 12, maxWidth: '80%', position: "relative" },
-    myMsg: { alignSelf: 'flex-end' },
-    otherMsg: { alignSelf: 'flex-start' },
-    messageBubble: { padding: 12, borderRadius: 18 },
-    myBubble: { backgroundColor: '#007AFF' },
-    otherBubble: { backgroundColor: '#FFF' },
-    myText: { color: '#FFF' },
-    otherText: { color: '#333' },
-    inputArea: { flexDirection: 'row', padding: 12, backgroundColor: '#FFF', alignItems: 'center', borderTopWidth: 1, borderTopColor: '#EEE' },
-    input: { flex: 1, backgroundColor: '#F0F2F5', borderRadius: 24, paddingHorizontal: 16, height: 40, marginRight: 10 },
-    emptyBox: { flex: 1, justifyContent: "center", alignItems: "center" },
-    modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'center', alignItems: 'center' },
-    modalBox: { backgroundColor: '#FFF', padding: 20, borderRadius: 12, alignItems: 'center', width: 350 },
-    reactionOutside: { position: 'absolute', bottom: -12, backgroundColor: '#FFF', borderRadius: 12, paddingHorizontal: 6, paddingVertical: 2, borderWidth: 1, borderColor: '#EEE', elevation: 3 },
-    dateLabel: { fontSize: 12, color: '#666', backgroundColor: '#EAEAEA', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 10 },
-    messageImage: { width: 200, height: 200, borderRadius: 12 },
-    replyBubble: { backgroundColor: 'rgba(0,0,0,0.05)', borderRadius: 10, padding: 8, marginBottom: 4, borderLeftWidth: 3, borderLeftColor: '#007AFF' },
-    replySender: { fontSize: 11, fontWeight: 'bold', color: '#007AFF', marginBottom: 2 },
-    replyText: { fontSize: 12, color: '#666', flexShrink: 1 },
-    replyThumb: { width: 30, height: 30, borderRadius: 4, marginRight: 6 },
-    replyPreviewBar: { backgroundColor: '#F0F2F5', padding: 10, flexDirection: 'row', alignItems: 'center', borderTopWidth: 1, borderTopColor: '#EEE' },
-    replyPreviewHeader: { fontSize: 11, fontWeight: 'bold', color: '#007AFF' },
-    replyPreviewText: { fontSize: 12, color: '#666' },
-    replyPreviewThumb: { width: 40, height: 40, borderRadius: 4, marginRight: 10 },
-    reactionItem: { marginHorizontal: 6, padding: 8 },
-    modalButton: { paddingVertical: 10, alignItems: "center", width: '100%'},
+// ─── Styles ───────────────────────────────────────────────────────────────────
+const s = StyleSheet.create({
+    root:         { flex: 1, backgroundColor: C.surface },
 
-    productBanner: {
-        backgroundColor: '#fff',
-        padding: 12,
-        margin: 10,
-        borderRadius: 15,
-        // shadow cho nổi bật
-        elevation: 3,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.1,
-      },
-      bannerHeader: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        marginBottom: 8,
-      },
-      bannerHeaderText: {
-        fontSize: 12,
-        color: '#888',
-      },
-      bannerBody: {
-        flexDirection: 'row',
-        alignItems: 'center',
-      },
-      bannerImg: {
-        width: 50,
-        height: 50,
-        borderRadius: 8,
-      },
-      bannerInfo: {
-        flex: 1,
-        marginLeft: 10,
-      },
-      bannerTitle: {
-        fontSize: 14,
-        fontWeight: '500',
-        color: '#333',
-      },
-      bannerPrice: {
-        fontSize: 14,
-        color: '#ee4d2d',
-        fontWeight: 'bold',
-      },
-      changeBtn: {
-        borderWidth: 1,
-        borderColor: '#ddd',
-        paddingHorizontal: 10,
-        paddingVertical: 5,
-        borderRadius: 5,
-      },
-      changeBtnText: {
-        fontSize: 13,
-        color: '#333',
-      },
-    productMessageCard: {
-        flexDirection: 'row',
-        backgroundColor: '#fff',
-        borderRadius: 12,
-        padding: 12, // Tăng padding cho thoáng
-        width: 280,  // Tăng chiều rộng banner (trước có thể là 220-240)
-        minHeight: 100, // Tăng chiều cao tối thiểu
-        borderWidth: 1,
-        borderColor: '#E8E8E8',
-        alignItems: 'flex-start',
-        // Đổ bóng cho giống hình mẫu bạn gửi
-        shadowColor: "#000",
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.1,
-        shadowRadius: 4,
-        elevation: 3,
-    },
-    productMsgImg: {
-        width: 80,  // Chỉnh ảnh bự ra (từ 50 lên 80)
-        height: 100, // Tăng chiều cao ảnh cho cân đối với sách
-        borderRadius: 4,
-        backgroundColor: '#f9f9f9',
-    },
-    productMsgInfo: {
-        flex: 1,
-        marginLeft: 12,
-        justifyContent: 'center',
-    },
-    productMsgTitle: {
-        fontSize: 15,
-        fontWeight: '600',
-        color: '#333',
-        lineHeight: 20, // Khoảng cách dòng để đọc tên sách dễ hơn
-        marginBottom: 8,
-        // Không để numberOfLines ở đây để nó hiện hết tên
-    },
-    productMsgPrice: {
-        fontSize: 16,
-        color: '#ee4d2d', // Màu cam đỏ đặc trưng giá tiền
-        fontWeight: '700',
-    },
+    // Header
+    header:       { flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingHorizontal: 14, paddingVertical: 12, backgroundColor: C.surface, borderBottomWidth: 0.5, borderBottomColor: C.border },
+    backBtn:      { width: 36, height: 36, borderRadius: 18, backgroundColor: C.soft, alignItems: "center", justifyContent: "center" },
+    headerTitle:  { fontSize: 17, fontWeight: "800", color: C.text1 },
 
-    // Thêm vào trong StyleSheet.create của ChatScreen.tsx
-    productBanner: {
-        backgroundColor: "#FFF",
+    // Tabs
+    tabBar:       { flexDirection: "row", paddingHorizontal: 16, backgroundColor: C.surface, borderBottomWidth: 0.5, borderBottomColor: C.border },
+    tabItem:      { marginRight: 24, paddingVertical: 12 },
+    tabItemActive:{ borderBottomWidth: 2.5, borderBottomColor: C.mid },
+    tabText:      { fontSize: 15, color: C.text3, fontWeight: "600" },
+    tabTextActive:{ color: C.mid, fontWeight: "700" },
+
+    // Chat area
+    chatArea:     { flex: 1, backgroundColor: C.bg },
+
+    // Banners
+    banner: {
+        backgroundColor: C.surface,
+        marginHorizontal: 12, marginTop: 10,
+        borderRadius: 14,
         padding: 12,
-        borderBottomWidth: 1,
-        borderBottomColor: "#EEE",
-        flexDirection: "column",
+        borderWidth: 1, borderColor: C.tint,
+        borderLeftWidth: 3, borderLeftColor: C.mid,
     },
-    bannerHeader: {
+    bannerOrange: { borderColor: "#FFE0B2", borderLeftColor: C.orange },
+    bannerRow:    { flexDirection: "row", alignItems: "center", marginBottom: 8 },
+    bannerLabel:  { flex: 1, fontSize: 12, fontWeight: "700", color: C.mid },
+    bannerBody:   { flexDirection: "row", alignItems: "center" },
+    bannerImg:    { width: 44, height: 56, borderRadius: 8, backgroundColor: C.soft },
+    bannerTitle:  { fontSize: 13, fontWeight: "700", color: C.text1, marginBottom: 2 },
+    bannerPrice:  { fontSize: 13, fontWeight: "700", color: C.red },
+    bannerBtn:    { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 10, backgroundColor: C.soft, borderWidth: 1, borderColor: C.tint },
+    bannerBtnOrange: { backgroundColor: "#FFF3E0", borderColor: "#FFE0B2" },
+    bannerBtnText:   { fontSize: 12, fontWeight: "700", color: C.mid },
+
+    // Messages
+    msgWrapper:      { maxWidth: "78%" },
+    msgWrapperMe:    { alignSelf: "flex-end" },
+    msgWrapperOther: { alignSelf: "flex-start" },
+
+    bubble:        { paddingHorizontal: 14, paddingVertical: 10, borderRadius: 18, marginTop: 2, position: "relative" },
+    bubbleMe:      { backgroundColor: C.msgMe, borderBottomRightRadius: 4 },
+    bubbleOther:   { backgroundColor: C.msgOther, borderBottomLeftRadius: 4, borderWidth: 0.5, borderColor: C.border },
+    bubbleTextMe:  { color: "#FFF", fontSize: 14.5, lineHeight: 20 },
+    bubbleTextOther: { color: C.text1, fontSize: 14.5, lineHeight: 20 },
+
+    msgImage: { width: 200, height: 200, borderRadius: 14, marginTop: 2 },
+
+    // Reply bubbles
+    replyBubble:      { borderRadius: 10, padding: 8, marginBottom: 4, borderLeftWidth: 3 },
+    replyBubbleMe:    { backgroundColor: "rgba(255,255,255,0.15)", borderLeftColor: "rgba(255,255,255,0.6)" },
+    replyBubbleOther: { backgroundColor: C.soft, borderLeftColor: C.mid },
+    replySender:      { fontSize: 11, fontWeight: "700", marginBottom: 2 },
+    replySenderMe:    { color: "rgba(255,255,255,0.9)" },
+    replySenderOther: { color: C.mid },
+    replyText:        { fontSize: 12, flexShrink: 1 },
+    replyTextMe:      { color: "rgba(255,255,255,0.8)" },
+    replyTextOther:   { color: C.text2 },
+    replyThumb:       { width: 28, height: 28, borderRadius: 4, marginRight: 6 },
+
+    // Reaction badges
+    reactionBadge:    { position: "absolute", bottom: -10, backgroundColor: "#FFF", borderRadius: 10, paddingHorizontal: 5, paddingVertical: 2, borderWidth: 0.5, borderColor: C.border, elevation: 2 },
+    reactionBadgeImg: { backgroundColor: "#FFF", borderRadius: 10, paddingHorizontal: 5, paddingVertical: 2, borderWidth: 0.5, borderColor: C.border, elevation: 2, marginTop: 4 },
+
+    // Timestamp
+    timeLabel: { fontSize: 10, color: C.text3, marginTop: 4, marginHorizontal: 4 },
+
+    // Date label
+    dateLabelWrap: { alignItems: "center", marginVertical: 12 },
+    dateLabel:     { fontSize: 11.5, color: C.text3, backgroundColor: "#E8EFF9", paddingHorizontal: 12, paddingVertical: 4, borderRadius: 99, fontWeight: "600" },
+
+    // Product card in message
+    productCard: {
+        backgroundColor: C.surface, borderRadius: 14, overflow: "hidden",
+        width: 260, marginTop: 2, borderWidth: 1, borderColor: C.border,
         flexDirection: "row",
-        justifyContent: "space-between",
-        alignItems: "center",
-        marginBottom: 8,
+        shadowColor: C.primary, shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.08, shadowRadius: 8, elevation: 3,
     },
-    bannerHeaderText: {
-        fontSize: 12,
-        fontWeight: "600",
-        color: "#007AFF",
+    productCardImg:        { width: 72, height: 96, backgroundColor: C.soft },
+    productCardInfo:       { flex: 1, padding: 10, justifyContent: "space-between" },
+    productCardTitle:      { fontSize: 13, fontWeight: "700", color: C.text1, lineHeight: 18 },
+    productCardPrice:      { fontSize: 14, fontWeight: "800", color: C.red },
+    productCardFooter:     { flexDirection: "row", alignItems: "center" },
+    productCardFooterText: { fontSize: 11, color: C.text3 },
+
+    // Order card in message
+    orderCard: {
+        backgroundColor: C.surface, borderRadius: 14, overflow: "hidden",
+        width: 260, marginTop: 2, borderWidth: 1, borderColor: "#FFE0B2",
+        borderLeftWidth: 3, borderLeftColor: C.orange,
+        shadowColor: C.orange, shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 8, elevation: 3,
     },
-    bannerBody: {
-        flexDirection: "row",
-        alignItems: "center",
-    },
-    bannerImg: {
-        width: 50,
-        height: 50,
-        borderRadius: 8,
-        backgroundColor: "#F0F0F0",
-    },
-    bannerInfo: {
-        flex: 1,
-        marginLeft: 12,
-        justifyContent: "center",
-    },
-    bannerTitle: {
-        fontSize: 14,
-        fontWeight: "700",
-        color: "#333",
-        marginBottom: 2,
-    },
-    bannerPrice: {
-        fontSize: 13,
-        fontWeight: "600",
-        color: "#E53935", // Màu đỏ cho giá tiền
-    },
-    changeBtn: {
-        paddingHorizontal: 12,
-        paddingVertical: 6,
-        borderRadius: 15,
-        backgroundColor: "#F0F7FF",
-        borderWidth: 1,
-        borderColor: "#007AFF",
-    },
-    changeBtnText: {
-        fontSize: 12,
-        color: "#007AFF",
-        fontWeight: "600",
-    },
+    orderCardHeader:   { flexDirection: "row", alignItems: "center", paddingHorizontal: 12, paddingTop: 10, paddingBottom: 6 },
+    orderCardId:       { fontSize: 12, fontWeight: "700", color: C.orange, flex: 1 },
+    orderStatusDot:    { width: 7, height: 7, borderRadius: 3.5, marginRight: 4 },
+    orderStatusText:   { fontSize: 11, color: C.text2 },
+    orderCardBody:     { flexDirection: "row", alignItems: "center", paddingHorizontal: 12, paddingBottom: 10 },
+    orderCardImg:      { width: 44, height: 56, borderRadius: 8, backgroundColor: C.soft },
+    orderCardItems:    { fontSize: 12, color: C.text2, fontWeight: "600", marginBottom: 4 },
+    orderCardTotal:    { fontSize: 14, fontWeight: "800", color: C.red },
+
+    // Reply bar
+    replyBar:       { flexDirection: "row", alignItems: "center", backgroundColor: C.surface, paddingHorizontal: 14, paddingVertical: 10, borderTopWidth: 0.5, borderTopColor: C.border },
+    replyBarAccent: { width: 3, height: 36, backgroundColor: C.mid, borderRadius: 2 },
+    replyBarHeader: { fontSize: 11, fontWeight: "700", color: C.mid, marginBottom: 2 },
+    replyBarText:   { fontSize: 12, color: C.text2 },
+    replyBarThumb:  { width: 36, height: 36, borderRadius: 6, marginHorizontal: 8 },
+
+    // Input area
+    inputArea:       { flexDirection: "row", alignItems: "flex-end", paddingHorizontal: 12, paddingVertical: 10, backgroundColor: C.surface, borderTopWidth: 0.5, borderTopColor: C.border, gap: 8 },
+    inputIconBtn:    { width: 38, height: 38, borderRadius: 19, backgroundColor: C.soft, alignItems: "center", justifyContent: "center" },
+    input:           { flex: 1, backgroundColor: C.soft, borderRadius: 20, paddingHorizontal: 16, paddingVertical: 9, fontSize: 14.5, color: C.text1, maxHeight: 100, borderWidth: 1, borderColor: C.tint },
+    sendBtn:         { width: 38, height: 38, borderRadius: 19, backgroundColor: C.mid, alignItems: "center", justifyContent: "center" },
+    sendBtnDisabled: { backgroundColor: C.tint },
+
+    // Empty
+    emptyBox:  { flex: 1, justifyContent: "center", alignItems: "center", gap: 12 },
+    emptyText: { fontSize: 15, color: C.text3, fontWeight: "600" },
+
+    // Modal
+    modalOverlay: { flex: 1, backgroundColor: "rgba(0,0,0,0.45)", justifyContent: "center", alignItems: "center" },
+    modalBox:     { backgroundColor: C.surface, borderRadius: 20, padding: 20, alignItems: "center", width: 320 },
+    modalTitle:   { fontSize: 15, fontWeight: "800", color: C.text1, marginBottom: 14 },
+    reactionsRow: { flexDirection: "row", gap: 4 },
+    reactionItem: { padding: 8, borderRadius: 12 },
+    modalDivider: { height: 0.5, backgroundColor: C.border, width: "100%", marginVertical: 14 },
+    modalAction:  { flexDirection: "row", alignItems: "center", paddingVertical: 6 },
+    modalActionText: { fontSize: 14, fontWeight: "700", color: C.mid },
 });
 
 export default ChatScreen;

@@ -5,12 +5,33 @@ import CartScreen from "../screens/profile/CartScreen";   // thêm
 import NotificationScreen from "../screens/NotificationScreen"; // tự tạo
 import { Ionicons } from "@expo/vector-icons";
 import { useNotification } from "../contexts/NotificationContext";
-import { View, Text } from "react-native";
+import {View, Text, Alert} from "react-native";
+import { useAuth } from "../hooks/useAuth";
+
 
 const Tab = createBottomTabNavigator();
 
 export default function TabNavigator() {
     const { unreadCount } = useNotification();
+    const { user } = useAuth();
+
+    const requireLogin = (navigation: any, message: string) => {
+        if (user) return false;
+
+        Alert.alert(
+            "Yêu cầu đăng nhập",
+            message,
+            [
+                { text: "Để sau", style: "cancel" },
+                {
+                    text: "Đăng nhập",
+                    onPress: () => navigation.navigate("Login"),
+                },
+            ]
+        );
+
+        return true;
+    };
 
     return (
         <Tab.Navigator
@@ -40,6 +61,15 @@ export default function TabNavigator() {
             <Tab.Screen
                 name="CartTab"
                 component={CartScreen}
+                listeners={({ navigation }) => ({
+                    tabPress: (e) => {
+                        const blocked = requireLogin(
+                            navigation,
+                            "Bạn cần đăng nhập để xem giỏ hàng"
+                        );
+                        if (blocked) e.preventDefault();
+                    },
+                })}
                 options={{
                     tabBarLabel: "Giỏ hàng",
                     tabBarIcon: ({ color }) => (
@@ -52,13 +82,22 @@ export default function TabNavigator() {
             <Tab.Screen
                 name="NotifyTab"
                 component={NotificationScreen}
+                listeners={({ navigation }) => ({
+                    tabPress: (e) => {
+                        const blocked = requireLogin(
+                            navigation,
+                            "Bạn cần đăng nhập để xem thông báo"
+                        );
+                        if (blocked) e.preventDefault();
+                    },
+                })}
                 options={{
                     tabBarLabel: "Thông báo",
                     tabBarIcon: ({ color }) => (
                         <View style={{ width: 24, height: 24 }}>
                             <Ionicons name="notifications-outline" size={24} color={color} />
 
-                            {unreadCount > 0 && (
+                            {user && unreadCount > 0 && (
                                 <View
                                     style={{
                                         position: "absolute",
