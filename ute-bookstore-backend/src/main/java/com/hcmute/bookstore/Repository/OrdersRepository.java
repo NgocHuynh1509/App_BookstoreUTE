@@ -16,6 +16,8 @@ import java.util.List;
 public interface OrdersRepository extends JpaRepository<Orders, String> {
     List<Orders> findByCustomer_CustomerIdOrderByOrderDateDesc(String customerId);
 
+    List<Orders> findAllByOrderByOrderDateDesc(Pageable pageable);
+
     Page<Orders> findByStatusIgnoreCase(String status, Pageable pageable);
 
     java.util.Optional<Orders> findByOrderIdAndCustomer_CustomerId(String orderId, String customerId);
@@ -51,6 +53,22 @@ public interface OrdersRepository extends JpaRepository<Orders, String> {
             "from Orders o where o.orderDate >= ?1 and o.orderDate < ?2 " +
             "group by function('date', o.orderDate) order by function('date', o.orderDate)")
     java.util.List<Object[]> countOrdersByDay(Date from, Date to);
+
+    @Query("select function('date', o.orderDate), " +
+            "sum(case when lower(o.status) = 'cancelled' or lower(o.status) = 'canceled' then 1 else 0 end), " +
+            "count(o) " +
+            "from Orders o where o.orderDate >= ?1 and o.orderDate < ?2 " +
+            "group by function('date', o.orderDate) order by function('date', o.orderDate)")
+    java.util.List<Object[]> countCancelledAndTotalByDay(Date from, Date to);
+
+    @Query("select function('date', o.orderDate), count(distinct o.customer.customerId) " +
+            "from Orders o where o.orderDate >= ?1 and o.orderDate < ?2 and o.customer is not null " +
+            "group by function('date', o.orderDate) order by function('date', o.orderDate)")
+    java.util.List<Object[]> countDistinctCustomersByDay(Date from, Date to);
+
+    @Query("select o.customer.customerId, min(o.orderDate) " +
+            "from Orders o where o.customer is not null group by o.customer.customerId")
+    java.util.List<Object[]> findFirstOrderDateByCustomer();
 
     @Query("select function('date_format', o.orderDate, '%Y-%m'), count(o) " +
             "from Orders o where o.orderDate >= ?1 and o.orderDate < ?2 " +

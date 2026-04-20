@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:intl/intl.dart';
 
-import '../../../widgets/primary_button.dart';
+import '../../../widgets/admin/admin_button.dart';
+import '../../../widgets/admin/search_bar_widget.dart';
+import '../../../theme/admin_theme.dart';
 import '../data/product_models.dart';
 import 'product_detail_screen.dart';
 import 'product_state.dart';
@@ -121,8 +124,8 @@ class _ProductsScreenState extends ConsumerState<ProductsScreen> {
               ],
             ),
             const SizedBox(height: 16),
-            PrimaryButton(
-              text: 'Áp dụng',
+            AdminButton(
+              label: 'Áp dụng',
               onPressed: () => Navigator.pop(context, controller.text.trim()),
             ),
           ],
@@ -185,17 +188,11 @@ class _ProductsScreenState extends ConsumerState<ProductsScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Sản phẩm'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.add_circle_outline),
-            onPressed: () => _showProductForm(),
-          ),
-        ],
       ),
       body: Column(
         children: [
           Container(
-            color: Colors.white,
+            color: AdminColors.surface,
             padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -207,23 +204,52 @@ class _ProductsScreenState extends ConsumerState<ProductsScreen> {
                       ),
                 ),
                 const SizedBox(height: 10),
-                TextField(
-                  controller: _searchController,
-                  decoration: InputDecoration(
-                    hintText: 'Tìm theo tên, tác giả, ISBN...',
-                    prefixIcon: const Icon(Icons.search),
-                    suffixIcon: IconButton(
-                      icon: const Icon(Icons.send_rounded),
+                LayoutBuilder(
+                  builder: (context, constraints) {
+                    final isNarrow = constraints.maxWidth < 720;
+                    final searchBar = Expanded(
+                      child: SearchBarWidget(
+                        controller: _searchController,
+                        hintText: 'Tìm theo tên, tác giả, ISBN...',
+                        onChanged: (_) {},
+                      ),
+                    );
+                    final searchAction = IconButton(
                       onPressed: () {
                         ref
                             .read(productNotifierProvider.notifier)
                             .loadFirstPage(search: _searchController.text.trim());
                       },
-                    ),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(14),
-                    ),
-                  ),
+                      icon: const Icon(Icons.send_rounded, color: AdminColors.primary),
+                    );
+                    final addButton = AdminButton(
+                      label: 'Thêm sản phẩm',
+                      icon: Icons.add_rounded,
+                      expand: !isNarrow,
+                      onPressed: () => _showProductForm(),
+                    );
+
+                    if (isNarrow) {
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          Row(children: [searchBar, const SizedBox(width: 8), searchAction]),
+                          const SizedBox(height: 12),
+                          addButton,
+                        ],
+                      );
+                    }
+
+                    return Row(
+                      children: [
+                        searchBar,
+                        const SizedBox(width: 8),
+                        searchAction,
+                        const SizedBox(width: 12),
+                        SizedBox(width: 170, child: addButton),
+                      ],
+                    );
+                  },
                 ),
                 const SizedBox(height: 12),
                 Wrap(
@@ -343,7 +369,10 @@ class _ProductsScreenState extends ConsumerState<ProductsScreen> {
                                     .delete(item.bookId);
                               }
                             },
-                          );
+                          )
+                              .animate()
+                              .fadeIn(duration: 260.ms, delay: (index * 25).ms)
+                              .slideY(begin: 0.06, end: 0, duration: 260.ms, curve: Curves.easeOutCubic);
                         },
                       ),
               ),
@@ -410,12 +439,13 @@ class _ProductCard extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: AdminColors.surface,
           borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: AdminColors.border),
           boxShadow: [
             BoxShadow(
               color: Colors.black.withOpacity(0.04),
-              blurRadius: 10,
+              blurRadius: 12,
               offset: const Offset(0, 6),
             ),
           ],
@@ -700,8 +730,8 @@ class _ProductFormState extends ConsumerState<_ProductForm> {
               subtitle: const Text('Tắt để ẩn sản phẩm khỏi cửa hàng'),
             ),
             const SizedBox(height: 12),
-            PrimaryButton(
-              text: 'Lưu',
+            AdminButton(
+              label: 'Lưu',
               onPressed: () async {
                 if (!_formKey.currentState!.validate()) return;
                 final request = ProductRequest(
