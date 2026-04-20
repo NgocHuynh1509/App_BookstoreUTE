@@ -4,7 +4,7 @@ import {
   Alert, Image, Modal, SafeAreaView, ActivityIndicator,
   StatusBar, Platform, TextInput,
 } from 'react-native';
-import { useRoute, useNavigation } from '@react-navigation/native';
+import { useRoute, useNavigation, CommonActions } from '@react-navigation/native';
 import { Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import Constants from "expo-constants";
@@ -118,6 +118,20 @@ export default function CheckoutScreen() {
     specificAddress: '',
     isDefault: false
   });
+
+  const goHomeAndClearStack = () => {
+    navigation.dispatch(
+        CommonActions.reset({
+          index: 0,
+          routes: [
+            {
+              name: "MainTabs",
+              params: { screen: "HomeTab" },
+            },
+          ],
+        })
+    );
+  };
 
   // ─── 1. HÀM LƯU ĐỊA CHỈ (GỘP & TỐI ƯU) ──────────────────────────
     const handleAddNewAddress = async () => {
@@ -421,7 +435,7 @@ export default function CheckoutScreen() {
         } else {
           // Thanh toán COD thành công
           Alert.alert("✅ Thành công", "Đơn hàng của bạn đã được đặt thành công!", [
-              { text: "OK", onPress: () => navigation.navigate("MainTabs") }
+            { text: "OK", onPress: goHomeAndClearStack }
           ]);
         }
       } else {
@@ -1080,15 +1094,14 @@ export default function CheckoutScreen() {
 
                   setTimeout(() => {
                     if (responseCode === '00') {
-                      Alert.alert("✅ Thành công", "Đơn hàng đã thanh toán!");
-                      navigation.navigate("MainTabs");
+                      Alert.alert("✅ Thành công", "Đơn hàng đã thanh toán!", [
+                        { text: "OK", onPress: goHomeAndClearStack }
+                      ]);
                     } else {
-                      // Dùng cái ID vừa móc được từ URL nè má!
-                      console.log("🚀 Gọi update FAILED cho đơn:", orderIdFromUrl);
                       handleUpdateFailedStatus(orderIdFromUrl);
-
-                      Alert.alert("⚠️ Thông báo", "Giao dịch đã bị hủy.");
-                      navigation.navigate("MainTabs");
+                      Alert.alert("⚠️ Thông báo", "Giao dịch đã bị hủy.", [
+                        { text: "OK", onPress: goHomeAndClearStack }
+                      ]);
                     }
                   }, 500);
                 }

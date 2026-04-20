@@ -87,47 +87,6 @@ function RatingBar({ star, count, total }: any) {
   );
 }
 
-// function BottomBar({ quantity, onDecrease, onIncrease, onAddCart, onBuyNow, onChat, isOutOfStock }: any) {
-//   return (
-//     <View style={s.bottomBar}>
-//       {/* CHAT BUTTON */}
-//       <TouchableOpacity
-//           style={s.chatBtn}
-//           onPress={onChat}
-//           activeOpacity={0.85}
-//       >
-//         <Text style={{ fontSize: 18 }}>💬</Text>
-//         <Text style={s.chatBtnTxt}>Chat</Text>
-//       </TouchableOpacity>
-//
-//       {!isOutOfStock && (
-//         <View style={s.qtyWrap}>
-//           <TouchableOpacity onPress={onDecrease} style={s.qtyBtn}><Text style={s.qtyBtnTxt}>−</Text></TouchableOpacity>
-//           <Text style={s.qtyVal}>{quantity}</Text>
-//           <TouchableOpacity onPress={onIncrease} style={s.qtyBtn}><Text style={s.qtyBtnTxt}>+</Text></TouchableOpacity>
-//         </View>
-//       )}
-//       <TouchableOpacity
-//         style={[s.cartBtn, isOutOfStock && { backgroundColor: "#C5D4EA", flex: 1 }]}
-//         onPress={onAddCart} disabled={isOutOfStock} activeOpacity={0.85}
-//       >
-//         <Text style={{ fontSize: 20 }}>🛒</Text>
-//         <Text style={s.cartBtnTxt}>{isOutOfStock ? "Hết hàng" : "Thêm vào giỏ hàng"}</Text>
-//       </TouchableOpacity>
-//       <TouchableOpacity
-//           style={[s.buyNowBtn, isOutOfStock && { backgroundColor: "#D9D9D9" }]}
-//           onPress={onBuyNow}
-//           disabled={isOutOfStock}
-//           activeOpacity={0.85}
-//       >
-//         <Text style={s.buyNowBtnTxt}>
-//           {isOutOfStock ? "Hết hàng" : "Mua ngay"}
-//         </Text>
-//       </TouchableOpacity>
-//     </View>
-//   );
-// }
-
 function BottomBar({ onAddCart, onBuyNow, onChat, isOutOfStock }: any) {
   return (
       <View style={s.bottomBar}>
@@ -170,6 +129,23 @@ function avatarColor(name = "") { return AV_COLORS[(name.charCodeAt(0) || 0) % A
 
 export default function BookDetail() {
   const { user }     = useAuth();
+  const requireLogin = (message = "Vui lòng đăng nhập để tiếp tục") => {
+    if (user?.token) return true;
+
+    Alert.alert(
+        "Yêu cầu đăng nhập",
+        message,
+        [
+          { text: "Để sau", style: "cancel" },
+          {
+            text: "Đăng nhập",
+            onPress: () => navigation.navigate("Login"),
+          },
+        ]
+    );
+
+    return false;
+  };
   const route        = useRoute<any>();
   const navigation   = useNavigation<any>();
   const { id }       = route.params;
@@ -187,17 +163,18 @@ export default function BookDetail() {
   const headerOpacity = scrollY.interpolate({ inputRange: [180, 260], outputRange: [0, 1], extrapolate: "clamp" });
 
   const handleChat = () => {
+    if (!requireLogin("Bạn cần đăng nhập để nhắn tin với shop")) return;
+
     navigation.navigate("Chat", {
       sellerId: book?.seller_id,
       bookId: book?.id,
-      // Gửi thêm object sản phẩm để hiển thị banner
       productPreview: {
         id: book.id,
         title: book.title,
         price: book.price,
         cover_image: book.cover_image,
-        stock: book.stock
-      }
+        stock: book.stock,
+      },
     });
   };
 
@@ -260,13 +237,9 @@ export default function BookDetail() {
   }, [id, user?.token]);
 
   const toggleFavorite = async () => {
-    const token = await AsyncStorage.getItem("token");
+    if (!requireLogin("Bạn cần đăng nhập để thêm sản phẩm vào yêu thích")) return;
 
-    if (!token) {
-      Alert.alert("Thông báo", "Vui lòng đăng nhập để dùng wishlist");
-      navigation.navigate("Login");
-      return;
-    }
+    const token = await AsyncStorage.getItem("token");
 
     try {
       if (isFavorite) {
@@ -359,6 +332,8 @@ export default function BookDetail() {
 
 
   const handleAddToCart = () => {
+    if (!requireLogin("Bạn cần đăng nhập để thêm sản phẩm vào giỏ hàng")) return;
+
     if (!book || book.stock <= 0) {
       Alert.alert("Thông báo", "Sản phẩm hiện đã hết hàng.");
       return;
@@ -447,6 +422,8 @@ export default function BookDetail() {
   // };
 
   const handleBuyNow = () => {
+    if (!requireLogin("Bạn cần đăng nhập để mua hàng")) return;
+
     if (!book || book.stock <= 0) {
       Alert.alert("Thông báo", "Sản phẩm hiện đã hết hàng.");
       return;

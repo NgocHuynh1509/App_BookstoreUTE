@@ -11,9 +11,20 @@ import { Ionicons } from "@expo/vector-icons";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useNotification } from "../contexts/NotificationContext";
 import { Alert } from "react-native";
+import { useFocusEffect } from "@react-navigation/native";
+import { useCallback } from "react";
+
+
+
 
 const NotificationScreen: React.FC<any> = ({ navigation }) => {
     const { notifications, markAsRead, markAllAsRead, refresh } = useNotification();
+
+    useFocusEffect(
+        useCallback(() => {
+            refresh();
+        }, [])
+    );
 
     const handlePress = async (item: any) => {
         if (!item.isRead) {

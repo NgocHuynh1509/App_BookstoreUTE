@@ -7,13 +7,14 @@ import {
   StyleSheet,
   ScrollView,
   StatusBar,
-  Platform,
+  Platform, Alert,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
 import { useAuth } from "../../hooks/useAuth";
 import Constants from "expo-constants";
 import { useFocusEffect } from "@react-navigation/native";
+import { CommonActions } from "@react-navigation/native";
 import { RefreshControl } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
@@ -93,10 +94,11 @@ function MenuItem({
 // ─── MAIN ─────────────────────────────────────────────────────────────────────
 export default function ProfileScreen() {
   const navigation = useNavigation<any>();
-  const { user, loadUser, loadingUser, logout } = useAuth();
+  const {user, loadUser, loadingUser, logout} = useAuth();
   const [refreshing, setRefreshing] = useState(false);
   const [orderCount, setOrderCount] = useState(0);
   const [wishlistCount, setWishlistCount] = useState(0);
+
 
   console.log("USER DATA FROM CONTEXT:", user);
   console.log("AVATAR URL:", `${BASE_URL}/uploads/${user?.avatar}`);
@@ -109,10 +111,10 @@ export default function ProfileScreen() {
 
       const [orderRes, wishlistRes] = await Promise.all([
         fetch(`${BASE_URL}/api/orders/user/${user.id}`, {
-          headers: { Authorization: `Bearer ${token}` },
+          headers: {Authorization: `Bearer ${token}`},
         }),
         fetch(`${BASE_URL}/wishlist`, {
-          headers: { Authorization: `Bearer ${token}` },
+          headers: {Authorization: `Bearer ${token}`},
         }),
       ]);
 
@@ -125,6 +127,21 @@ export default function ProfileScreen() {
       console.error("Lỗi load counts:", error);
       setOrderCount(0);
       setWishlistCount(0);
+    }
+  };
+
+  const handleLogout = async () => {
+    try {
+      await logout();
+
+      navigation.dispatch(
+          CommonActions.reset({
+            index: 0,
+            routes: [{name: "Welcome"}],
+          })
+      );
+    } catch (error) {
+      console.log("LOGOUT ERROR:", error);
     }
   };
 
@@ -151,165 +168,206 @@ export default function ProfileScreen() {
   );
 
   const avatarUri = user?.avatar
-    ? `${BASE_URL}/uploads/${user.avatar}`
-    : "https://cdn-icons-png.flaticon.com/512/149/149071.png";
+      ? `${BASE_URL}/uploads/${user.avatar}`
+      : "https://cdn-icons-png.flaticon.com/512/149/149071.png";
 
-  return (
-    <View style={styles.container}>
-      <StatusBar barStyle="light-content" backgroundColor={C.primary} />
+  if (!user) {
+    return (
+        <View style={styles.container}>
+          <StatusBar barStyle="light-content" backgroundColor={C.primary}/>
 
-      <ScrollView
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ paddingBottom: 40 }}
-        refreshControl={
-          <RefreshControl
-            refreshing={refreshing}
-            onRefresh={onRefresh}
-            colors={[C.primaryMid]}
-            tintColor={C.primaryMid}
-          />
-        }
-      >
-        {/* ── HEADER HERO ──────────────────────────────────────────── */}
-        <View style={styles.hero}>
-          {/* decorative circles */}
-          <View style={styles.heroBubble1} />
-          <View style={styles.heroBubble2} />
-          <View style={styles.heroBubble3} />
+          <View style={styles.guestWrap}>
+            <Ionicons name="person-circle-outline" size={100} color={C.primaryMid}/>
 
-          <View style={styles.heroTop}>
-            <Text style={styles.heroTitle}>Tài khoản</Text>
-            <TouchableOpacity style={styles.bellBtn}>
-              <Ionicons name="notifications-outline" size={22} color="#FFF" />
+            <Text style={styles.guestTitle}>Bạn chưa đăng nhập</Text>
+            <Text style={styles.guestSub}>
+              Đăng nhập để xem đơn hàng, thông báo và nhiều hơn nữa
+            </Text>
+
+            <TouchableOpacity
+                style={styles.loginBtn}
+                onPress={() => navigation.navigate("Login")}
+            >
+              <Text style={styles.loginTxt}>Đăng nhập</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+                style={styles.registerBtn}
+                onPress={() => navigation.navigate("Register")}
+            >
+              <Text style={styles.registerTxt}>Đăng ký</Text>
             </TouchableOpacity>
           </View>
+        </View>
+    );
+  }
 
-          {/* Avatar + name block */}
-          <View style={styles.heroProfile}>
-            <View style={styles.avatarWrap}>
-              <Image
-                source={{ uri: avatarUri }}
-                onError={(err) => console.log("🔥 IMAGE ERROR:", err.nativeEvent.error)}
-                style={styles.avatar}
+  return (
+      <View style={styles.container}>
+        <StatusBar barStyle="light-content" backgroundColor={C.primary}/>
+        <ScrollView
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={{paddingBottom: 40}}
+            refreshControl={
+              <RefreshControl
+                  refreshing={refreshing}
+                  onRefresh={onRefresh}
+                  colors={[C.primaryMid]}
+                  tintColor={C.primaryMid}
               />
-              <View style={styles.avatarOnline} />
-            </View>
+            }
+        >
+          {/* ── HEADER HERO ──────────────────────────────────────────── */}
+          <View style={styles.hero}>
+            {/* decorative circles */}
+            <View style={styles.heroBubble1}/>
+            <View style={styles.heroBubble2}/>
+            <View style={styles.heroBubble3}/>
 
-            <View style={styles.heroInfo}>
-              <Text style={styles.heroName}>{user?.username || "No Name"}</Text>
-              <Text style={styles.heroUsername}>@{user?.username}</Text>
-              <TouchableOpacity
-                style={styles.editBtn}
-                onPress={() => navigation.navigate("EditInfo")}
-                activeOpacity={0.8}
-              >
-                <Ionicons name="pencil-outline" size={13} color={C.primaryMid} />
-                <Text style={styles.editBtnTxt}>Chỉnh sửa hồ sơ</Text>
+            <View style={styles.heroTop}>
+              <Text style={styles.heroTitle}>Tài khoản</Text>
+              <TouchableOpacity style={styles.bellBtn}>
+                <Ionicons name="notifications-outline" size={22} color="#FFF"/>
               </TouchableOpacity>
             </View>
+
+            {/* Avatar + name block */}
+            <View style={styles.heroProfile}>
+              <View style={styles.avatarWrap}>
+                <Image
+                    source={{uri: avatarUri}}
+                    onError={(err) => console.log("🔥 IMAGE ERROR:", err.nativeEvent.error)}
+                    style={styles.avatar}
+                />
+                <View style={styles.avatarOnline}/>
+              </View>
+
+              <View style={styles.heroInfo}>
+                <Text style={styles.heroName}>{user?.username || "No Name"}</Text>
+                <Text style={styles.heroUsername}>@{user?.username}</Text>
+                <TouchableOpacity
+                    style={styles.editBtn}
+                    onPress={() => navigation.navigate("EditInfo")}
+                    activeOpacity={0.8}
+                >
+                  <Ionicons name="pencil-outline" size={13} color={C.primaryMid}/>
+                  <Text style={styles.editBtnTxt}>Chỉnh sửa hồ sơ</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+
+            {/* Stats row */}
+            {user?.reward_points !== undefined && (
+                <View style={styles.statsRow}>
+                  <StatBubble value={user.reward_points} label="Điểm" icon="⭐"/>
+                  <View style={styles.statsDivider}/>
+                  <StatBubble value={String(orderCount)} label="Đơn hàng" icon="📦"/>
+                  <View style={styles.statsDivider}/>
+                  <StatBubble value={String(wishlistCount)} label="Yêu thích" icon="❤️"/>
+                </View>
+            )}
           </View>
 
-          {/* Stats row */}
-          {user?.reward_points !== undefined && (
-              <View style={styles.statsRow}>
-                <StatBubble value={user.reward_points} label="Điểm" icon="⭐" />
-                <View style={styles.statsDivider} />
-                <StatBubble value={String(orderCount)} label="Đơn hàng" icon="📦" />
-                <View style={styles.statsDivider} />
-                <StatBubble value={String(wishlistCount)} label="Yêu thích" icon="❤️" />
-              </View>
-          )}
-        </View>
+          {/* ── CONTACT CARD ─────────────────────────────────────────── */}
+          <View style={styles.contactCard}>
+            <Text style={styles.cardLabel}>Thông tin liên hệ</Text>
 
-        {/* ── CONTACT CARD ─────────────────────────────────────────── */}
-        <View style={styles.contactCard}>
-          <Text style={styles.cardLabel}>Thông tin liên hệ</Text>
+            {user?.email && (
+                <View style={styles.contactRow}>
+                  <View style={styles.contactIconWrap}>
+                    <Ionicons name="mail-outline" size={17} color={C.primaryMid}/>
+                  </View>
+                  <Text style={styles.contactTxt}>{user.email}</Text>
+                </View>
+            )}
 
-          {user?.email && (
-            <View style={styles.contactRow}>
-              <View style={styles.contactIconWrap}>
-                <Ionicons name="mail-outline" size={17} color={C.primaryMid} />
-              </View>
-              <Text style={styles.contactTxt}>{user.email}</Text>
-            </View>
-          )}
+            {user?.phone && (
+                <View style={styles.contactRow}>
+                  <View style={styles.contactIconWrap}>
+                    <Ionicons name="call-outline" size={17} color={C.primaryMid}/>
+                  </View>
+                  <Text style={styles.contactTxt}>{user.phone}</Text>
+                </View>
+            )}
 
-          {user?.phone && (
-            <View style={styles.contactRow}>
-              <View style={styles.contactIconWrap}>
-                <Ionicons name="call-outline" size={17} color={C.primaryMid} />
-              </View>
-              <Text style={styles.contactTxt}>{user.phone}</Text>
-            </View>
-          )}
+            {user?.address && (
+                <View style={[styles.contactRow, {borderBottomWidth: 0}]}>
+                  <View style={styles.contactIconWrap}>
+                    <Ionicons name="location-outline" size={17} color={C.primaryMid}/>
+                  </View>
+                  <Text style={styles.contactTxt}>{user.address}</Text>
+                </View>
+            )}
+          </View>
 
-          {user?.address && (
-            <View style={[styles.contactRow, { borderBottomWidth: 0 }]}>
-              <View style={styles.contactIconWrap}>
-                <Ionicons name="location-outline" size={17} color={C.primaryMid} />
-              </View>
-              <Text style={styles.contactTxt}>{user.address}</Text>
-            </View>
-          )}
-        </View>
+          {/* ── MENU CARDS ───────────────────────────────────────────── */}
+          <View style={styles.menuCard}>
+            <Text style={styles.cardLabel}>Quản lý tài khoản</Text>
 
-        {/* ── MENU CARDS ───────────────────────────────────────────── */}
-        <View style={styles.menuCard}>
-          <Text style={styles.cardLabel}>Quản lý tài khoản</Text>
+            <MenuItem
+                icon="receipt-outline"
+                text="Đơn hàng của tôi"
+                onPress={() => navigation.navigate("OrderHistory")}
+            />
+            <MenuItem
+                icon="location-outline"
+                text="Địa chỉ nhận hàng"
+                onPress={() => navigation.navigate("Address")}
+                noBorder
+            />
+          </View>
 
-          <MenuItem
-            icon="receipt-outline"
-            text="Đơn hàng của tôi"
-            onPress={() => navigation.navigate("OrderHistory")}
-          />
-          <MenuItem
-            icon="location-outline"
-            text="Địa chỉ nhận hàng"
-            onPress={() => navigation.navigate("Address")}
-            noBorder
-          />
-        </View>
+          <View style={[styles.menuCard, {marginTop: 12}]}>
+            <Text style={styles.cardLabel}>Cài đặt & Hỗ trợ</Text>
+            <MenuItem
+                icon="lock-closed-outline"
+                text="Đổi mật khẩu"
+                onPress={() => navigation.navigate("ChangePassword")}
+            />
+            <MenuItem
+                icon="notifications-outline"
+                text="Thông báo"
+            />
+            <MenuItem
+                icon="help-buoy-outline"
+                text="Trung tâm hỗ trợ"
+            />
+            <MenuItem
+                icon="settings-outline"
+                text="Cài đặt"
+                noBorder
+            />
+          </View>
 
-        <View style={[styles.menuCard, { marginTop: 12 }]}>
-          <Text style={styles.cardLabel}>Cài đặt & Hỗ trợ</Text>
-          <MenuItem
-            icon="lock-closed-outline"
-            text="Đổi mật khẩu"
-            onPress={() => navigation.navigate("ChangePassword")}
-          />
-          <MenuItem
-            icon="notifications-outline"
-            text="Thông báo"
-          />
-          <MenuItem
-            icon="help-buoy-outline"
-            text="Trung tâm hỗ trợ"
-          />
-          <MenuItem
-            icon="settings-outline"
-            text="Cài đặt"
-            noBorder
-          />
-        </View>
+          {/* ── LOGOUT ───────────────────────────────────────────────── */}
+          <TouchableOpacity
+              style={styles.logoutBtn}
+              activeOpacity={0.85}
+              onPress={() => {
+                Alert.alert(
+                    "Đăng xuất",
+                    "Bạn có chắc muốn đăng xuất không?",
+                    [
+                      {text: "Hủy", style: "cancel"},
+                      {
+                        text: "Đăng xuất",
+                        style: "destructive",
+                        onPress: handleLogout,
+                      },
+                    ]
+                );
+              }}
+          >
+            <Ionicons name="log-out-outline" size={20} color={C.primaryMid}/>
+            <Text style={styles.logoutTxt}>Đăng xuất</Text>
+          </TouchableOpacity>
 
-        {/* ── LOGOUT ───────────────────────────────────────────────── */}
-        <TouchableOpacity
-            style={styles.logoutBtn}
-            activeOpacity={0.85}
-            onPress={async () => {
-              await logout();
-              navigation.navigate("Login");
-            }}
-        >
-          <Ionicons name="log-out-outline" size={20} color={C.primaryMid} />
-          <Text style={styles.logoutTxt}>Đăng xuất</Text>
-        </TouchableOpacity>
-
-        <Text style={styles.version}>UTE Book Store v1.0.0</Text>
-      </ScrollView>
-    </View>
+          <Text style={styles.version}>UTE Book Store v1.0.0</Text>
+        </ScrollView>
+      </View>
   );
 }
+
 
 // ─── Styles ───────────────────────────────────────────────────────────────────
 const styles = StyleSheet.create({
@@ -460,5 +518,55 @@ const styles = StyleSheet.create({
   version: {
     textAlign: "center", marginTop: 18, marginBottom: 10,
     fontSize: 12, color: C.text3,
+  },
+
+  guestWrap: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    paddingHorizontal: 30,
+  },
+
+  guestTitle: {
+    fontSize: 20,
+    fontWeight: "800",
+    color: C.text1,
+    marginTop: 16,
+  },
+
+  guestSub: {
+    fontSize: 14,
+    color: C.text3,
+    textAlign: "center",
+    marginTop: 6,
+    marginBottom: 24,
+  },
+
+  loginBtn: {
+    backgroundColor: C.primaryMid,
+    paddingVertical: 14,
+    paddingHorizontal: 40,
+    borderRadius: 30,
+    marginBottom: 12,
+  },
+
+  loginTxt: {
+    color: "#fff",
+    fontSize: 16,
+    fontWeight: "800",
+  },
+
+  registerBtn: {
+    borderWidth: 1.5,
+    borderColor: C.primaryMid,
+    paddingVertical: 14,
+    paddingHorizontal: 40,
+    borderRadius: 30,
+  },
+
+  registerTxt: {
+    color: C.primaryMid,
+    fontSize: 16,
+    fontWeight: "800",
   },
 });

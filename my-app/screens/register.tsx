@@ -1,3 +1,4 @@
+import React, { useState } from "react";
 import {
   View,
   Text,
@@ -9,12 +10,114 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
+  StatusBar,
 } from "react-native";
-import { useState } from "react";
+import { Ionicons } from "@expo/vector-icons";
 import api from "../services/api";
 
+const C = {
+  primary: "#1565C0",
+  primaryMid: "#1E88E5",
+  primarySoft: "#E3F2FD",
+  primaryTint: "#BBDEFB",
+  bg: "#F0F6FF",
+  surface: "#FFFFFF",
+  border: "#DDEEFF",
+  borderFocus: "#1E88E5",
+  text1: "#0D1B3E",
+  text2: "#4A5980",
+  text3: "#9AA8C8",
+  placeholder: "#B0C4DE",
+  error: "#E53935",
+  green: "#00897B",
+};
+
+function InputField({
+                      label,
+                      icon,
+                      value,
+                      onChangeText,
+                      placeholder,
+                      keyboardType,
+                      autoCapitalize = "sentences",
+                      editable = true,
+                    }: any) {
+  const [focused, setFocused] = useState(false);
+
+  return (
+      <View style={s.fieldWrap}>
+        <View style={s.fieldLabelRow}>
+          <Ionicons name={icon} size={13} color={C.primaryMid} />
+          <Text style={s.fieldLabel}>{label}</Text>
+        </View>
+
+        <View style={[s.inputWrap, focused && s.inputWrapFocused]}>
+          <TextInput
+              style={s.input}
+              value={value}
+              onChangeText={onChangeText}
+              placeholder={placeholder}
+              placeholderTextColor={C.placeholder}
+              keyboardType={keyboardType}
+              autoCapitalize={autoCapitalize}
+              editable={editable}
+              onFocus={() => setFocused(true)}
+              onBlur={() => setFocused(false)}
+          />
+        </View>
+      </View>
+  );
+}
+
+function PasswordField({
+                         label,
+                         icon,
+                         value,
+                         onChangeText,
+                         placeholder,
+                         hint,
+                         editable = true,
+                       }: any) {
+  const [focused, setFocused] = useState(false);
+  const [shown, setShown] = useState(false);
+
+  return (
+      <View style={s.fieldWrap}>
+        <View style={s.fieldLabelRow}>
+          <Ionicons name={icon} size={13} color={C.primaryMid} />
+          <Text style={s.fieldLabel}>{label}</Text>
+        </View>
+
+        <View style={[s.inputWrap, focused && s.inputWrapFocused]}>
+          <TextInput
+              style={s.input}
+              value={value}
+              onChangeText={onChangeText}
+              placeholder={placeholder}
+              placeholderTextColor={C.placeholder}
+              secureTextEntry={!shown}
+              autoCapitalize="none"
+              editable={editable}
+              onFocus={() => setFocused(true)}
+              onBlur={() => setFocused(false)}
+          />
+          <TouchableOpacity onPress={() => setShown((v: boolean) => !v)} style={{ paddingLeft: 8 }}>
+            <Ionicons
+                name={shown ? "eye-off-outline" : "eye-outline"}
+                size={18}
+                color={C.text3}
+            />
+          </TouchableOpacity>
+        </View>
+
+        {hint ? <Text style={s.fieldHint}>{hint}</Text> : null}
+      </View>
+  );
+}
+
 export default function RegisterScreen({ navigation }: any) {
-  const [step, setStep] = useState(1); // 1: nhập info, 2: nhập OTP
+  const [step, setStep] = useState(1);
+
   const [email, setEmail] = useState("");
   const [otp, setOtp] = useState("");
   const [userName, setUserName] = useState("");
@@ -25,6 +128,24 @@ export default function RegisterScreen({ navigation }: any) {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
+
+  const strength = (() => {
+    if (!password) return 0;
+    let score = 0;
+    if (password.length >= 8) score++;
+    if (/[A-Z]/.test(password)) score++;
+    if (/[0-9]/.test(password)) score++;
+    if (/[^A-Za-z0-9]/.test(password)) score++;
+    return score;
+  })();
+
+  const strengthLabel = ["", "Yếu", "Trung bình", "Khá mạnh", "Mạnh"][strength];
+  const strengthColor = ["", C.error, "#FF8C00", "#FFC107", C.green][strength];
+
+  const passwordsMatch =
+      confirmPassword.length > 0 && password === confirmPassword;
+  const mismatch =
+      confirmPassword.length > 0 && password !== confirmPassword;
 
   const handleRegister = async () => {
     if (!userName || !fullName || !email || !phone || !address || !password) {
@@ -80,12 +201,16 @@ export default function RegisterScreen({ navigation }: any) {
         otpType: "REGISTER",
       });
 
-      Alert.alert("Thành công", res.data.message || "Xác thực email thành công", [
-        {
-          text: "OK",
-          onPress: () => navigation.replace("Login"),
-        },
-      ]);
+      Alert.alert(
+          "Thành công",
+          res.data.message || "Xác thực email thành công",
+          [
+            {
+              text: "OK",
+              onPress: () => navigation.replace("Login"),
+            },
+          ]
+      );
     } catch (err: any) {
       Alert.alert(
           "Lỗi",
@@ -122,252 +247,517 @@ export default function RegisterScreen({ navigation }: any) {
     }
   };
 
+  const canSubmitStep1 =
+      userName &&
+      fullName &&
+      email &&
+      phone &&
+      address &&
+      password &&
+      confirmPassword &&
+      password === confirmPassword &&
+      !loading;
+
+  const canSubmitStep2 = otp.length === 6 && !loading;
+
   return (
       <KeyboardAvoidingView
-          style={styles.container}
+          style={{ flex: 1, backgroundColor: C.bg }}
           behavior={Platform.OS === "ios" ? "padding" : "height"}
       >
-        <ScrollView contentContainerStyle={styles.scrollContainer}>
-          <View style={styles.card}>
-            <Text style={styles.title}>Đăng ký tài khoản</Text>
-            <Text style={styles.subtitle}>
+        <StatusBar barStyle="light-content" backgroundColor={C.primaryMid} />
+
+        <View style={s.topBar}>
+          <View style={s.topBarBlob} />
+          <TouchableOpacity style={s.backBtn} onPress={handleBack}>
+            <Ionicons name="chevron-back" size={22} color="#FFF" />
+          </TouchableOpacity>
+          <Text style={s.topBarTitle}>
+            {step === 1 ? "Đăng ký tài khoản" : "Xác thực OTP"}
+          </Text>
+          <View style={{ width: 38 }} />
+        </View>
+
+        <ScrollView
+            contentContainerStyle={s.scroll}
+            keyboardShouldPersistTaps="handled"
+            showsVerticalScrollIndicator={false}
+        >
+          <View style={s.card}>
+            <View style={s.cardIcon}>
+              <Ionicons
+                  name={step === 1 ? "person-add-outline" : "mail-open-outline"}
+                  size={28}
+                  color={C.primaryMid}
+              />
+            </View>
+
+            <Text style={s.cardTitle}>
+              {step === 1 ? "Tạo tài khoản mới" : "Kiểm tra email của bạn"}
+            </Text>
+
+            <Text style={s.cardSub}>
               {step === 1
-                  ? "Nhập thông tin để đăng ký"
-                  : "Nhập mã OTP đã gửi về email"}
+                  ? "Điền đầy đủ thông tin để bắt đầu đăng ký"
+                  : "Nhập mã OTP 6 số đã được gửi đến email"}
             </Text>
 
             {step === 1 ? (
                 <>
-                  <TextInput
-                      style={styles.input}
-                      placeholder="Username"
-                      placeholderTextColor="#999"
+                  <InputField
+                      label="Tên đăng nhập"
+                      icon="person-outline"
                       value={userName}
                       onChangeText={setUserName}
+                      placeholder="Nhập username"
+                      autoCapitalize="none"
                       editable={!loading}
                   />
 
-                  <TextInput
-                      style={styles.input}
-                      placeholder="Họ và tên"
-                      placeholderTextColor="#999"
+                  <InputField
+                      label="Họ và tên"
+                      icon="id-card-outline"
                       value={fullName}
                       onChangeText={setFullName}
+                      placeholder="Nhập họ và tên"
                       editable={!loading}
                   />
 
-                  <TextInput
-                      style={styles.input}
-                      placeholder="Email"
-                      placeholderTextColor="#999"
-                      keyboardType="email-address"
-                      autoCapitalize="none"
+                  <InputField
+                      label="Email"
+                      icon="mail-outline"
                       value={email}
                       onChangeText={setEmail}
+                      placeholder="Nhập email"
+                      keyboardType="email-address"
+                      autoCapitalize="none"
                       editable={!loading}
                   />
 
-                  <TextInput
-                      style={styles.input}
-                      placeholder="Số điện thoại"
-                      placeholderTextColor="#999"
+                  <InputField
+                      label="Số điện thoại"
+                      icon="call-outline"
                       value={phone}
                       onChangeText={setPhone}
+                      placeholder="Nhập số điện thoại"
+                      keyboardType="phone-pad"
                       editable={!loading}
                   />
 
-                  <TextInput
-                      style={styles.input}
-                      placeholder="Địa chỉ"
-                      placeholderTextColor="#999"
+                  <InputField
+                      label="Địa chỉ"
+                      icon="location-outline"
                       value={address}
                       onChangeText={setAddress}
+                      placeholder="Nhập địa chỉ"
                       editable={!loading}
                   />
 
-                  <TextInput
-                      style={styles.input}
-                      placeholder="Ngày sinh (yyyy-MM-dd)"
-                      placeholderTextColor="#999"
+                  <InputField
+                      label="Ngày sinh"
+                      icon="calendar-outline"
                       value={dateOfBirth}
                       onChangeText={setDateOfBirth}
+                      placeholder="yyyy-MM-dd"
                       editable={!loading}
                   />
 
-                  <TextInput
-                      style={styles.input}
-                      placeholder="Mật khẩu"
-                      placeholderTextColor="#999"
-                      secureTextEntry
+                  <PasswordField
+                      label="Mật khẩu"
+                      icon="lock-closed-outline"
                       value={password}
                       onChangeText={setPassword}
+                      placeholder="Tối thiểu 6 ký tự"
+                      hint="Nên dùng chữ hoa, số và ký tự đặc biệt"
                       editable={!loading}
                   />
 
-                  <TextInput
-                      style={styles.input}
-                      placeholder="Xác nhận mật khẩu"
-                      placeholderTextColor="#999"
-                      secureTextEntry
+                  {password.length > 0 && (
+                      <View style={s.strengthWrap}>
+                        <View style={s.strengthBar}>
+                          {[1, 2, 3, 4].map((i) => (
+                              <View
+                                  key={i}
+                                  style={[
+                                    s.strengthSegment,
+                                    {
+                                      backgroundColor:
+                                          i <= strength ? strengthColor : C.border,
+                                    },
+                                  ]}
+                              />
+                          ))}
+                        </View>
+                        <Text style={[s.strengthLabel, { color: strengthColor }]}>
+                          {strengthLabel}
+                        </Text>
+                      </View>
+                  )}
+
+                  <PasswordField
+                      label="Xác nhận mật khẩu"
+                      icon="shield-checkmark-outline"
                       value={confirmPassword}
                       onChangeText={setConfirmPassword}
+                      placeholder="Nhập lại mật khẩu"
                       editable={!loading}
                   />
 
-                  <TouchableOpacity
-                      style={[styles.button, loading && styles.buttonDisabled]}
-                      onPress={handleRegister}
-                      disabled={loading}
-                  >
-                    {loading ? (
-                        <ActivityIndicator color="#fff" />
-                    ) : (
-                        <Text style={styles.buttonText}>Đăng ký</Text>
-                    )}
-                  </TouchableOpacity>
+                  {passwordsMatch && (
+                      <View style={s.matchRow}>
+                        <Ionicons
+                            name="checkmark-circle-outline"
+                            size={15}
+                            color={C.green}
+                        />
+                        <Text style={[s.matchTxt, { color: C.green }]}>
+                          Mật khẩu khớp
+                        </Text>
+                      </View>
+                  )}
+
+                  {mismatch && (
+                      <View style={s.matchRow}>
+                        <Ionicons
+                            name="close-circle-outline"
+                            size={15}
+                            color={C.error}
+                        />
+                        <Text style={[s.matchTxt, { color: C.error }]}>
+                          Mật khẩu không khớp
+                        </Text>
+                      </View>
+                  )}
                 </>
             ) : (
                 <>
-                  <View style={styles.emailInfo}>
-                    <Text style={styles.emailLabel}>Email: </Text>
-                    <Text style={styles.emailValue}>{email}</Text>
+                  <View style={s.emailInfoBox}>
+                    <Ionicons name="mail-outline" size={18} color={C.primaryMid} />
+                    <View style={{ flex: 1 }}>
+                      <Text style={s.emailInfoLabel}>Email xác thực</Text>
+                      <Text style={s.emailInfoValue}>{email}</Text>
+                    </View>
                   </View>
 
-                  <TextInput
-                      style={styles.input}
-                      placeholder="Mã OTP (6 số)"
-                      placeholderTextColor="#999"
-                      keyboardType="number-pad"
-                      maxLength={6}
+                  <InputField
+                      label="Mã OTP"
+                      icon="key-outline"
                       value={otp}
                       onChangeText={setOtp}
+                      placeholder="Nhập mã OTP 6 số"
+                      keyboardType="number-pad"
                       editable={!loading}
                   />
 
                   <TouchableOpacity
-                      style={[styles.button, loading && styles.buttonDisabled]}
-                      onPress={handleVerifyOtp}
-                      disabled={loading}
-                  >
-                    {loading ? (
-                        <ActivityIndicator color="#fff" />
-                    ) : (
-                        <Text style={styles.buttonText}>Xác thực OTP</Text>
-                    )}
-                  </TouchableOpacity>
-
-                  <TouchableOpacity
-                      style={styles.resendButton}
+                      style={s.resendButton}
                       onPress={handleResendOtp}
                       disabled={loading}
                   >
-                    <Text style={styles.resendText}>Gửi lại mã OTP</Text>
+                    <Text style={s.resendText}>Gửi lại mã OTP</Text>
                   </TouchableOpacity>
                 </>
             )}
-
-            <TouchableOpacity style={styles.backButton} onPress={handleBack}>
-              <Text style={styles.backText}>
-                {step === 1 ? "Đã có tài khoản? Đăng nhập" : "Quay lại"}
-              </Text>
-            </TouchableOpacity>
           </View>
+
+          {step === 1 && (
+              <View style={s.tipsCard}>
+                <Text style={s.tipsTitle}>💡 Lưu ý khi đăng ký:</Text>
+                {[
+                  "Email phải đang hoạt động để nhận mã OTP",
+                  "Mật khẩu nên có ít nhất 6 ký tự",
+                  "Thông tin cá nhân nên nhập chính xác",
+                ].map((t, i) => (
+                    <View key={i} style={s.tipRow}>
+                      <View style={s.tipDot} />
+                      <Text style={s.tipTxt}>{t}</Text>
+                    </View>
+                ))}
+              </View>
+          )}
+
+          <TouchableOpacity
+              style={[
+                s.btn,
+                !(
+                    step === 1 ? canSubmitStep1 : canSubmitStep2
+                ) && s.btnDisabled,
+              ]}
+              onPress={step === 1 ? handleRegister : handleVerifyOtp}
+              disabled={!(step === 1 ? canSubmitStep1 : canSubmitStep2)}
+              activeOpacity={0.85}
+          >
+            {loading ? (
+                <ActivityIndicator color="#FFF" />
+            ) : (
+                <>
+                  <Ionicons
+                      name={
+                        step === 1
+                            ? "person-add-outline"
+                            : "checkmark-circle-outline"
+                      }
+                      size={19}
+                      color="#FFF"
+                  />
+                  <Text style={s.btnTxt}>
+                    {step === 1 ? "Đăng ký" : "Xác thực OTP"}
+                  </Text>
+                </>
+            )}
+          </TouchableOpacity>
+
+          <TouchableOpacity style={s.bottomLink} onPress={handleBack}>
+            <Text style={s.bottomLinkTxt}>
+              {step === 1 ? "Đã có tài khoản? Đăng nhập" : "Quay lại bước đăng ký"}
+            </Text>
+          </TouchableOpacity>
+
+          <View style={{ height: 20 }} />
         </ScrollView>
       </KeyboardAvoidingView>
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#FFD6E7",
-  },
-  scrollContainer: {
-    flexGrow: 1,
-    justifyContent: "center",
-    padding: 20,
-  },
-  card: {
-    backgroundColor: "#FFF0F6",
-    borderRadius: 25,
-    padding: 28,
-    shadowColor: "#FF8BB3",
-    shadowOpacity: 0.25,
-    shadowRadius: 12,
-    elevation: 8,
-    borderWidth: 2,
-    borderColor: "#FFB6D9",
-  },
-  title: {
-    fontSize: 26,
-    fontWeight: "bold",
-    textAlign: "center",
-    color: "#FF4F9A",
-    marginBottom: 5,
-  },
-  subtitle: {
-    textAlign: "center",
-    color: "#D46A9E",
-    marginBottom: 25,
-    fontSize: 15,
-  },
-  emailInfo: {
+const s = StyleSheet.create({
+  topBar: {
+    backgroundColor: C.primaryMid,
     flexDirection: "row",
-    backgroundColor: "#FFE6F2",
-    padding: 12,
-    borderRadius: 12,
-    marginBottom: 15,
-    borderWidth: 1,
-    borderColor: "#FFB6D9",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingTop: Platform.OS === "android" ? (StatusBar.currentHeight || 0) + 10 : 10,
+    paddingBottom: 16,
+    paddingHorizontal: 14,
+    borderBottomLeftRadius: 28,
+    borderBottomRightRadius: 28,
+    overflow: "hidden",
   },
-  emailLabel: {
-    color: "#D46A9E",
-    fontWeight: "600",
+  topBarBlob: {
+    position: "absolute",
+    width: 150,
+    height: 150,
+    borderRadius: 75,
+    backgroundColor: "rgba(255,255,255,0.08)",
+    top: -50,
+    right: -30,
   },
-  emailValue: {
-    color: "#FF4F9A",
-    fontWeight: "bold",
+  backBtn: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    backgroundColor: "rgba(255,255,255,0.18)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  topBarTitle: {
+    fontSize: 17,
+    fontWeight: "800",
+    color: "#FFF",
+  },
+
+  scroll: {
+    padding: 16,
+    gap: 14,
+    paddingBottom: 20,
+  },
+
+  card: {
+    backgroundColor: C.surface,
+    borderRadius: 24,
+    padding: 24,
+    elevation: 2,
+    shadowColor: C.primaryMid,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 10,
+    gap: 14,
+  },
+  cardIcon: {
+    width: 56,
+    height: 56,
+    borderRadius: 18,
+    backgroundColor: C.primarySoft,
+    justifyContent: "center",
+    alignItems: "center",
+    alignSelf: "center",
+  },
+  cardTitle: {
+    fontSize: 20,
+    fontWeight: "900",
+    color: C.text1,
+    textAlign: "center",
+  },
+  cardSub: {
+    fontSize: 14,
+    color: C.text3,
+    textAlign: "center",
+  },
+
+  fieldWrap: { gap: 7 },
+  fieldLabelRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 5,
+  },
+  fieldLabel: {
+    fontSize: 12,
+    fontWeight: "700",
+    color: C.text2,
+    textTransform: "uppercase",
+    letterSpacing: 0.6,
+  },
+  fieldHint: {
+    fontSize: 11,
+    color: C.text3,
+    marginTop: 2,
+  },
+
+  inputWrap: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: C.bg,
+    borderWidth: 1.5,
+    borderColor: C.border,
+    borderRadius: 14,
+    paddingHorizontal: 14,
+    paddingVertical: 2,
+  },
+  inputWrapFocused: {
+    borderColor: C.borderFocus,
+    backgroundColor: C.primarySoft,
   },
   input: {
-    backgroundColor: "#FFE6F2",
-    borderRadius: 12,
-    padding: 15,
-    fontSize: 16,
-    marginBottom: 15,
+    flex: 1,
+    fontSize: 15,
+    color: C.text1,
+    paddingVertical: 12,
+  },
+
+  strengthWrap: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+  },
+  strengthBar: {
+    flex: 1,
+    flexDirection: "row",
+    gap: 4,
+  },
+  strengthSegment: {
+    flex: 1,
+    height: 5,
+    borderRadius: 3,
+  },
+  strengthLabel: {
+    fontSize: 12,
+    fontWeight: "700",
+    width: 70,
+  },
+
+  matchRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+  },
+  matchTxt: {
+    fontSize: 13,
+    fontWeight: "600",
+  },
+
+  emailInfoBox: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    backgroundColor: C.primarySoft,
     borderWidth: 1,
-    borderColor: "#FFB6D9",
-    color: "#D62478",
+    borderColor: C.primaryTint,
+    borderRadius: 14,
+    padding: 14,
   },
-  button: {
-    backgroundColor: "#FF5CA8",
-    paddingVertical: 15,
-    borderRadius: 12,
-    alignItems: "center",
-    marginTop: 10,
+  emailInfoLabel: {
+    fontSize: 12,
+    color: C.text2,
+    fontWeight: "700",
+    marginBottom: 2,
   },
-  buttonDisabled: {
-    backgroundColor: "#FF9ACB",
+  emailInfoValue: {
+    fontSize: 14,
+    color: C.primaryMid,
+    fontWeight: "800",
   },
-  buttonText: {
-    color: "#fff",
-    fontSize: 17,
-    fontWeight: "bold",
-  },
+
   resendButton: {
-    marginTop: 15,
     alignItems: "center",
+    marginTop: 4,
   },
   resendText: {
-    color: "#FF4F9A",
+    color: C.primaryMid,
     fontSize: 14,
-    textDecorationLine: "underline",
+    fontWeight: "700",
   },
-  backButton: {
-    marginTop: 20,
+
+  tipsCard: {
+    backgroundColor: C.surface,
+    borderRadius: 18,
+    padding: 16,
+    gap: 8,
+    borderWidth: 1,
+    borderColor: C.border,
+  },
+  tipsTitle: {
+    fontSize: 13,
+    fontWeight: "700",
+    color: C.text2,
+  },
+  tipRow: {
+    flexDirection: "row",
     alignItems: "center",
+    gap: 10,
   },
-  backText: {
-    color: "#D46A9E",
+  tipDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: C.primaryMid,
+    flexShrink: 0,
+  },
+  tipTxt: {
+    fontSize: 13,
+    color: C.text3,
+  },
+
+  btn: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+    backgroundColor: C.primaryMid,
+    borderRadius: 16,
+    paddingVertical: 17,
+    elevation: 5,
+    shadowColor: C.primaryMid,
+    shadowOffset: { width: 0, height: 5 },
+    shadowOpacity: 0.3,
+    shadowRadius: 12,
+  },
+  btnDisabled: {
+    backgroundColor: C.text3,
+    elevation: 0,
+    shadowOpacity: 0,
+  },
+  btnTxt: {
+    color: "#FFF",
+    fontSize: 16,
+    fontWeight: "800",
+  },
+
+  bottomLink: {
+    alignItems: "center",
+    marginTop: 6,
+  },
+  bottomLinkTxt: {
+    color: C.text2,
     fontSize: 14,
+    fontWeight: "600",
   },
 });
