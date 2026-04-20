@@ -2,7 +2,10 @@ package com.hcmute.bookstore.Entity;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
+
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 
 @Entity
 @Table(name = "return_requests")
@@ -21,8 +24,12 @@ public class ReturnRequest {
     @NotNull
     private String reason; // Lý do hủy/hoàn hàng
 
-    @Column(name = "image_evidence", length = 255)
-    private String imageEvidence; // Lưu đường dẫn hoặc URL của ảnh đính kèm
+    // 2. Sửa trường này
+    @ElementCollection
+    @CollectionTable(name = "return_images", joinColumns = @JoinColumn(name = "returnId"))
+    @Column(name = "image_url")
+    private List<String> imageEvidences = new ArrayList<>(); // Khởi tạo mảng rỗng để tránh NullPointerException
+
 
     // --- THÔNG TIN NGÂN HÀNG ĐỂ HOÀN TIỀN ---
     @Column(name = "bank_name", length = 100)
@@ -54,9 +61,9 @@ public class ReturnRequest {
     public String getReason() { return reason; }
     public void setReason(String reason) { this.reason = reason; }
 
-    public String getImageEvidence() { return imageEvidence; }
-    public void setImageEvidence(String imageEvidence) { this.imageEvidence = imageEvidence; }
-
+    // Getter và Setter cho list ảnh
+    public List<String> getImageEvidences() { return imageEvidences; }
+    public void setImageEvidences(List<String> imageEvidences) { this.imageEvidences = imageEvidences; }
     public String getBankName() { return bankName; }
     public void setBankName(String bankName) { this.bankName = bankName; }
 

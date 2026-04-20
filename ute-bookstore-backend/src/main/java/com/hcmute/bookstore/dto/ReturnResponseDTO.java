@@ -5,6 +5,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Data
 @NoArgsConstructor
@@ -17,7 +18,7 @@ public class ReturnResponseDTO {
     private String bankName;
     private String accountHolder;
     private String accountNumber;
-    private String imageEvidence;
+    private List<String> imageEvidences;
     private String status;
     private LocalDateTime createdAt; // Ngày gửi yêu cầu
 }

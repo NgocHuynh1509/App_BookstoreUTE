@@ -37,7 +37,8 @@ public class ReturnRequestController {
         rr.setBankName(dto.getBankName());
         rr.setAccountHolder(dto.getAccountHolder());
         rr.setAccountNumber(dto.getAccountNumber());
-        rr.setImageEvidence(dto.getImageEvidence());
+        // Gán danh sách ảnh
+        rr.setImageEvidences(dto.getImageEvidences());
         rr.setStatus("PENDING");
 
 
@@ -60,7 +61,8 @@ public class ReturnRequestController {
                             .bankName(rr.getBankName())
                             .accountHolder(rr.getAccountHolder())
                             .accountNumber(rr.getAccountNumber())
-                            .imageEvidence(rr.getImageEvidence())
+                            // ĐỔI Ở ĐÂY: Lấy toàn bộ danh sách ảnh từ Entity
+                            .imageEvidences(rr.getImageEvidences())
                             .status(rr.getStatus())
                             .createdAt(LocalDateTime.now()) // Hoặc rr.getCreatedAt() nếu có
                             .build();

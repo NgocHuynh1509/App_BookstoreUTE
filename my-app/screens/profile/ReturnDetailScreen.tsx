@@ -9,12 +9,15 @@ import {
   ActivityIndicator,
   Image,
   StatusBar,
+  Modal,
+  Dimensions,
 } from "react-native";
 import { useRoute, useNavigation } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import Constants from "expo-constants";
 
+const { width } = Dimensions.get("window");
 const BASE_URL = Constants.expoConfig?.extra?.API_URL;
 
 const C = {
@@ -24,7 +27,8 @@ const C = {
   text1: "#0D1B3E",
   text2: "#4A5980",
   orange: "#F57C00",
-  green: "#00897B",
+  green: "#2E7D32",
+  red: "#C62828",
   border: "#DDEEFF",
 };
 
@@ -35,6 +39,43 @@ export default function ReturnDetailScreen() {
 
   const [loading, setLoading] = useState(true);
   const [returnData, setReturnData] = useState<any>(null);
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
+
+  // Hàm helper để map trạng thái từ Backend sang UI
+  const getStatusInfo = (status: string) => {
+    switch (status?.toLowerCase()) {
+      case "pending":
+        return {
+          label: "Yêu cầu đang chờ xử lý",
+          sub: "Chúng tôi đã tiếp nhận yêu cầu và đang kiểm tra.",
+          color: C.orange,
+          icon: "time"
+        };
+      case "finished":
+      case "completed":
+      case "approved":
+        return {
+          label: "Đã xử lý xong",
+          sub: "Yêu cầu hoàn trả đã được chấp nhận và thực hiện.",
+          color: C.green,
+          icon: "checkmark-circle"
+        };
+      case "rejected":
+        return {
+          label: "Yêu cầu bị từ chối",
+          sub: "Rất tiếc, yêu cầu không đáp ứng chính sách hoàn trả.",
+          color: C.red,
+          icon: "close-circle"
+        };
+      default:
+        return {
+          label: "Đang cập nhật",
+          sub: "Vui lòng kiểm tra lại sau.",
+          color: C.text2,
+          icon: "help-circle"
+        };
+    }
+  };
 
   const fetchReturnDetail = async () => {
     try {
@@ -42,108 +83,102 @@ export default function ReturnDetailScreen() {
       const res = await fetch(`${BASE_URL}/api/orders/returns/detail/${orderId}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-
-      // Kiểm tra nếu response không thành công (404, 500...)
-      if (!res.ok) {
-          const errorText = await res.text(); // Đọc dạng text để xem lỗi gì
-          console.log("Server error text:", errorText);
-          setReturnData(null);
-          return;
-      }
-
+      if (!res.ok) { setReturnData(null); return; }
       const data = await res.json();
       setReturnData(data);
     } catch (error) {
-      console.error("Lỗi fetch return detail:", error);
+      console.error("Lỗi fetch:", error);
     } finally {
       setLoading(false);
     }
   };
 
-  useEffect(() => {
-    fetchReturnDetail();
-  }, [orderId]);
+  useEffect(() => { fetchReturnDetail(); }, [orderId]);
 
-  if (loading) {
-    return (
-      <View style={s.center}>
-        <ActivityIndicator size="large" color={C.primary} />
-      </View>
-    );
-  }
+  if (loading) return (
+    <View style={s.center}><ActivityIndicator size="large" color={C.primary} /></View>
+  );
 
-  if (!returnData) {
-    return (
-      <View style={s.center}>
-        <Text>Không tìm thấy thông tin yêu cầu.</Text>
-        <TouchableOpacity onPress={() => navigation.goBack()}>
-          <Text style={{ color: C.primary, marginTop: 10 }}>Quay lại</Text>
-        </TouchableOpacity>
-      </View>
-    );
-  }
+  if (!returnData) return (
+    <View style={s.center}>
+      <Text>Không tìm thấy yêu cầu.</Text>
+      <TouchableOpacity onPress={() => navigation.goBack()} style={s.btnBackErr}><Text style={{color:'#FFF'}}>Quay lại</Text></TouchableOpacity>
+    </View>
+  );
+
+  const statusInfo = getStatusInfo(returnData.status);
 
   return (
     <SafeAreaView style={s.container}>
       <StatusBar barStyle="dark-content" />
 
-      {/* Header */}
+      <Modal visible={!!selectedImage} transparent={true} animationType="fade">
+        <View style={s.modalContainer}>
+          <TouchableOpacity style={s.closeModalBtn} onPress={() => setSelectedImage(null)}>
+            <Ionicons name="close-circle" size={45} color="#FFF" />
+          </TouchableOpacity>
+          <Image source={{ uri: selectedImage || '' }} style={s.fullImage} resizeMode="contain" />
+        </View>
+      </Modal>
+
       <View style={s.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={s.backBtn}>
-          <Ionicons name="chevron-back" size={24} color={C.text1} />
-        </TouchableOpacity>
+        <TouchableOpacity onPress={() => navigation.goBack()}><Ionicons name="chevron-back" size={28} color={C.text1} /></TouchableOpacity>
         <Text style={s.headerTitle}>Chi tiết hoàn trả</Text>
         <View style={{ width: 40 }} />
       </View>
 
       <ScrollView contentContainerStyle={s.scroll}>
-        {/* Status Card */}
-        <View style={s.statusCard}>
-          <View style={s.statusIcon}>
-            <Ionicons name="time-outline" size={30} color={C.orange} />
+        {/* PHẦN TRẠNG THÁI ĐỘNG TỪ DATABASE */}
+        <View style={[s.statusCard, { borderColor: statusInfo.color + '40' }]}>
+          <View style={[s.statusIcon, { backgroundColor: statusInfo.color + '15' }]}>
+            <Ionicons name={statusInfo.icon as any} size={35} color={statusInfo.color} />
           </View>
-          <Text style={s.statusTxt}>Yêu cầu đang chờ xử lý</Text>
-          <Text style={s.subTxt}>Chúng tôi sẽ xem xét và phản hồi trong vòng 24-48h</Text>
+          <Text style={[s.statusTxt, { color: statusInfo.color }]}>{statusInfo.label}</Text>
+
+          <View style={[s.orderBadge, { borderColor: C.primary }]}>
+            <Text style={s.orderBadgeLabel}>MÃ ĐƠN HÀNG</Text>
+            <Text style={s.orderBadgeValue}>#{orderId}</Text>
+          </View>
+
+          <Text style={s.subTxt}>{statusInfo.sub}</Text>
         </View>
 
-        {/* Thông tin hoàn tiền */}
         <View style={s.card}>
-          <Text style={s.sectionTitle}>Thông tin nhận tiền hoàn</Text>
-          <View style={s.infoRow}>
-            <Text style={s.label}>Ngân hàng:</Text>
-            <Text style={s.value}>{returnData.bankName}</Text>
+          <View style={s.cardHeader}>
+            <Ionicons name="card-outline" size={20} color={C.primary} />
+            <Text style={s.sectionTitle}>Thông tin nhận tiền hoàn</Text>
           </View>
-          <View style={s.infoRow}>
-            <Text style={s.label}>Chủ tài khoản:</Text>
-            <Text style={s.value}>{returnData.accountHolder}</Text>
-          </View>
-          <View style={s.infoRow}>
-            <Text style={s.label}>Số tài khoản:</Text>
-            <Text style={s.value}>{returnData.accountNumber}</Text>
-          </View>
+          <View style={s.infoRow}><Text style={s.label}>Ngân hàng</Text><Text style={s.value}>{returnData.bankName}</Text></View>
+          <View style={s.divider} />
+          <View style={s.infoRow}><Text style={s.label}>Chủ tài khoản</Text><Text style={s.value}>{returnData.accountHolder}</Text></View>
+          <View style={s.divider} />
+          <View style={s.infoRow}><Text style={s.label}>Số tài khoản</Text><Text style={s.value}>{returnData.accountNumber}</Text></View>
         </View>
 
-        {/* Lý do */}
         <View style={s.card}>
-          <Text style={s.sectionTitle}>Lý do hoàn trả</Text>
-          <Text style={s.reasonTxt}>{returnData.reason}</Text>
+          <View style={s.cardHeader}>
+            <Ionicons name="chatbox-ellipses-outline" size={20} color={C.primary} />
+            <Text style={s.sectionTitle}>Lý do hoàn trả</Text>
+          </View>
+          <Text style={s.reasonTxt}>"{returnData.reason}"</Text>
 
-          {returnData.imageEvidence && (
-            <View style={s.imageContainer}>
-              <Text style={[s.label, { marginBottom: 8 }]}>Minh chứng:</Text>
-              <Image
-                source={{ uri: returnData.imageEvidence }}
-                style={s.evidenceImage}
-                resizeMode="cover"
-              />
+          {returnData.imageEvidences?.length > 0 && (
+            <View style={s.imageSection}>
+              <Text style={[s.label, { marginBottom: 12 }]}>Minh chứng hình ảnh</Text>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                {returnData.imageEvidences.map((img: string, i: number) => (
+                  <TouchableOpacity key={i} onPress={() => setSelectedImage(img)}>
+                    <Image source={{ uri: img }} style={s.evidenceImageMini} />
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
             </View>
           )}
         </View>
 
-        {/* Mã đơn hàng */}
-        <View style={[s.card, { alignItems: 'center', backgroundColor: 'transparent', elevation: 0, shadowOpacity: 0 }]}>
-           <Text style={{ color: C.text2, fontSize: 12 }}>Mã đơn hàng: #{orderId}</Text>
-           <Text style={{ color: C.text2, fontSize: 12 }}>Ngày gửi: {new Date(returnData.createdAt).toLocaleDateString('vi-VN')}</Text>
+        <View style={s.footer}>
+          <Text style={s.footerTxt}>Ngày gửi: {new Date(returnData.createdAt).toLocaleString('vi-VN')}</Text>
+          <Text style={s.footerTxt}>ID yêu cầu: {returnData.returnId}</Text>
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -152,52 +187,31 @@ export default function ReturnDetailScreen() {
 
 const s = StyleSheet.create({
   container: { flex: 1, backgroundColor: C.bg },
-  center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    backgroundColor: C.surface,
-  },
-  headerTitle: { fontSize: 18, fontWeight: '800', color: C.text1 },
-  backBtn: { width: 40, height: 40, justifyContent: 'center' },
+  center: { flex: 1, justifyContent: "center", alignItems: "center" },
+  header: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", padding: 16, backgroundColor: C.surface, elevation: 2 },
+  headerTitle: { fontSize: 18, fontWeight: "800", color: C.text1 },
   scroll: { padding: 16, gap: 16 },
-  statusCard: {
-    backgroundColor: C.surface,
-    padding: 24,
-    borderRadius: 20,
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: C.border,
-  },
-  statusIcon: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    backgroundColor: '#FFF3E0',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 12,
-  },
-  statusTxt: { fontSize: 18, fontWeight: '800', color: C.orange },
-  subTxt: { fontSize: 13, color: C.text2, textAlign: 'center', marginTop: 4 },
-  card: {
-    backgroundColor: C.surface,
-    padding: 16,
-    borderRadius: 16,
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-  },
-  sectionTitle: { fontSize: 15, fontWeight: '800', color: C.primary, marginBottom: 12 },
-  infoRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 },
+  statusCard: { backgroundColor: C.surface, padding: 24, borderRadius: 24, alignItems: "center", borderWidth: 1.5, elevation: 4 },
+  statusIcon: { width: 70, height: 70, borderRadius: 35, justifyContent: "center", alignItems: "center", marginBottom: 15 },
+  statusTxt: { fontSize: 20, fontWeight: "800" },
+  orderBadge: { backgroundColor: "#E3F2FD", paddingHorizontal: 25, paddingVertical: 10, borderRadius: 15, marginVertical: 15, alignItems: "center", borderWidth: 1.5 },
+  orderBadgeLabel: { fontSize: 10, color: C.primary, fontWeight: "700" },
+  orderBadgeValue: { fontSize: 22, fontWeight: "900", color: C.primary },
+  subTxt: { fontSize: 13, color: C.text2, textAlign: "center" },
+  card: { backgroundColor: C.surface, padding: 16, borderRadius: 20, borderWidth: 1, borderColor: C.border },
+  cardHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: 15, gap: 8 },
+  sectionTitle: { fontSize: 16, fontWeight: "800", color: C.primary },
+  infoRow: { flexDirection: "row", justifyContent: "space-between" },
   label: { fontSize: 14, color: C.text2 },
-  value: { fontSize: 14, fontWeight: '600', color: C.text1 },
-  reasonTxt: { fontSize: 14, color: C.text1, lineHeight: 20, fontStyle: 'italic' },
-  imageContainer: { marginTop: 16 },
-  evidenceImage: { width: '100%', height: 200, borderRadius: 12, backgroundColor: '#EEE' },
+  value: { fontSize: 14, fontWeight: "700", color: C.text1 },
+  divider: { height: 1, backgroundColor: "#F0F0F0", marginVertical: 10 },
+  reasonTxt: { fontSize: 15, color: C.text1, fontStyle: "italic", backgroundColor: "#F9F9F9", padding: 12, borderRadius: 10 },
+  imageSection: { marginTop: 20 },
+  evidenceImageMini: { width: 100, height: 100, borderRadius: 12, marginRight: 10 },
+  modalContainer: { flex: 1, backgroundColor: "rgba(0,0,0,0.9)", justifyContent: "center" },
+  closeModalBtn: { position: "absolute", top: 40, right: 20, zIndex: 1 },
+  fullImage: { width: '100%', height: '80%' },
+  footer: { alignItems: "center", marginVertical: 20 },
+  footerTxt: { color: "#9EABB8", fontSize: 12 },
+  btnBackErr: { backgroundColor: C.primary, padding: 12, borderRadius: 8, marginTop: 10 }
 });

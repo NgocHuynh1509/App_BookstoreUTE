@@ -4,6 +4,8 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.List;
+
 /**
  * Data Transfer Object cho yêu cầu hoàn trả hàng.
  * Dùng để nhận dữ liệu từ Frontend gửi lên API.
@@ -27,5 +29,5 @@ public class ReturnRequestDTO {
      * Có thể là String Base64 hoặc URL sau khi đã upload lên
      * các dịch vụ lưu trữ đám mây (Cloudinary, S3, Firebase).
      */
-    private String imageEvidence;
+    private List<String> imageEvidences; // Chuyển thành List nhen
 }
