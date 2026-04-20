@@ -33,6 +33,7 @@ public class OrderService {
     @Autowired private ShippingAddressRepository addressRepo;
     @Autowired private CartRepository cartRepo;
     @Autowired private CartDetailRepository cartDetailRepo;
+    @Autowired ReturnRequestRepository returnRequestRepository;
 
     public List<OrderHistoryResponse> getOrdersByUserId(String userIdFromClient, String emailFromToken) {
         Users user = usersRepository.findByCustomer_Email(emailFromToken)
@@ -111,6 +112,10 @@ public class OrderService {
         Orders order = ordersRepository.findByOrderIdAndCustomer_CustomerId(orderId, customerId)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy đơn hàng"));
 
+        // --- LOGIC KIỂM TRA HOÀN TRÀ ---
+        // Kiểm tra xem trong bảng return_requests đã có bản ghi nào cho order này chưa
+        boolean hasReturn = returnRequestRepository.existsByOrder_OrderId(orderId);
+
         List<OrderDetail> orderDetails = orderDetailRepository.findByOrder_OrderId(orderId);
 
         List<OrderDetailItemResponse> items = orderDetails.stream()
@@ -122,25 +127,6 @@ public class OrderService {
                 ))
                 .toList();
 
-//        String address;
-//        if (order.getShippingAddress() != null) {
-//            var sa = order.getShippingAddress();
-//
-//            address = sa.getSpecificAddress()
-//                    + (sa.getWard() != null ? ", " + sa.getWard() : "")
-//                    + ", " + sa.getDistrict()
-//                    + ", " + sa.getProvince();
-//        } else {
-//            address = order.getAddress();
-//        }
-//
-//        String customerName = user.getFullName() != null
-//                ? user.getFullName()
-//                : (user.getCustomer() != null ? user.getCustomer().getFullName() : "Khách hàng");
-//
-//        String phone = user.getCustomer() != null
-//                ? user.getCustomer().getPhone()
-//                : "";
         String address;
         String customerName;
         String phone;
@@ -174,7 +160,8 @@ public class OrderService {
                 order.getShippingFee(),
                 order.getVoucherDiscount() != null ? order.getVoucherDiscount() : BigDecimal.ZERO,
                 order.getPointsDiscount() != null ? order.getPointsDiscount() : BigDecimal.ZERO,
-                items
+                items,
+                hasReturn // <--- TRUYỀN BIẾN HASRETURN VÀO ĐÂY
         );
     }
 
