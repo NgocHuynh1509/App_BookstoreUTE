@@ -47,6 +47,7 @@ public class OrderDetailResponse {
         this.points_discount = points_discount;
         this.has_return_request = has_return_request; // <--- GÁN GIÁ TRỊ
         this.items = items;
+        this.has_return_request = has_return_request; // <--- GÁN GIÁ TRỊ
     }
 
     public String getId() {

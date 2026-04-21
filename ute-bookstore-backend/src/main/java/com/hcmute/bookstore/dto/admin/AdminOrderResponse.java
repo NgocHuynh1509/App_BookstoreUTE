@@ -16,6 +16,7 @@ public class AdminOrderResponse {
     private String address;
     private String customerId;
     private String customerEmail;
+    private boolean hasReturnRequest; // Thêm field này
 
     public String getFullName() {
         return fullName;
@@ -104,6 +105,9 @@ public class AdminOrderResponse {
     public void setCustomerEmail(String customerEmail) {
         this.customerEmail = customerEmail;
     }
+    public boolean isHasReturnRequest() { return hasReturnRequest; }
+    public void setHasReturnRequest(boolean hasReturnRequest) { this.hasReturnRequest = hasReturnRequest; }
+
 
 
 }

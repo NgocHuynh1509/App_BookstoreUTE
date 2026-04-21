@@ -30,6 +30,7 @@ const List<_OrderTabItem> _orderTabs = [
   _OrderTabItem(label: 'Đã xác nhận', status: 'Confirmed'),
   _OrderTabItem(label: 'Đang giao', status: 'Shipping'),
   _OrderTabItem(label: 'Hoàn thành', status: 'Completed'),
+  _OrderTabItem(label: 'Yêu cầu hoàn', status: 'RequestingReturn'), // Tab mới
   _OrderTabItem(label: 'Hoàn trả', status: 'Returned'),
   _OrderTabItem(label: 'Đã hủy', status: 'Cancelled'),
 ];
@@ -37,13 +38,54 @@ const List<_OrderTabItem> _orderTabs = [
 final ordersProvider =
 FutureProvider.family<List<OrderItem>, String?>((ref, status) async {
   final api = ref.read(orderApiProvider);
-  final data = await api.fetchOrders(page: 0, size: 20, status: status);
-  final content = (data['content'] as List<dynamic>? ?? [])
-      .map((e) => OrderItem.fromJson(e as Map<String, dynamic>))
-      .toList();
-  content.sort((a, b) =>
-      DateTime.parse(b.orderDate).compareTo(DateTime.parse(a.orderDate)));
-  return content;
+//   // Nếu là tab "Đợi hoàn trả"
+//     if (status == 'RequestingReturn') {
+//       // Lấy các đơn Completed để lọc
+//       final data = await api.fetchOrders(page: 0, size: 100, status: 'Completed');
+//       final content = (data['content'] as List<dynamic>? ?? [])
+//           .map((e) => OrderItem.fromJson(e as Map<String, dynamic>))
+//           // CHỖ QUAN TRỌNG: Chỉ lấy những đơn có yêu cầu trả hàng
+//           .where((order) => order.hasReturnRequest == true)
+//           .toList();
+//
+//       content.sort((a, b) =>
+//           DateTime.parse(b.orderDate).compareTo(DateTime.parse(a.orderDate)));
+//       return content;
+//     }
+//   final data = await api.fetchOrders(page: 0, size: 20, status: status);
+//   final content = (data['content'] as List<dynamic>? ?? [])
+//       .map((e) => OrderItem.fromJson(e as Map<String, dynamic>))
+//       .toList();
+//   content.sort((a, b) =>
+//       DateTime.parse(b.orderDate).compareTo(DateTime.parse(a.orderDate)));
+//   return content;
+try {
+    if (status == 'RequestingReturn') {
+      // Gọi API với status đặc biệt mà mình đã viết ở Backend (ReturnRequest)
+      // Thay vì lấy 'Completed' rồi lọc ở App, hãy để Server lọc cho nhanh
+      final data = await api.fetchOrders(page: 0, size: 100, status: 'ReturnRequest');
+
+      final List<dynamic> contentJson = data['content'] ?? [];
+      return contentJson.map((e) {
+        try {
+          return OrderItem.fromJson(e as Map<String, dynamic>);
+        } catch (e) {
+          // Tránh lỗi nếu một item trong list bị lỗi định dạng
+          print('Lỗi parse OrderItem: $e');
+          return null;
+        }
+      }).whereType<OrderItem>().toList(); // Loại bỏ các item null
+    }
+
+    // Các trường hợp tab khác
+    final data = await api.fetchOrders(page: 0, size: 20, status: status);
+    final List<dynamic> contentJson = data['content'] ?? [];
+    return contentJson
+        .map((e) => OrderItem.fromJson(e as Map<String, dynamic>))
+        .toList();
+  } catch (e) {
+    throw Exception('Lỗi tải danh sách: $e');
+  }
 });
 
 class OrdersScreen extends ConsumerStatefulWidget {
@@ -424,6 +466,27 @@ class _OrderCard extends StatelessWidget {
                 ),
               ],
             ),
+
+                if (order.hasReturnRequest == true)
+              Container(
+                margin: const EdgeInsets.only(bottom: 12), // Tăng margin một chút cho thoáng
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: Colors.red.shade50,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: Colors.red.shade200),
+                ),
+                child: Row(
+                  children: [
+                    Icon(Icons.warning_amber_rounded, color: Colors.red.shade700, size: 16),
+                    const SizedBox(width: 8),
+                    Text(
+                      'ĐƠN HÀNG ĐANG YÊU CẦU HOÀN TRẢ',
+                      style: TextStyle(color: Colors.red.shade700, fontWeight: FontWeight.bold, fontSize: 11),
+                    ),
+                  ],
+                ),
+              ),
             const SizedBox(height: 14),
             _InfoRow(
               icon: Icons.person_outline,

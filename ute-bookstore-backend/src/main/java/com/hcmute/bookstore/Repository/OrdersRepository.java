@@ -81,4 +81,7 @@ public interface OrdersRepository extends JpaRepository<Orders, String> {
     @Query("select min(o.orderDate) from Orders o")
     Date findMinOrderDate();
 
+    @Query("SELECT o FROM Orders o WHERE EXISTS (SELECT r FROM ReturnRequest r WHERE r.order.orderId = o.orderId)")
+    Page<Orders> findOrdersWithReturnRequests(Pageable pageable);
+
 }

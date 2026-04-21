@@ -30,7 +30,7 @@ export default function ReturnRequestScreen() {
     let result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
       allowsMultipleSelection: true, // Cho phép chọn nhiều
-      selectionLimit: 5, // Giới hạn tối đa 5 ảnh
+      selectionLimit: 0, // Giới hạn tối đa 5 ảnh
       quality: 0.5,
     });
 
@@ -127,7 +127,7 @@ export default function ReturnRequestScreen() {
           onChangeText={setReason}
         />
 
-        <Text style={s.label}>Minh chứng hình ảnh ({images.length}/5)</Text>
+        <Text style={s.label}>Minh chứng hình ảnh ({images.length})</Text>
 
         {/* 4. GIAO DIỆN CHỌN NHIỀU ẢNH */}
         <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 20 }}>

@@ -11,6 +11,7 @@ class OrderItem {
   final double totalAmount;
   final double shippingFee;
   final String orderDate;
+  final bool hasReturnRequest; // Thêm field này
 
   OrderItem({
     required this.orderId,
@@ -25,6 +26,7 @@ class OrderItem {
     required this.totalAmount,
     required this.shippingFee,
     required this.orderDate,
+    required this.hasReturnRequest,
   });
 
   factory OrderItem.fromJson(Map<String, dynamic> json) {
@@ -41,6 +43,7 @@ class OrderItem {
       totalAmount: (json['totalAmount'] as num?)?.toDouble() ?? 0,
       shippingFee: (json['shippingFee'] as num?)?.toDouble() ?? 0,
       orderDate: json['orderDate']?.toString() ?? '',
+      hasReturnRequest: json['hasReturnRequest'] ?? false, // Map từ backend
     );
   }
 }
