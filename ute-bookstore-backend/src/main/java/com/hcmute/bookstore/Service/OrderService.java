@@ -12,7 +12,9 @@ import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -36,23 +38,41 @@ public class OrderService {
     @Autowired ReturnRequestRepository returnRequestRepository;
 
     public List<OrderHistoryResponse> getOrdersByUserId(String userIdFromClient, String emailFromToken) {
+        // 1. Kiểm tra User
         Users user = usersRepository.findByCustomer_Email(emailFromToken)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy user"));
 
         String customerId = user.getCustomer().getCustomerId();
 
+        // 2. Kiểm tra quyền truy cập
         if (!customerId.equals(userIdFromClient)) {
             throw new RuntimeException("Bạn không có quyền xem đơn hàng này");
         }
 
+        // 3. Lấy danh sách đơn hàng
         List<Orders> orders = ordersRepository.findByCustomer_CustomerIdOrderByOrderDateDesc(customerId);
 
+        // 4. Lấy danh sách mã đơn hàng
+        List<String> orderIds = orders.stream().map(Orders::getOrderId).toList();
+
+        // 5. Truy vấn tất cả ReturnRequest liên quan đến các đơn hàng này
+        List<ReturnRequest> returnRequests = returnRequestRepository.findByOrder_OrderIdIn(orderIds);
+
+        // 6. Tạo Map để tra cứu: Key = orderId, Value = status hoàn tiền
+        Map<String, String> returnStatusMap = returnRequests.stream()
+                .collect(Collectors.toMap(
+                        req -> req.getOrder().getOrderId(),
+                        ReturnRequest::getStatus
+                ));
+
+        // 7. Map sang OrderHistoryResponse
         return orders.stream()
                 .map(order -> new OrderHistoryResponse(
-                        order.getOrderId(),
-                        normalizeHistoryStatus(order.getStatus()),
-                        order.getOrderDate(),
-                        order.getTotalAmount()
+                        order.getOrderId(), //
+                        normalizeHistoryStatus(order.getStatus()), //
+                        order.getOrderDate(), //
+                        order.getTotalAmount(), //
+                        returnStatusMap.get(order.getOrderId()) // Lấy từ Map, nếu không có sẽ trả về null
                 ))
                 .toList();
     }

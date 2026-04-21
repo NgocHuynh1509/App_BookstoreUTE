@@ -90,6 +90,20 @@ function OrderCard({ item, onPress }: { item: Order; onPress: () => void }) {
   const dateStr = date.toLocaleDateString("vi-VN", { day: "2-digit", month: "2-digit", year: "numeric" });
   const timeStr = date.toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" });
 
+  // Logic xử lý nhãn hoàn tiền
+    const renderReturnLabel = () => {
+      if (!item.returnRequestStatus) return null;
+
+      const isPending = item.returnRequestStatus === "PENDING";
+      return (
+        <View style={[s.returnBadge, { backgroundColor: isPending ? C.orangeBg : C.greenBg }]}>
+          <Text style={[s.returnBadgeTxt, { color: isPending ? C.orange : C.green }]}>
+            {isPending ? "Đang xử lý hoàn tiền" : "Đã xử lý hoàn tiền"}
+          </Text>
+        </View>
+      );
+    };
+
   return (
     <TouchableOpacity style={s.card} onPress={onPress} activeOpacity={0.85}>
       {/* Card top: order id + status */}
@@ -99,6 +113,7 @@ function OrderCard({ item, onPress }: { item: Order; onPress: () => void }) {
             <Ionicons name="receipt-outline" size={14} color={C.primaryMid} />
             <Text style={s.orderNum}>Đơn #{item.id}</Text>
           </View>
+          {renderReturnLabel()}
           <View style={s.dateRow}>
             <Ionicons name="calendar-outline" size={12} color={C.text3} />
             <Text style={s.dateTxt}>{dateStr}</Text>
@@ -436,4 +451,17 @@ const s = StyleSheet.create({
   },
   emptyTitle: { fontSize: 17, fontWeight: "800", color: C.text1, marginBottom: 8 },
   emptySub:   { fontSize: 14, color: C.text3, textAlign: "center", lineHeight: 21 },
+  // Style cho nhãn hoàn tiền
+    returnBadge: {
+      paddingHorizontal: 8,
+      paddingVertical: 2,
+      borderRadius: 6,
+      borderWidth: 0.5,
+      borderColor: 'rgba(0,0,0,0.05)',
+    },
+    returnBadgeTxt: {
+      fontSize: 10,
+      fontWeight: "800",
+      textTransform: 'uppercase',
+    },
 });
