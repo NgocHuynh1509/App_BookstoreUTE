@@ -163,10 +163,14 @@ export default function SearchScreen({ navigation }: any) {
                 <TouchableOpacity
                   key={item.bookId} // Đổi từ item.id thành item.bookId cho khớp với Meilisearch
                       style={[s.suggRow, idx === suggestions.length - 1 && { borderBottomWidth: 0 }]}
-                      onPress={() => {
-                        saveSearchHistory(item.title);
-                        navigation.navigate("SearchResult", { keyword: item.title });
-                      }}
+                  onPress={() => {
+                      saveSearchHistory(item.title);
+                      navigation.navigate("SearchResult", {
+                          bookId: item.bookId,
+                          keyword: item.title,
+                          mode: "recommend",
+                      });
+                  }}
                       activeOpacity={0.75}
                 >
                   <View style={s.suggIconWrap}>

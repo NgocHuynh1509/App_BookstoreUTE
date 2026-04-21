@@ -24,190 +24,337 @@ const C = {
 
 // ─── Sort options ─────────────────────────────────────────────────────────────
 const SORT_OPTIONS = [
-  { key: "relevant",   label: "Phù hợp nhất",  icon: "sparkles-outline" },
+  { key: "relevant",   label: "Phù hợp nhất",   icon: "sparkles-outline" },
   { key: "low-high",   label: "Giá thấp → cao", icon: "trending-up-outline" },
   { key: "high-low",   label: "Giá cao → thấp", icon: "trending-down-outline" },
-  { key: "newest",     label: "Mới nhất",        icon: "calendar-outline" },
-  { key: "bestseller", label: "Bán chạy nhất",   icon: "flame-outline" },
+  { key: "newest",     label: "Mới nhất",       icon: "calendar-outline" },
+  { key: "bestseller", label: "Bán chạy nhất",  icon: "flame-outline" },
 ];
+
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+const getBookImage = (item: any) =>
+    item.cover_image || item.imageUrl || item.image || "https://via.placeholder.com/300x450?text=No+Image";
+
+const getBookAuthor = (item: any) =>
+    item.author_name || item.author || "Không rõ tác giả";
+
+const getBookPrice = (item: any) => Number(item.price || 0);
+
+const getBookId = (item: any) =>
+    item.id || item.bookId;
+
+function normalizeRecommendItem(item: any) {
+  return {
+    id: item.id ?? item.bookId,
+    bookId: item.bookId ?? item.id,
+    title: item.title ?? "",
+    author_name: item.author_name ?? item.author ?? "Không rõ tác giả",
+    cover_image: item.cover_image ?? item.imageUrl ?? item.image ?? "",
+    price: Number(item.price ?? 0),
+    score: Number(item.score ?? 0),
+    isRecommended: true,
+  };
+}
 
 // ─── Book card ────────────────────────────────────────────────────────────────
 function BookCard({ item, onPress }: any) {
+  const image = item.cover_image || item.imageUrl || item.image || "https://via.placeholder.com/300x450?text=No+Image";
+  const author = item.author_name || item.author || "Không rõ";
+  const price = Number(item.price || 0);
+  const originalPrice = Number(item.original_price || 0);
+  const hasDiscount = originalPrice > price;
+
   return (
-    <TouchableOpacity style={s.bookCard} onPress={onPress} activeOpacity={0.88}>
-      <Image source={{ uri: item.cover_image }} style={s.bookImg} resizeMode="cover" />
-      <View style={s.bookBody}>
-        <Text style={s.bookTitle} numberOfLines={2}>{item.title}</Text>
-        <Text style={s.bookAuthor} numberOfLines={1}>{item.author_name}</Text>
-        <Text style={s.bookPrice}>{Number(item.price).toLocaleString("vi-VN")}đ</Text>
-      </View>
-    </TouchableOpacity>
+      <TouchableOpacity style={s.cardG} onPress={onPress} activeOpacity={0.85}>
+        <View style={{ position: "relative" }}>
+          <Image source={{ uri: image }} style={s.cardGImg} resizeMode="cover" />
+
+          {hasDiscount && (
+              <View style={s.discountBadge}>
+                <Text style={s.discountBadgeTxt}>
+                  -{Math.round(((originalPrice - price) / originalPrice) * 100)}%
+                </Text>
+              </View>
+          )}
+        </View>
+
+        <View style={s.cardGBody}>
+          <Text style={s.cardGTitle} numberOfLines={2}>
+            {item.title}
+          </Text>
+
+          <Text style={s.cardGAuthor} numberOfLines={1}>
+            {author}
+          </Text>
+
+          <Text style={s.cardGPrice}>
+            {price.toLocaleString("vi-VN")}đ
+          </Text>
+
+          {hasDiscount && (
+              <Text style={s.cardGOldPrice}>
+                {originalPrice.toLocaleString("vi-VN")}đ
+              </Text>
+          )}
+
+          {item.score !== undefined && item.score > 0 && (
+              <Text style={s.bookScore}>
+                Tương đồng: {(Number(item.score) * 100).toFixed(1)}%
+              </Text>
+          )}
+        </View>
+      </TouchableOpacity>
   );
 }
 
 // ─── MAIN ─────────────────────────────────────────────────────────────────────
 export default function SearchResultScreen({ route, navigation }: any) {
-  const { keyword } = route.params;
+  const {
+    keyword: routeKeyword = "",
+    bookId: routeBookId = "",
+    mode: routeMode = "search",
+  } = route.params || {};
 
-  const [searchText, setSearchText]             = useState(keyword);
-  const [books, setBooks]                       = useState([]);
+  const [searchText, setSearchText]             = useState(routeKeyword);
+  const [books, setBooks]                       = useState<any[]>([]);
   const [loading, setLoading]                   = useState(false);
   const [sort, setSort]                         = useState("relevant");
   const [showSortDropdown, setShowSortDropdown] = useState(false);
+  const [mode, setMode]                         = useState(routeMode);
+  const [selectedBookId, setSelectedBookId]     = useState(routeBookId);
 
-  // ==========================
-  // DATA LOGIC (unchanged)
-  // ==========================
   const loadData = async () => {
     setLoading(true);
     try {
-      const res = await api.get("/books", { params: { search: searchText } });
-      let data  = [...res.data];
+      let data: any[] = [];
 
-      if (sort === "low-high")  data.sort((a, b) => a.price - b.price);
-      if (sort === "high-low")  data.sort((a, b) => b.price - a.price);
-      if (sort === "newest")    data.sort((a, b) => b.id - a.id);
+      if (mode === "recommend" && selectedBookId) {
+        const res = await api.get(`/api/recommend/${selectedBookId}`);
+
+        const raw = typeof res.data === "string"
+            ? JSON.parse(res.data)
+            : res.data;
+
+        if (!Array.isArray(raw)) {
+          setBooks([]);
+          return;
+        }
+
+        const detailList = await Promise.all(
+            raw.map(async (item: any) => {
+              try {
+                const detail = await api.get(`/books/${item.bookId}`);
+                return {
+                  ...detail.data,
+                  score: item.score,
+                };
+              } catch (err) {
+                console.log("Lỗi load book:", item.bookId, err);
+                return null;
+              }
+            })
+        );
+
+        data = detailList.filter(Boolean);
+      } else {
+        const res = await api.get("/books", {
+          params: { search: searchText },
+        });
+
+        data = Array.isArray(res.data) ? [...res.data] : [];
+      }
+
+      if (sort === "low-high") {
+        data.sort((a, b) => getBookPrice(a) - getBookPrice(b));
+      }
+      if (sort === "high-low") {
+        data.sort((a, b) => getBookPrice(b) - getBookPrice(a));
+      }
+      if (sort === "newest") {
+        data.sort((a, b) => String(getBookId(b)).localeCompare(String(getBookId(a))));
+      }
 
       setBooks(data);
     } catch (err) {
       console.log("Lỗi load search result:", err);
+      setBooks([]);
     } finally {
       setLoading(false);
     }
   };
 
-  useEffect(() => { setSearchText(keyword); }, [keyword]);
-  useEffect(() => { loadData(); },            [searchText, sort]);
+  // cập nhật khi params đổi
+  useEffect(() => {
+    setSearchText(routeKeyword || "");
+    setSelectedBookId(routeBookId || "");
+    setMode(routeMode || "search");
+  }, [routeKeyword, routeBookId, routeMode]);
+
+  useEffect(() => {
+    loadData();
+  }, [searchText, sort, selectedBookId, mode]);
+
+  const handleManualSearch = () => {
+    setMode("search");
+    setSelectedBookId("");
+    loadData();
+  };
 
   const activeSort = SORT_OPTIONS.find(x => x.key === sort);
 
   return (
-    <View style={s.container}>
-      <StatusBar barStyle="light-content" backgroundColor={C.primaryMid} />
+      <View style={s.container}>
+        <StatusBar barStyle="light-content" backgroundColor={C.primaryMid} />
 
-      {/* ── HEADER ─────────────────────────────────────────────── */}
-      <View style={s.header}>
-        <View style={s.headerBlob} />
+        <View style={s.header}>
+          <View style={s.headerBlob} />
 
-        <View style={s.headerTop}>
-          <TouchableOpacity
-            style={s.backBtn}
-            onPress={() => navigation.canGoBack() && navigation.goBack()}
-          >
-            <Ionicons name="chevron-back" size={22} color="#FFF" />
-          </TouchableOpacity>
-
-          <View style={s.searchBar}>
-            <Ionicons name="search-outline" size={17} color={C.primaryMid} />
-            <TextInput
-              style={s.searchInput}
-              placeholder="Tìm tên sách, tác giả..."
-              placeholderTextColor={C.text3}
-              value={searchText}
-              onChangeText={t => setSearchText(t)}
-              onSubmitEditing={loadData}
-              returnKeyType="search"
-            />
-            {searchText.length > 0 && (
-              <TouchableOpacity onPress={() => setSearchText("")}>
-                <Ionicons name="close-circle" size={16} color={C.text3} />
-              </TouchableOpacity>
-            )}
-          </View>
-
-          <TouchableOpacity style={s.goBtn} onPress={loadData}>
-            <Ionicons name="arrow-forward" size={18} color="#FFF" />
-          </TouchableOpacity>
-        </View>
-      </View>
-
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={s.scroll}>
-
-        {/* ── FILTER BAR ───────────────────────────────────────── */}
-        <View style={s.filterBar}>
-          <View style={{ flexDirection: "row", alignItems: "baseline", gap: 4 }}>
-            <Text style={s.resultNum}>{books.length}</Text>
-            <Text style={s.resultLabel}>kết quả</Text>
-          </View>
-
-          {/* Sort dropdown trigger */}
-          <View>
+          <View style={s.headerTop}>
             <TouchableOpacity
-              style={[s.sortBtn, showSortDropdown && s.sortBtnActive]}
-              onPress={() => setShowSortDropdown(v => !v)}
-              activeOpacity={0.85}
+                style={s.backBtn}
+                onPress={() => navigation.canGoBack() && navigation.goBack()}
             >
-              <Ionicons
-                name={activeSort?.icon as any}
-                size={13}
-                color={showSortDropdown ? "#FFF" : C.primaryMid}
-              />
-              <Text style={[s.sortBtnTxt, showSortDropdown && { color: "#FFF" }]}>
-                {activeSort?.label}
-              </Text>
-              <Ionicons
-                name={showSortDropdown ? "chevron-up" : "chevron-down"}
-                size={13}
-                color={showSortDropdown ? "#FFF" : C.primaryMid}
-              />
+              <Ionicons name="chevron-back" size={22} color="#FFF" />
             </TouchableOpacity>
 
-            {showSortDropdown && (
-              <View style={s.dropdown}>
-                {SORT_OPTIONS.map((op, idx) => {
-                  const active = op.key === sort;
-                  return (
-                    <TouchableOpacity
-                      key={op.key}
-                      style={[
-                        s.dropdownItem,
-                        active && s.dropdownItemActive,
-                        idx === SORT_OPTIONS.length - 1 && { borderBottomWidth: 0 },
-                      ]}
-                      onPress={() => { setSort(op.key); setShowSortDropdown(false); }}
-                    >
-                      <Ionicons name={op.icon as any} size={14} color={active ? C.primaryMid : C.text3} />
-                      <Text style={[s.dropdownTxt, active && s.dropdownTxtActive]}>{op.label}</Text>
-                      {active && <Ionicons name="checkmark" size={14} color={C.primaryMid} style={{ marginLeft: "auto" as any }} />}
-                    </TouchableOpacity>
-                  );
-                })}
-              </View>
-            )}
+            <View style={s.searchBar}>
+              <Ionicons name="search-outline" size={17} color={C.primaryMid} />
+              <TextInput
+                  style={s.searchInput}
+                  placeholder="Tìm tên sách, tác giả..."
+                  placeholderTextColor={C.text3}
+                  value={searchText}
+                  onChangeText={t => setSearchText(t)}
+                  onSubmitEditing={handleManualSearch}
+                  returnKeyType="search"
+              />
+              {searchText.length > 0 && (
+                  <TouchableOpacity onPress={() => setSearchText("")}>
+                    <Ionicons name="close-circle" size={16} color={C.text3} />
+                  </TouchableOpacity>
+              )}
+            </View>
+
+            <TouchableOpacity style={s.goBtn} onPress={handleManualSearch}>
+              <Ionicons name="arrow-forward" size={18} color="#FFF" />
+            </TouchableOpacity>
           </View>
         </View>
 
-        {/* ── CONTENT ──────────────────────────────────────────── */}
-        {loading ? (
-          <View style={s.centerBox}>
-            <ActivityIndicator size="large" color={C.primaryMid} />
-            <Text style={{ color: C.text3, marginTop: 10, fontSize: 14 }}>Đang tìm kiếm...</Text>
-          </View>
-        ) : books.length === 0 ? (
-          <View style={s.centerBox}>
-            <View style={s.emptyIconWrap}>
-              <Ionicons name="search-outline" size={44} color={C.primaryTint} />
+        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={s.scroll}>
+          <View style={s.filterBar}>
+            <View>
+              <View style={{ flexDirection: "row", alignItems: "baseline", gap: 4 }}>
+                <Text style={s.resultNum}>{books.length}</Text>
+                <Text style={s.resultLabel}>kết quả</Text>
+              </View>
+
+              <Text style={s.modeText}>
+                {mode === "recommend"
+                    ? "Gợi ý sách tương tự"
+                    : `Kết quả tìm kiếm cho "${searchText}"`}
+              </Text>
             </View>
-            <Text style={s.emptyTitle}>Không tìm thấy kết quả</Text>
-            <Text style={s.emptySub}>Thử từ khóa khác hoặc kiểm tra lại chính tả</Text>
+
+            <View>
+              <TouchableOpacity
+                  style={[s.sortBtn, showSortDropdown && s.sortBtnActive]}
+                  onPress={() => setShowSortDropdown(v => !v)}
+                  activeOpacity={0.85}
+              >
+                <Ionicons
+                    name={activeSort?.icon as any}
+                    size={13}
+                    color={showSortDropdown ? "#FFF" : C.primaryMid}
+                />
+                <Text style={[s.sortBtnTxt, showSortDropdown && { color: "#FFF" }]}>
+                  {activeSort?.label}
+                </Text>
+                <Ionicons
+                    name={showSortDropdown ? "chevron-up" : "chevron-down"}
+                    size={13}
+                    color={showSortDropdown ? "#FFF" : C.primaryMid}
+                />
+              </TouchableOpacity>
+
+              {showSortDropdown && (
+                  <View style={s.dropdown}>
+                    {SORT_OPTIONS.map((op, idx) => {
+                      const active = op.key === sort;
+                      return (
+                          <TouchableOpacity
+                              key={op.key}
+                              style={[
+                                s.dropdownItem,
+                                active && s.dropdownItemActive,
+                                idx === SORT_OPTIONS.length - 1 && { borderBottomWidth: 0 },
+                              ]}
+                              onPress={() => {
+                                setSort(op.key);
+                                setShowSortDropdown(false);
+                              }}
+                          >
+                            <Ionicons name={op.icon as any} size={14} color={active ? C.primaryMid : C.text3} />
+                            <Text style={[s.dropdownTxt, active && s.dropdownTxtActive]}>{op.label}</Text>
+                            {active && (
+                                <Ionicons
+                                    name="checkmark"
+                                    size={14}
+                                    color={C.primaryMid}
+                                    style={{ marginLeft: "auto" as any }}
+                                />
+                            )}
+                          </TouchableOpacity>
+                      );
+                    })}
+                  </View>
+              )}
+            </View>
           </View>
-        ) : (
-          <FlatList
-            data={books}
-            keyExtractor={item => item.id.toString()}
-            numColumns={2}
-            scrollEnabled={false}
-            columnWrapperStyle={s.gridRow}
-            renderItem={({ item }) => (
-              <BookCard
-                item={item}
-                onPress={() => navigation.navigate("BookDetail", { id: item.id })}
+
+          {loading ? (
+              <View style={s.centerBox}>
+                <ActivityIndicator size="large" color={C.primaryMid} />
+                <Text style={{ color: C.text3, marginTop: 10, fontSize: 14 }}>
+                  {mode === "recommend" ? "Đang tải gợi ý..." : "Đang tìm kiếm..."}
+                </Text>
+              </View>
+          ) : books.length === 0 ? (
+              <View style={s.centerBox}>
+                <View style={s.emptyIconWrap}>
+                  <Ionicons name="search-outline" size={44} color={C.primaryTint} />
+                </View>
+                <Text style={s.emptyTitle}>
+                  {mode === "recommend" ? "Không có gợi ý phù hợp" : "Không tìm thấy kết quả"}
+                </Text>
+                <Text style={s.emptySub}>
+                  {mode === "recommend"
+                      ? "Hiện chưa có sách tương tự cho lựa chọn này"
+                      : "Thử từ khóa khác hoặc kiểm tra lại chính tả"}
+                </Text>
+              </View>
+          ) : (
+              <FlatList
+                  data={books}
+                  keyExtractor={(item, index) => String(getBookId(item) ?? index)}
+                  numColumns={2}
+                  scrollEnabled={false}
+                  columnWrapperStyle={s.gridRow}
+                  renderItem={({ item }) => (
+                      <BookCard
+                          item={item}
+                          onPress={() =>
+                              navigation.navigate("BookDetail", {
+                                id: item.id ?? item.bookId,
+                                bookId: item.bookId ?? item.id,
+                              })
+                          }
+                      />
+                  )}
               />
-            )}
-          />
-        )}
-      </ScrollView>
-    </View>
+          )}
+        </ScrollView>
+      </View>
   );
 }
 
@@ -215,111 +362,227 @@ export default function SearchResultScreen({ route, navigation }: any) {
 const s = StyleSheet.create({
   container: { flex: 1, backgroundColor: C.bg },
 
-  // ── Header
   header: {
     backgroundColor: C.primaryMid,
     paddingTop: Platform.OS === "android" ? (StatusBar.currentHeight || 0) + 10 : 52,
-    paddingBottom: 18, paddingHorizontal: 14,
-    borderBottomLeftRadius: 28, borderBottomRightRadius: 28,
+    paddingBottom: 18,
+    paddingHorizontal: 14,
+    borderBottomLeftRadius: 28,
+    borderBottomRightRadius: 28,
     overflow: "hidden",
   },
   headerBlob: {
-    position: "absolute", width: 160, height: 160, borderRadius: 80,
-    backgroundColor: "rgba(255,255,255,0.08)", top: -50, right: -30,
+    position: "absolute",
+    width: 160,
+    height: 160,
+    borderRadius: 80,
+    backgroundColor: "rgba(255,255,255,0.08)",
+    top: -50,
+    right: -30,
   },
   headerTop: {
-    flexDirection: "row", alignItems: "center", gap: 10,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
   },
   backBtn: {
-    width: 38, height: 38, borderRadius: 19,
+    width: 38,
+    height: 38,
+    borderRadius: 19,
     backgroundColor: "rgba(255,255,255,0.18)",
-    justifyContent: "center", alignItems: "center",
+    justifyContent: "center",
+    alignItems: "center",
     flexShrink: 0,
   },
   searchBar: {
-    flex: 1, flexDirection: "row", alignItems: "center", gap: 8,
-    backgroundColor: C.surface, borderRadius: 14,
-    paddingHorizontal: 12, paddingVertical: 9,
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    backgroundColor: C.surface,
+    borderRadius: 14,
+    paddingHorizontal: 12,
+    paddingVertical: 9,
     elevation: 2,
-    shadowColor: C.primary, shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.10, shadowRadius: 4,
+    shadowColor: C.primary,
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.10,
+    shadowRadius: 4,
   },
   searchInput: {
-    flex: 1, fontSize: 14, color: C.text1, paddingVertical: 0,
+    flex: 1,
+    fontSize: 14,
+    color: C.text1,
+    paddingVertical: 0,
   },
   goBtn: {
-    width: 38, height: 38, borderRadius: 14,
+    width: 38,
+    height: 38,
+    borderRadius: 14,
     backgroundColor: "rgba(255,255,255,0.22)",
-    justifyContent: "center", alignItems: "center",
+    justifyContent: "center",
+    alignItems: "center",
     flexShrink: 0,
   },
 
   scroll: { padding: 16, paddingBottom: 30 },
 
-  // ── Filter bar
   filterBar: {
-    flexDirection: "row", justifyContent: "space-between",
-    alignItems: "center", marginBottom: 14,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "flex-start",
+    marginBottom: 14,
   },
   resultNum:   { fontSize: 22, fontWeight: "900", color: C.text1 },
   resultLabel: { fontSize: 13, color: C.text3 },
+  modeText:    { fontSize: 12, color: C.text2, marginTop: 2, maxWidth: 180 },
 
   sortBtn: {
-    flexDirection: "row", alignItems: "center", gap: 5,
-    backgroundColor: C.surface, borderRadius: 12,
-    paddingHorizontal: 12, paddingVertical: 8,
-    borderWidth: 1.5, borderColor: C.primaryTint,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 5,
+    backgroundColor: C.surface,
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderWidth: 1.5,
+    borderColor: C.primaryTint,
     elevation: 2,
-    shadowColor: C.primaryMid, shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.08, shadowRadius: 4,
+    shadowColor: C.primaryMid,
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.08,
+    shadowRadius: 4,
   },
   sortBtnActive: { backgroundColor: C.primaryMid, borderColor: C.primaryMid },
   sortBtnTxt:    { fontSize: 13, color: C.primaryMid, fontWeight: "600" },
 
   dropdown: {
-    position: "absolute", right: 0, top: 46, zIndex: 99,
-    backgroundColor: C.surface, borderRadius: 16,
+    position: "absolute",
+    right: 0,
+    top: 46,
+    zIndex: 99,
+    backgroundColor: C.surface,
+    borderRadius: 16,
     width: 195,
     elevation: 12,
-    shadowColor: C.primary, shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.15, shadowRadius: 14,
+    shadowColor: C.primary,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.15,
+    shadowRadius: 14,
     overflow: "hidden",
   },
   dropdownItem: {
-    flexDirection: "row", alignItems: "center", gap: 10,
-    paddingHorizontal: 14, paddingVertical: 13,
-    borderBottomWidth: 1, borderColor: C.border,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    paddingHorizontal: 14,
+    paddingVertical: 13,
+    borderBottomWidth: 1,
+    borderColor: C.border,
   },
   dropdownItemActive: { backgroundColor: C.primarySoft },
   dropdownTxt:        { fontSize: 14, color: C.text2 },
   dropdownTxtActive:  { color: C.primaryMid, fontWeight: "700" },
 
-  // ── Grid
   gridRow: { justifyContent: "space-between", gap: 12 },
 
-  // ── Book card
-  bookCard: {
-    width: "48%",
-    backgroundColor: C.surface, borderRadius: 18,
-    marginBottom: 12, overflow: "hidden",
-    elevation: 2,
-    shadowColor: C.primaryMid, shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.09, shadowRadius: 8,
-  },
-  bookImg:    { width: "100%", height: 168 },
-  bookBody:   { padding: 10, gap: 4 },
-  bookTitle:  { fontSize: 13, fontWeight: "700", color: C.text1, lineHeight: 18 },
-  bookAuthor: { fontSize: 11, color: C.text3 },
-  bookPrice:  { fontSize: 15, fontWeight: "800", color: C.primaryMid, marginTop: 2 },
-
-  // ── Center states
   centerBox: { alignItems: "center", paddingTop: 60, gap: 10 },
   emptyIconWrap: {
-    width: 88, height: 88, borderRadius: 44,
+    width: 88,
+    height: 88,
+    borderRadius: 44,
     backgroundColor: C.primarySoft,
-    justifyContent: "center", alignItems: "center",
+    justifyContent: "center",
+    alignItems: "center",
     marginBottom: 4,
   },
-  emptyTitle: { fontSize: 17, fontWeight: "800", color: C.text1 },
-  emptySub:   { fontSize: 14, color: C.text3, textAlign: "center", lineHeight: 21, paddingHorizontal: 24 },
+  emptyTitle: {
+    fontSize: 17,
+    fontWeight: "800",
+    color: C.text1,
+  },
+  emptySub: {
+    fontSize: 14,
+    color: C.text3,
+    textAlign: "center",
+    lineHeight: 21,
+    paddingHorizontal: 24,
+  },
+
+  gridRow: {
+    justifyContent: "space-between",
+    gap: 12,
+  },
+
+  cardG: {
+    width: "48%",
+    backgroundColor: C.surface,
+    borderRadius: 18,
+    marginBottom: 14,
+    overflow: "hidden",
+    elevation: 3,
+    shadowColor: C.primaryMid,
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.10,
+    shadowRadius: 8,
+  },
+
+  cardGImg: {
+    width: "100%",
+    height: 168,
+  },
+
+  discountBadge: {
+    position: "absolute",
+    top: 8,
+    left: 8,
+    backgroundColor: C.sale,
+    borderRadius: 8,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+  },
+
+  discountBadgeTxt: {
+    color: "#FFF",
+    fontSize: 11,
+    fontWeight: "800",
+  },
+
+  cardGBody: {
+    padding: 10,
+  },
+
+  cardGTitle: {
+    fontSize: 13,
+    fontWeight: "700",
+    color: C.text1,
+    marginBottom: 3,
+    lineHeight: 18,
+  },
+
+  cardGAuthor: {
+    fontSize: 11,
+    color: C.text3,
+    marginBottom: 5,
+  },
+
+  cardGPrice: {
+    fontSize: 15,
+    fontWeight: "800",
+    color: C.sale,
+  },
+
+  cardGOldPrice: {
+    fontSize: 11,
+    color: C.text3,
+    textDecorationLine: "line-through",
+    marginTop: 1,
+  },
+
+  bookScore: {
+    fontSize: 11,
+    color: "#2E7D32",
+    fontWeight: "700",
+    marginTop: 4,
+  },
 });
