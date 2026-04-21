@@ -7,8 +7,8 @@
     "icon": "./assets/images/icon.png",
     "userInterfaceStyle": "automatic",
     "extra": {
-      "API_URL": "http://192.168.1.66:8080",
-      "MEILI_URL": "http://192.168.1.66:7700",
+      "API_URL": "http://192.168.1.12:8080",
+      "MEILI_URL": "http://192.168.1.12:7700",
       "eas": {
         "projectId": "511a330d-0bec-48ae-93d6-a7733992696d"
       }
