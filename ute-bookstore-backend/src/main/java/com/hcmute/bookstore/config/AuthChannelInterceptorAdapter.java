@@ -1,6 +1,8 @@
 package com.hcmute.bookstore.config;
 
 import com.hcmute.bookstore.Security.JwtService;
+import com.hcmute.bookstore.Entity.Users;
+import com.hcmute.bookstore.Repository.UsersRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.Ordered;
@@ -22,6 +24,7 @@ import java.util.Collections;
 public class AuthChannelInterceptorAdapter implements ChannelInterceptor {
 
     private final JwtService jwtService;
+    private final UsersRepository usersRepository;
 
     @Override
     public Message<?> preSend(Message<?> message, MessageChannel channel) {
@@ -33,21 +36,24 @@ public class AuthChannelInterceptorAdapter implements ChannelInterceptor {
             if (authHeader != null && authHeader.startsWith("Bearer ")) {
                 String token = authHeader.substring(7);
                 try {
-                    // 1. Giải mã token lấy email
-                    String email = jwtService.extractUsername(token);
+                    // 1. Giải mã token lấy subject (hiện tại CustomUserDetailsService lưu email vào subject)
+                    String subject = jwtService.extractUsername(token);
 
-                    if (email != null) {
-                        // 2. MAPPING Tên: Ép email về đúng Username mà App đang dùng
-                        String finalPrincipal;
-                        if (email.contains("admin")) {
-                            finalPrincipal = "admin";
-                        } else if (email.contains("ngochuynh150905")) {
-                            finalPrincipal = "diemngoc";
+                    if (subject != null) {
+                        String finalPrincipal = subject;
+                        
+                        // 2. Tìm username thức tế từ Database thay vì gán cứng
+                        Users userByEmail = usersRepository.findByCustomer_Email(subject).orElse(null);
+                        if (userByEmail != null) {
+                            finalPrincipal = userByEmail.getUserName();
                         } else {
-                            finalPrincipal = email; // Mặc định nếu không khớp
+                            Users userByName = usersRepository.findById(subject).orElse(null);
+                            if (userByName != null) {
+                                finalPrincipal = userByName.getUserName();
+                            }
                         }
 
-                        // 3. ĐỊNH DANH: Đây là bước quan trọng nhất
+                        // 3. ĐỊNH DANH (Dùng trực tiếp username)
                         UsernamePasswordAuthenticationToken auth =
                                 new UsernamePasswordAuthenticationToken(finalPrincipal, null, Collections.emptyList());
 
