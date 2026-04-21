@@ -9,15 +9,20 @@ from sklearn.metrics.pairwise import cosine_similarity
 import pandas as pd
 import os
 import sys
-print("PYTHON SCRIPT STARTED", file=sys.stderr)
 import re
+print("PYTHON SCRIPT STARTED", file=sys.stderr)
+
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8")
+if hasattr(sys.stderr, "reconfigure"):
+    sys.stderr.reconfigure(encoding="utf-8")
 
 @lru_cache(maxsize=1)
 
 def load_data():
     try:
         current_dir = os.path.dirname(os.path.abspath(__file__))
-        python_dir = current_dir  # ml.py đang ở python folder
+        python_dir = current_dir
 
         csv_path = os.path.join(python_dir, "books_latest.csv")
         sim_path = os.path.join(python_dir, "sim_matrix.csv")
@@ -26,23 +31,21 @@ def load_data():
             print("CSV not found at:", csv_path, file=sys.stderr)
             return None, None
 
-        if not os.path.exists(sim_path):
-            print("sim_matrix not found at:", sim_path, file=sys.stderr)
-            return None, None
-
         print("Reading:", csv_path, file=sys.stderr)
         df = pd.read_csv(csv_path, encoding="utf-8")
 
-        print("Reading:", sim_path, file=sys.stderr)
-        sim_matrix = pd.read_csv(sim_path, index_col=0, encoding="utf-8")
+        sim_matrix = None
+        if os.path.exists(sim_path):
+            print("Reading:", sim_path, file=sys.stderr)
+            sim_matrix = pd.read_csv(sim_path, index_col=0, encoding="utf-8")
+        else:
+            print("sim_matrix not found, will rebuild.", file=sys.stderr)
 
         return df, sim_matrix
 
     except Exception as e:
         print("Load error:", e, file=sys.stderr)
         return None, None
-
-
 
 df, sim_matrix = load_data()
 
@@ -281,18 +284,25 @@ if __name__ == "__main__":
     import sys
     import json
 
-    # chuẩn hóa + build model
+    if df is None:
+        print("[]")
+        sys.exit(0)
+
     df = prepare_ml_text(df)
     df, tfidf_matrix, sim_global = create_models(df)
-    # Spring Boot sẽ truyền bookId vào
+
     book_id = sys.argv[1] if len(sys.argv) > 1 else ""
 
     if not book_id:
         print("[]")
-        exit()
+        sys.exit(0)
 
-    recs = recommend_books(book_id, df, sim_matrix, top_k=6)
+    sim_df = pd.DataFrame(
+        sim_global,
+        index=df["bookId"].astype(str),
+        columns=df["bookId"].astype(str)
+    )
 
-    # In JSON cho Spring Boot / HTML đọc
+    recs = recommend_books(book_id, df, sim_df, top_k=6)
+
     print(json.dumps(recs, ensure_ascii=False))
-

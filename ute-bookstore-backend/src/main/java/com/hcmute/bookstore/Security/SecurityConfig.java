@@ -65,6 +65,8 @@ public class SecurityConfig {
                                 "/categories/**",
                                 "/reviews/book/**",
                                 "/uploads/**",
+                                "/api/recommend/**",
+
                                 "/chat/media/**"
                         ).permitAll()
                         .requestMatchers(
