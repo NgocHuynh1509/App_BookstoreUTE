@@ -236,6 +236,8 @@ class _MessageBubbleState extends State<MessageBubble> with SingleTickerProvider
             categoryName: '',
             publicationYear: null,
             originalPrice: null,
+            averageRating: 0,
+            reviewCount: 0,
           );
 
           // Chuyển hướng sang màn hình chi tiết sản phẩm
@@ -510,3 +512,4 @@ class _MessageBubbleState extends State<MessageBubble> with SingleTickerProvider
     );
   }
 }
+

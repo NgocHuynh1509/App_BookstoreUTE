@@ -21,6 +21,18 @@ enum _ProductSort { newest, priceAsc, priceDesc, bestSeller }
 
 enum _ProductStatusFilter { all, active, outOfStock, hidden }
 
+class _ProductFilterResult {
+  const _ProductFilterResult({
+    required this.categoryId,
+    required this.status,
+    required this.sort,
+  });
+
+  final String categoryId;
+  final _ProductStatusFilter status;
+  final _ProductSort sort;
+}
+
 class _ProductsScreenState extends ConsumerState<ProductsScreen> {
   final _searchController = TextEditingController();
   _ProductSort _sort = _ProductSort.newest;
@@ -82,82 +94,130 @@ class _ProductsScreenState extends ConsumerState<ProductsScreen> {
 
   Future<void> _showFilterSheet() async {
     final controller = TextEditingController(text: _categoryController.text);
-    final result = await showModalBottomSheet<String>(
+    var tempStatus = _statusFilter;
+    var tempSort = _sort;
+    final result = await showModalBottomSheet<_ProductFilterResult>(
       context: context,
       isScrollControlled: true,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
-      builder: (_) => Padding(
-        padding: EdgeInsets.only(
-          left: 16,
-          right: 16,
-          top: 16,
-          bottom: MediaQuery.of(context).viewInsets.bottom + 16,
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              'Bộ lọc nâng cao',
-              style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16),
-            ),
-            const SizedBox(height: 12),
-            TextField(
-              controller: controller,
-              decoration: const InputDecoration(
-                labelText: 'Mã danh mục (CategoryId)',
-                hintText: 'VD: C01',
+      builder: (_) => StatefulBuilder(
+        builder: (context, setModalState) => Padding(
+          padding: EdgeInsets.only(
+            left: 16,
+            right: 16,
+            top: 16,
+            bottom: MediaQuery.of(context).viewInsets.bottom + 16,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Bộ lọc nâng cao',
+                style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16),
               ),
-            ),
-            const SizedBox(height: 12),
-            const Text('Trạng thái hiển thị'),
-            const SizedBox(height: 8),
-            Wrap(
-              spacing: 8,
-              children: [
-                _buildStatusChip('Tất cả', _ProductStatusFilter.all),
-                _buildStatusChip('Còn hàng', _ProductStatusFilter.active),
-                _buildStatusChip('Hết hàng', _ProductStatusFilter.outOfStock),
-                _buildStatusChip('Đang ẩn', _ProductStatusFilter.hidden),
-              ],
-            ),
-            const SizedBox(height: 16),
-            AdminButton(
-              label: 'Áp dụng',
-              onPressed: () => Navigator.pop(context, controller.text.trim()),
-            ),
-          ],
+              const SizedBox(height: 12),
+              TextField(
+                controller: controller,
+                decoration: const InputDecoration(
+                  labelText: 'Mã danh mục (CategoryId)',
+                  hintText: 'VD: C01',
+                ),
+              ),
+              const SizedBox(height: 12),
+              const Text('Trạng thái hiển thị'),
+              const SizedBox(height: 8),
+              Wrap(
+                spacing: 8,
+                children: [
+                  _buildStatusChip('Tất cả', _ProductStatusFilter.all, tempStatus,
+                      (value) => setModalState(() => tempStatus = value)),
+                  _buildStatusChip('Còn hàng', _ProductStatusFilter.active, tempStatus,
+                      (value) => setModalState(() => tempStatus = value)),
+                  _buildStatusChip('Hết hàng', _ProductStatusFilter.outOfStock, tempStatus,
+                      (value) => setModalState(() => tempStatus = value)),
+                  _buildStatusChip('Đang ẩn', _ProductStatusFilter.hidden, tempStatus,
+                      (value) => setModalState(() => tempStatus = value)),
+                ],
+              ),
+              const SizedBox(height: 12),
+              const Text('Sắp xếp'),
+              const SizedBox(height: 8),
+              Wrap(
+                spacing: 8,
+                children: [
+                  _buildSortChip('Mới nhất', _ProductSort.newest, tempSort,
+                      (value) => setModalState(() => tempSort = value)),
+                  _buildSortChip('Giá ↑', _ProductSort.priceAsc, tempSort,
+                      (value) => setModalState(() => tempSort = value)),
+                  _buildSortChip('Giá ↓', _ProductSort.priceDesc, tempSort,
+                      (value) => setModalState(() => tempSort = value)),
+                  _buildSortChip('Bán chạy', _ProductSort.bestSeller, tempSort,
+                      (value) => setModalState(() => tempSort = value)),
+                ],
+              ),
+              const SizedBox(height: 16),
+              AdminButton(
+                label: 'Áp dụng',
+                onPressed: () => Navigator.pop(
+                  context,
+                  _ProductFilterResult(
+                    categoryId: controller.text.trim(),
+                    status: tempStatus,
+                    sort: tempSort,
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
 
     if (result != null) {
-      _categoryController.text = result;
-      await ref.read(productNotifierProvider.notifier).loadFirstPage(
-            search: _searchController.text.trim(),
-            categoryId: result,
-          );
+      final shouldReload = result.categoryId != _categoryController.text.trim();
+      setState(() {
+        _statusFilter = result.status;
+        _sort = result.sort;
+        _categoryController.text = result.categoryId;
+      });
+      if (shouldReload) {
+        await ref.read(productNotifierProvider.notifier).loadFirstPage(
+              search: _searchController.text.trim(),
+              categoryId: result.categoryId,
+            );
+      }
     }
   }
 
-  Widget _buildStatusChip(String label, _ProductStatusFilter value) {
-    final selected = _statusFilter == value;
+  Widget _buildStatusChip(
+    String label,
+    _ProductStatusFilter value,
+    _ProductStatusFilter selected,
+    ValueChanged<_ProductStatusFilter> onSelected,
+  ) {
+    final isSelected = selected == value;
     return ChoiceChip(
       label: Text(label),
-      selected: selected,
-      onSelected: (_) => setState(() => _statusFilter = value),
+      selected: isSelected,
+      onSelected: (_) => onSelected(value),
       materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
     );
   }
 
-  Widget _buildSortChip(String label, _ProductSort value) {
-    final selected = _sort == value;
+  Widget _buildSortChip(
+    String label,
+    _ProductSort value,
+    _ProductSort selected,
+    ValueChanged<_ProductSort> onSelected,
+  ) {
+    final isSelected = selected == value;
     return ChoiceChip(
       label: Text(label),
-      selected: selected,
-      onSelected: (_) => setState(() => _sort = value),
+      selected: isSelected,
+      onSelected: (_) => onSelected(value),
       materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
     );
   }
@@ -250,21 +310,6 @@ class _ProductsScreenState extends ConsumerState<ProductsScreen> {
                       ],
                     );
                   },
-                ),
-                const SizedBox(height: 12),
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: [
-                    _buildStatusChip('Tất cả', _ProductStatusFilter.all),
-                    _buildStatusChip('Còn hàng', _ProductStatusFilter.active),
-                    _buildStatusChip('Hết hàng', _ProductStatusFilter.outOfStock),
-                    _buildStatusChip('Đang ẩn', _ProductStatusFilter.hidden),
-                    _buildSortChip('Mới nhất', _ProductSort.newest),
-                    _buildSortChip('Giá ↑', _ProductSort.priceAsc),
-                    _buildSortChip('Giá ↓', _ProductSort.priceDesc),
-                    _buildSortChip('Bán chạy', _ProductSort.bestSeller),
-                  ],
                 ),
                 const SizedBox(height: 12),
                 Row(
@@ -425,6 +470,9 @@ class _ProductCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final statusColor = _statusColor();
     final tags = _tags();
+    final ratingText = product.reviewCount > 0
+        ? '${product.averageRating.toStringAsFixed(1)} (${product.reviewCount})'
+        : 'Chưa có đánh giá';
 
     return InkWell(
       borderRadius: BorderRadius.circular(16),
@@ -522,6 +570,17 @@ class _ProductCard extends StatelessWidget {
                           ),
                         ),
                       ],
+                    ],
+                  ),
+                  const SizedBox(height: 6),
+                  Row(
+                    children: [
+                      const Icon(Icons.star_rounded, size: 16, color: Color(0xFFF59E0B)),
+                      const SizedBox(width: 4),
+                      Text(
+                        ratingText,
+                        style: TextStyle(color: Colors.grey[700], fontSize: 12),
+                      ),
                     ],
                   ),
                   const SizedBox(height: 6),

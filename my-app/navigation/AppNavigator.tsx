@@ -21,6 +21,7 @@ import ReviewScreen from "../screens/ReviewScreen";
 
 import BookDetailScreen from "../screens/BookDetail";
 import SearchResultScreen from "../screens/SearchResultScreen";
+import BookPreviewScreen from "../screens/BookPreviewScreen";
 
 import AddressScreen from "../screens/profile/AddressList";
 import AddressFormScreen from "../screens/profile/AddressForm";
@@ -54,6 +55,7 @@ export default function AppNavigator() {
       <Stack.Screen name="SearchScreen" component={SearchScreen} />
       <Stack.Screen name="BookDetail" component={BookDetailScreen} />
       <Stack.Screen name="SearchResult" component={SearchResultScreen} />
+      <Stack.Screen name="BookPreview" component={BookPreviewScreen} />
       <Stack.Screen name="OrderHistory" component={OrderHistoryScreen} />
       <Stack.Screen name="OrderDetail" component={OrderDetailScreen} />
       <Stack.Screen name="ReviewScreen" component={ReviewScreen} />

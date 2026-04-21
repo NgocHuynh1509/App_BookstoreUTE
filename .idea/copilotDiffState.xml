@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="CopilotDiffPersistence">
+    <option name="pendingDiffs">
+      <map>
+        <entry key="$PROJECT_DIR$/ute-bookstore-backend/src/main/java/com/hcmute/bookstore/dto/admin/PredictionJobResponse.java">
+          <value>
+            <PendingDiffInfo>
+              <option name="filePath" value="$PROJECT_DIR$/ute-bookstore-backend/src/main/java/com/hcmute/bookstore/dto/admin/PredictionJobResponse.java" />
+              <option name="updatedContent" value="package com.hcmute.bookstore.dto.admin;&#10;&#10;public class PredictionJobResponse {&#10;    private String jobId;&#10;    private String status;&#10;    private DashboardRevenuePredictionResponse prediction;&#10;    private String message;&#10;&#10;    public PredictionJobResponse() {&#10;    }&#10;&#10;    public PredictionJobResponse(String jobId, String status, DashboardRevenuePredictionResponse prediction, String message) {&#10;        this.jobId = jobId;&#10;        this.status = status;&#10;        this.prediction = prediction;&#10;        this.message = message;&#10;    }&#10;&#10;    public static PredictionJobResponse pending(String jobId) {&#10;        return new PredictionJobResponse(jobId, &quot;PENDING&quot;, null, null);&#10;    }&#10;&#10;    public static PredictionJobResponse done(String jobId, DashboardRevenuePredictionResponse prediction) {&#10;        return new PredictionJobResponse(jobId, &quot;DONE&quot;, prediction, null);&#10;    }&#10;&#10;    public static PredictionJobResponse failed(String jobId, String message) {&#10;        return new PredictionJobResponse(jobId, &quot;FAILED&quot;, null, message);&#10;    }&#10;&#10;    public String getJobId() {&#10;        return jobId;&#10;    }&#10;&#10;    public void setJobId(String jobId) {&#10;        this.jobId = jobId;&#10;    }&#10;&#10;    public String getStatus() {&#10;        return status;&#10;    }&#10;&#10;    public void setStatus(String status) {&#10;        this.status = status;&#10;    }&#10;&#10;    public DashboardRevenuePredictionResponse getPrediction() {&#10;        return prediction;&#10;    }&#10;&#10;    public void setPrediction(DashboardRevenuePredictionResponse prediction) {&#10;        this.prediction = prediction;&#10;    }&#10;&#10;    public String getMessage() {&#10;        return message;&#10;    }&#10;&#10;    public void setMessage(String message) {&#10;        this.message = message;&#10;    }&#10;}&#10;" />
+            </PendingDiffInfo>
+          </value>
+        </entry>
+        <entry key="$PROJECT_DIR$/ute_bookstore_flutter/lib/features/dashboard/prediction/prediction_provider.dart">
+          <value>
+            <PendingDiffInfo>
+              <option name="filePath" value="$PROJECT_DIR$/ute_bookstore_flutter/lib/features/dashboard/prediction/prediction_provider.dart" />
+              <option name="updatedContent" value="import 'package:flutter/foundation.dart';&#10;import 'package:flutter_riverpod/flutter_riverpod.dart';&#10;&#10;import '../../../app/providers.dart';&#10;import '../data/dashboard_models.dart';&#10;import 'prediction_service.dart';&#10;&#10;final predictionServiceProvider = Provider&lt;PredictionService&gt;((ref) {&#10;  return PredictionService(ref.read(apiClientProvider));&#10;});&#10;&#10;final predictionProvider = AutoDisposeAsyncNotifierProvider&lt;PredictionNotifier, DashboardRevenuePredictionResponse&gt;(&#10;  PredictionNotifier.new,&#10;);&#10;&#10;class PredictionNotifier extends AutoDisposeAsyncNotifier&lt;DashboardRevenuePredictionResponse&gt; {&#10;  late final PredictionService _service;&#10;&#10;  @override&#10;  Future&lt;DashboardRevenuePredictionResponse&gt; build() async {&#10;    _service = ref.read(predictionServiceProvider);&#10;    return _load();&#10;  }&#10;&#10;  Future&lt;void&gt; retry() async {&#10;    state = const AsyncLoading();&#10;    state = await AsyncValue.guard(_load);&#10;  }&#10;&#10;  Future&lt;DashboardRevenuePredictionResponse&gt; _load() async {&#10;    try {&#10;      return await _service.fetchPrediction();&#10;    } catch (error, stackTrace) {&#10;      debugPrint('Prediction load error: $error');&#10;      debugPrint('$stackTrace');&#10;      rethrow;&#10;    }&#10;  }&#10;}&#10;" />
+            </PendingDiffInfo>
+          </value>
+        </entry>
+      </map>
+    </option>
+  </component>
+</project>
