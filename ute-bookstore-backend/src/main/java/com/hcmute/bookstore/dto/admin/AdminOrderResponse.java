@@ -16,6 +16,8 @@ public class AdminOrderResponse {
     private String address;
     private String customerId;
     private String customerEmail;
+    private boolean hasReturnRequest; // Thêm field này
+    private String returnRequestStatus; // THÊM FIELD NÀY (PENDING, APPROVED, REJECTED)
 
     public String getFullName() {
         return fullName;
@@ -104,6 +106,12 @@ public class AdminOrderResponse {
     public void setCustomerEmail(String customerEmail) {
         this.customerEmail = customerEmail;
     }
+    public boolean isHasReturnRequest() { return hasReturnRequest; }
+    public void setHasReturnRequest(boolean hasReturnRequest) { this.hasReturnRequest = hasReturnRequest; }
+    // Getter và Setter
+    public String getReturnRequestStatus() { return returnRequestStatus; }
+    public void setReturnRequestStatus(String returnRequestStatus) { this.returnRequestStatus = returnRequestStatus; }
+
 
 
 }

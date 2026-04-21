@@ -88,4 +88,80 @@ public class ShippingAddressController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
         }
     }
+
+    // Xóa địa chỉ
+    @DeleteMapping("/{id}")
+    public ResponseEntity<?> deleteAddress(@PathVariable String id) {
+        try {
+            ShippingAddress address = addressRepository.findById(id).orElse(null);
+            if (address == null) {
+                return ResponseEntity.notFound().build();
+            }
+            if (address.getIsDefault()) {
+                return ResponseEntity.badRequest().body("Không thể xóa địa chỉ mặc định");
+            }
+            addressRepository.deleteById(id);
+            return ResponseEntity.ok().body("Đã xóa địa chỉ thành công");
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Lỗi: " + e.getMessage());
+        }
+    }
+
+    // Lấy chi tiết 1 địa chỉ (Dùng khi bấm Chỉnh sửa)
+    @GetMapping("/{id}")
+    public ResponseEntity<?> getAddressById(@PathVariable String id) {
+        return addressRepository.findById(id)
+                .map(addr -> ResponseEntity.ok(new ShippingAddressDTO(addr)))
+                .orElse(ResponseEntity.notFound().build());
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<?> updateAddress(@PathVariable String id, @RequestBody ShippingAddress addressUpdates) {
+        Map<String, Object> response = new HashMap<>();
+        try {
+            // 1. Tìm địa chỉ cũ trong Database
+            ShippingAddress existingAddress = addressRepository.findById(id).orElse(null);
+            if (existingAddress == null) {
+                response.put("message", "Không tìm thấy địa chỉ cần cập nhật");
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
+            }
+
+            // 2. Logic xử lý nếu người dùng muốn đặt địa chỉ này làm mặc định
+            if (addressUpdates.getIsDefault() != null && addressUpdates.getIsDefault()) {
+                String customerId = existingAddress.getCustomer().getCustomerId();
+                List<ShippingAddress> userAddresses = addressService.getAllAddressesByUser(customerId);
+
+                for (ShippingAddress addr : userAddresses) {
+                    if (addr.getIsDefault() && !addr.getId().equals(id)) {
+                        addr.setIsDefault(false);
+                        addressRepository.save(addr); // Bỏ mặc định các địa chỉ khác
+                    }
+                }
+                existingAddress.setIsDefault(true);
+            } else {
+                // Nếu địa chỉ đang là mặc định mà cố tình bỏ tick,
+                // có thể giữ nguyên hoặc xử lý tùy logic (thường địa chỉ mặc định không cho bỏ tick trực tiếp)
+                existingAddress.setIsDefault(addressUpdates.getIsDefault());
+            }
+
+            // 3. Cập nhật các thông tin khác
+            existingAddress.setRecipientName(addressUpdates.getRecipientName());
+            existingAddress.setPhoneNumber(addressUpdates.getPhoneNumber());
+            existingAddress.setProvince(addressUpdates.getProvince());
+            existingAddress.setDistrict(addressUpdates.getDistrict());
+            existingAddress.setWard(addressUpdates.getWard());
+            existingAddress.setSpecificAddress(addressUpdates.getSpecificAddress());
+
+            // 4. Lưu lại
+            ShippingAddress updated = addressRepository.save(existingAddress);
+
+            response.put("status", "success");
+            response.put("data", new ShippingAddressDTO(updated));
+            return ResponseEntity.ok(response);
+
+        } catch (Exception e) {
+            response.put("message", "Lỗi khi cập nhật: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
+    }
 }

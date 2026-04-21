@@ -12,7 +12,9 @@ import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -33,25 +35,44 @@ public class OrderService {
     @Autowired private ShippingAddressRepository addressRepo;
     @Autowired private CartRepository cartRepo;
     @Autowired private CartDetailRepository cartDetailRepo;
+    @Autowired ReturnRequestRepository returnRequestRepository;
 
     public List<OrderHistoryResponse> getOrdersByUserId(String userIdFromClient, String emailFromToken) {
+        // 1. Kiểm tra User
         Users user = usersRepository.findByCustomer_Email(emailFromToken)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy user"));
 
         String customerId = user.getCustomer().getCustomerId();
 
+        // 2. Kiểm tra quyền truy cập
         if (!customerId.equals(userIdFromClient)) {
             throw new RuntimeException("Bạn không có quyền xem đơn hàng này");
         }
 
+        // 3. Lấy danh sách đơn hàng
         List<Orders> orders = ordersRepository.findByCustomer_CustomerIdOrderByOrderDateDesc(customerId);
 
+        // 4. Lấy danh sách mã đơn hàng
+        List<String> orderIds = orders.stream().map(Orders::getOrderId).toList();
+
+        // 5. Truy vấn tất cả ReturnRequest liên quan đến các đơn hàng này
+        List<ReturnRequest> returnRequests = returnRequestRepository.findByOrder_OrderIdIn(orderIds);
+
+        // 6. Tạo Map để tra cứu: Key = orderId, Value = status hoàn tiền
+        Map<String, String> returnStatusMap = returnRequests.stream()
+                .collect(Collectors.toMap(
+                        req -> req.getOrder().getOrderId(),
+                        ReturnRequest::getStatus
+                ));
+
+        // 7. Map sang OrderHistoryResponse
         return orders.stream()
                 .map(order -> new OrderHistoryResponse(
-                        order.getOrderId(),
-                        normalizeHistoryStatus(order.getStatus()),
-                        order.getOrderDate(),
-                        order.getTotalAmount()
+                        order.getOrderId(), //
+                        normalizeHistoryStatus(order.getStatus()), //
+                        order.getOrderDate(), //
+                        order.getTotalAmount(), //
+                        returnStatusMap.get(order.getOrderId()) // Lấy từ Map, nếu không có sẽ trả về null
                 ))
                 .toList();
     }
@@ -111,6 +132,10 @@ public class OrderService {
         Orders order = ordersRepository.findByOrderIdAndCustomer_CustomerId(orderId, customerId)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy đơn hàng"));
 
+        // --- LOGIC KIỂM TRA HOÀN TRÀ ---
+        // Kiểm tra xem trong bảng return_requests đã có bản ghi nào cho order này chưa
+        boolean hasReturn = returnRequestRepository.existsByOrder_OrderId(orderId);
+
         List<OrderDetail> orderDetails = orderDetailRepository.findByOrder_OrderId(orderId);
 
         List<OrderDetailItemResponse> items = orderDetails.stream()
@@ -122,25 +147,6 @@ public class OrderService {
                 ))
                 .toList();
 
-//        String address;
-//        if (order.getShippingAddress() != null) {
-//            var sa = order.getShippingAddress();
-//
-//            address = sa.getSpecificAddress()
-//                    + (sa.getWard() != null ? ", " + sa.getWard() : "")
-//                    + ", " + sa.getDistrict()
-//                    + ", " + sa.getProvince();
-//        } else {
-//            address = order.getAddress();
-//        }
-//
-//        String customerName = user.getFullName() != null
-//                ? user.getFullName()
-//                : (user.getCustomer() != null ? user.getCustomer().getFullName() : "Khách hàng");
-//
-//        String phone = user.getCustomer() != null
-//                ? user.getCustomer().getPhone()
-//                : "";
         String address;
         String customerName;
         String phone;
@@ -174,7 +180,8 @@ public class OrderService {
                 order.getShippingFee(),
                 order.getVoucherDiscount() != null ? order.getVoucherDiscount() : BigDecimal.ZERO,
                 order.getPointsDiscount() != null ? order.getPointsDiscount() : BigDecimal.ZERO,
-                items
+                items,
+                hasReturn // <--- TRUYỀN BIẾN HASRETURN VÀO ĐÂY
         );
     }
 

@@ -669,39 +669,12 @@ const [showBuyQtyModal, setShowBuyQtyModal] = useState(false);  const [selectedI
           <>
             <SectionTitle title="Sách thuộc danh mục" />
             {loadingBooks ? <ActivityIndicator color={C.primaryMid} style={{ margin: 20 }} /> :
-              <FlatList data={books} numColumns={2} scrollEnabled={false}
-                keyExtractor={(item: any) => item.id.toString()} columnWrapperStyle={s.gridRow}
-                renderItem={({ item }: any) => <BookCardG item={item}
-                  onPress={() => navigation.navigate("BookDetail", { id: item.id })}
-                  onLongPress={() => handleLongPress(item)} showDiscount={false} />} />}
-          </>
-        )}
-
-        {!categoryFilter && (
-          <>
-            <SectionTitle title="🏆 Top bán chạy nhất" />
-            {loadingBest ? <ActivityIndicator color={C.primaryMid} style={{ margin: 20 }} /> :
-              <FlatList data={bestSellers} horizontal keyExtractor={(item: any) => item.id.toString()}
-                showsHorizontalScrollIndicator={false}
-                contentContainerStyle={{ paddingLeft: 16, paddingRight: 8, paddingVertical: 4 }}
-                        renderItem={({ item }: any) => (
-                            <BookCardH
-                                item={item}
-                                onPress={() => navigation.navigate("BookDetail", { id: item.id })}
-                                onLongPress={() => handleLongPress(item)}
-                                onAddToCart={handleOpenModal}
-                                onBuyNow={handleBuyNow}
-                            />
-                        )}
-                        onPress={() => navigation.navigate("BookDetail", { id: item.id })}
-                  onLongPress={() => handleLongPress(item)} />} />}
-          </>
-        )}
-
-        <SectionTitle title="🔥 Giảm giá nhiều nhất" />
-        {loadingDiscount ? <ActivityIndicator color={C.primaryMid} style={{ margin: 20 }} /> :
-          <FlatList data={topDiscounts} numColumns={2} scrollEnabled={false}
-            keyExtractor={(item: any) => item.id.toString()} columnWrapperStyle={s.gridRow}
+                <FlatList
+                    data={books}
+                    numColumns={2}
+                    scrollEnabled={false}
+                    keyExtractor={(item: any) => item.id.toString()}
+                    columnWrapperStyle={s.gridRow}
                     renderItem={({ item }: any) => (
                         <BookCardG
                             item={item}
@@ -712,26 +685,75 @@ const [showBuyQtyModal, setShowBuyQtyModal] = useState(false);  const [selectedI
                             showDiscount={false}
                         />
                     )}
-                    onPress={() => navigation.navigate("BookDetail", { id: item.id })}
-              onLongPress={() => handleLongPress(item)} showDiscount />} />}
+                />}
+          </>
+        )}
+
+        {!categoryFilter && (
+          <>
+            <SectionTitle title="🏆 Top bán chạy nhất" />
+            {loadingBest ? <ActivityIndicator color={C.primaryMid} style={{ margin: 20 }} /> :
+                <FlatList
+                    data={bestSellers}
+                    horizontal
+                    keyExtractor={(item: any) => item.id.toString()}
+                    showsHorizontalScrollIndicator={false}
+                    contentContainerStyle={{ paddingLeft: 16, paddingRight: 8, paddingVertical: 4 }}
+                    renderItem={({ item }: any) => (
+                        <BookCardH
+                            item={item}
+                            onPress={() => navigation.navigate("BookDetail", { id: item.id })}
+                            onLongPress={() => handleLongPress(item)}
+                            onAddToCart={handleOpenModal}
+                            onBuyNow={handleBuyNow}
+                        />
+                    )}
+                />
+            }
+
+
+          </>
+        )}
+
+        <SectionTitle title="🔥 Giảm giá nhiều nhất" />
+        {loadingDiscount ? <ActivityIndicator color={C.primaryMid} style={{ margin: 20 }} /> :
+            <FlatList
+                data={topDiscounts}
+                numColumns={2}
+                scrollEnabled={false}
+                keyExtractor={(item: any) => item.id.toString()}
+                columnWrapperStyle={s.gridRow}
+                renderItem={({ item }: any) => (
+                    <BookCardG
+                        item={item}
+                        onPress={() => navigation.navigate("BookDetail", { id: item.id })}
+                        onLongPress={() => handleLongPress(item)}
+                        onAddToCart={handleOpenModal}
+                        onBuyNow={handleBuyNow}
+                        showDiscount
+                    />
+                )}
+            />
+        }
 
         <SectionTitle title="📖 Tất cả sách" />
-        <FlatList data={allBooks} numColumns={2} scrollEnabled={false}
-          keyExtractor={(item: any, index: number) => item.id.toString() + index}
-          columnWrapperStyle={s.gridRow}
-                  renderItem={({ item }: any) => (
-                      <BookCardG
-                          item={item}
-                          onPress={() => navigation.navigate("BookDetail", { id: item.id })}
-                          onLongPress={() => handleLongPress(item)}
-                          onAddToCart={handleOpenModal}
-                          onBuyNow={handleBuyNow}
-                          showDiscount
-                      />
-                  )}
-                  onPress={() => navigation.navigate("BookDetail", { id: item.id })}
-            onLongPress={() => handleLongPress(item)} showDiscount={false} />} />
-
+        <FlatList
+            data={allBooks}
+            numColumns={2}
+            scrollEnabled={false}
+            keyExtractor={(item: any, index: number) => item.id.toString() + index}
+            columnWrapperStyle={s.gridRow}
+            renderItem={({ item }: any) => (
+                <BookCardG
+                    item={item}
+                    onPress={() => navigation.navigate("BookDetail", { id: item.id })}
+                    onLongPress={() => handleLongPress(item)}
+                    onAddToCart={handleOpenModal}
+                    onBuyNow={handleBuyNow}
+                    showDiscount={false}
+                />
+            )}
+        />
         {loadingMore && (
           <View style={s.loadMoreBox}>
             <ActivityIndicator size="large" color={C.primaryMid} />

@@ -1,18 +1,14 @@
 package com.hcmute.bookstore.Service;
 
 import com.hcmute.bookstore.Entity.*;
-import com.hcmute.bookstore.Repository.OrderDetailRepository;
-import com.hcmute.bookstore.Repository.OrdersRepository;
-import com.hcmute.bookstore.Repository.UserFcmTokenRepository;
-import com.hcmute.bookstore.Repository.UsersRepository;
-import com.hcmute.bookstore.dto.admin.AdminOrderDetailItemResponse;
-import com.hcmute.bookstore.dto.admin.AdminOrderDetailResponse;
-import com.hcmute.bookstore.dto.admin.AdminOrderResponse;
-import com.hcmute.bookstore.dto.admin.UpdateOrderStatusRequest;
+import com.hcmute.bookstore.Repository.*;
+import com.hcmute.bookstore.dto.admin.*;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -27,16 +23,40 @@ public class AdminOrderService {
     private final NotificationService notificationService;
     private final UserFcmTokenRepository tokenRepo;
     private final ExpoPushService expoPushService;
+    @Autowired
+    ReturnRequestRepository returnRequestRepository;
 
-    public Page<AdminOrderResponse> getOrders(String status, Pageable pageable) {
-        Page<Orders> page;
-        if (status != null && !status.isBlank()) {
-            page = ordersRepository.findByStatusIgnoreCase(status.trim(), pageable);
-        } else {
-            page = ordersRepository.findAll(pageable);
-        }
-        return page.map(this::toResponse);
+//    public Page<AdminOrderResponse> getOrders(String status, Pageable pageable) {
+//
+//        if ("ReturnRequest".equalsIgnoreCase(status)) {
+//            // Gọi repository để lấy các đơn hàng có liên kết với ReturnRequest
+//            // Hoặc lấy tất cả đơn Completed rồi lọc (tùy số lượng dữ liệu)
+//            return ordersRepository.findOrdersWithReturnRequests(pageable).map(this::toResponse);
+//        }
+//        Page<Orders> page;
+//        if (status != null && !status.isBlank()) {
+//            page = ordersRepository.findByStatusIgnoreCase(status.trim(), pageable);
+//        } else {
+//            page = ordersRepository.findAll(pageable);
+//        }
+//        return page.map(this::toResponse);
+//    }
+public Page<AdminOrderResponse> getOrders(String status, Pageable pageable) {
+    Page<Orders> page;
+
+    if ("ReturnRequest".equalsIgnoreCase(status)) {
+        // Gọi hàm truy vấn các đơn có yêu cầu hoàn trả
+        page = ordersRepository.findOrdersWithReturnRequests(pageable);
+    } else if (status != null && !status.isBlank()) {
+        // Lọc theo status bình thường (Completed, Shipping, v.v.)
+        page = ordersRepository.findByStatusIgnoreCase(status.trim(), pageable);
+    } else {
+        // Lấy tất cả
+        page = ordersRepository.findAll(pageable);
     }
+
+    return page.map(this::toResponse);
+}
 
 //    public AdminOrderResponse updateStatus(String orderId, UpdateOrderStatusRequest request) {
 //        Orders order = ordersRepository.findById(orderId)
@@ -132,6 +152,16 @@ public class AdminOrderService {
         response.setShippingFee(order.getShippingFee());
         response.setPaymentMethod(order.getPaymentMethod());
 
+//        // Kiểm tra xem đơn hàng có yêu cầu hoàn trả không
+//        boolean hasReturn = returnRequestRepository.existsByOrder_OrderId(order.getOrderId());
+//        response.setHasReturnRequest(hasReturn);
+        // Giả sử bạn đã thêm findByOrderId vào ReturnRequestRepository như ở bước trước
+        returnRequestRepository.findByOrder_OrderId(order.getOrderId()).ifPresent(returnReq -> {
+            response.setHasReturnRequest(true);
+            response.setReturnRequestStatus(returnReq.getStatus()); // Gán trạng thái (PENDING/APPROVED/REJECTED)
+        });
+
+
         if (order.getShippingAddress() != null) {
             var sa = order.getShippingAddress();
 
@@ -211,7 +241,40 @@ public class AdminOrderService {
             }
         }
 
+
+        // THÊM: Tìm kiếm yêu cầu hoàn trả
+        returnRequestRepository.findByOrder_OrderId(orderId).ifPresent(rr -> {
+            AdminReturnRequestResponse rrDto = new AdminReturnRequestResponse();
+            rrDto.setReason(rr.getReason());
+            rrDto.setReply(rr.getReply());
+            rrDto.setStatus(rr.getStatus());
+            rrDto.setImages(rr.getImageEvidences());
+            rrDto.setBankName(rr.getBankName());
+            rrDto.setAccountHolder(rr.getAccountHolder());
+            rrDto.setAccountNumber(rr.getAccountNumber());
+            response.setReturnRequest(rrDto);
+        });
+
         return response;
+    }
+
+    // Trong AdminOrderService.java
+    @Transactional
+    public void handleReturnRequest(String orderId, HandleReturnRequest request) {
+        ReturnRequest rr = returnRequestRepository.findByOrder_OrderId(orderId)
+                .orElseThrow(() -> new RuntimeException("Yêu cầu không tồn tại"));
+
+        rr.setStatus(request.getStatus());
+        rr.setReply(request.getReply());
+
+        // Nếu đồng ý (APPROVED), cập nhật trạng thái đơn hàng sang Returned
+        if ("FINISHED".equals(request.getStatus())) {
+            Orders order = rr.getOrder();
+            order.setStatus("Returned");
+            ordersRepository.save(order);
+        }
+
+        returnRequestRepository.save(rr);
     }
 }
 

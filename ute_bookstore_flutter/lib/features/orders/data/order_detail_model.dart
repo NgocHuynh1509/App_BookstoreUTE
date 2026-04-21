@@ -38,6 +38,7 @@ class OrderDetailModel {
   final double pointsDiscount;
   final String customerUsername;
   final List<OrderDetailItem> items;
+  final ReturnRequestModel? returnRequest;
 
   OrderDetailModel({
     required this.orderId,
@@ -53,6 +54,7 @@ class OrderDetailModel {
     required this.pointsDiscount,
     required this.customerUsername,
     required this.items,
+    this.returnRequest,
   });
 
   factory OrderDetailModel.fromJson(Map<String, dynamic> json) {
@@ -72,6 +74,42 @@ class OrderDetailModel {
       items: (json['items'] as List<dynamic>? ?? [])
           .map((e) => OrderDetailItem.fromJson(e as Map<String, dynamic>))
           .toList(),
+
+      returnRequest: json['returnRequest'] != null
+                ? ReturnRequestModel.fromJson(json['returnRequest'])
+                : null,
+    );
+  }
+}
+
+class ReturnRequestModel {
+  final String reason;
+  final String? reply;
+  final String status;
+  final List<String> images;
+  final String? bankName;
+  final String? accountHolder;
+  final String? accountNumber;
+
+  ReturnRequestModel({
+    required this.reason,
+    this.reply,
+    required this.status,
+    required this.images,
+    this.bankName,
+    this.accountHolder,
+    this.accountNumber,
+  });
+
+  factory ReturnRequestModel.fromJson(Map<String, dynamic> json) {
+    return ReturnRequestModel(
+      reason: json['reason'] ?? '',
+      reply: json['reply'],
+      status: json['status'] ?? 'PENDING',
+      images: List<String>.from(json['images'] ?? []),
+      bankName: json['bankName'],
+      accountHolder: json['accountHolder'],
+      accountNumber: json['accountNumber'],
     );
   }
 }

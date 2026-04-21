@@ -85,10 +85,22 @@ public class ChatService {
     public List<ChatThreadDTO> getChatThreadsForAdmin() {
         List<ChatMessage> latestMessages = chatRepository.findAllChatThreads();
         return latestMessages.stream().map(msg -> {
-            long unreadCount = chatRepository.countByUserNameAndReceiverNameAndStatusNot(msg.getUserName(), "admin", MessageStatus.SEEN);
+            String customerUsername = msg.getUserName().equals("admin") ? msg.getReceiverName() : msg.getUserName();
+            long unreadCount = chatRepository.countByUserNameAndReceiverNameAndStatusNot(customerUsername, "admin", MessageStatus.SEEN);
+            
+            String senderPrefix = msg.getUserName().equals("admin") ? "Bạn: " : msg.getUserName() + ": ";
+            String displayContent = msg.getContent();
+            if (displayContent == null || displayContent.trim().isEmpty()) {
+                if (msg.getMessageType() != null && "IMAGE".equalsIgnoreCase(msg.getMessageType().name())) {
+                    displayContent = "[Hình ảnh]";
+                } else {
+                    displayContent = "[Đính kèm]";
+                }
+            }
+            
             return ChatThreadDTO.builder()
-                    .customerUsername(msg.getUserName())
-                    .lastMessage(msg.getContent())
+                    .customerUsername(customerUsername)
+                    .lastMessage(senderPrefix + displayContent)
                     .lastTime(msg.getCreatedAt())
                     .unreadCount((int) unreadCount)
                     .manualUnread(msg.isMarkedUnreadByAdmin())

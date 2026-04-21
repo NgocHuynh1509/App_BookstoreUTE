@@ -5,6 +5,7 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="90f2e1e5-d5bd-4083-a96e-40142505842d" name="Changes" comment="create order">
+      <change beforePath="$PROJECT_DIR$/.idea/dataSources.local.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/dataSources.local.xml" afterDir="false" />
       <change afterPath="$PROJECT_DIR$/my-app/.env" afterDir="false" />
       <change afterPath="$PROJECT_DIR$/my-app/app.config.js" afterDir="false" />
       <change afterPath="$PROJECT_DIR$/my-app/components/BookRecommendCard.tsx" afterDir="false" />
@@ -18,6 +19,11 @@
       <change afterPath="$PROJECT_DIR$/ute-bookstore-backend/src/main/java/com/hcmute/bookstore/dto/AiChatResponse.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/copilotDiffState.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/copilotDiffState.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/my-app/app.json" beforeDir="false" afterPath="$PROJECT_DIR$/my-app/app.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/my-app/screens/home.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/my-app/screens/home.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ute_bookstore_python/books_latest.csv" beforeDir="false" afterPath="$PROJECT_DIR$/ute_bookstore_python/books_latest.csv" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ute_bookstore_python/ml.py" beforeDir="false" afterPath="$PROJECT_DIR$/ute_bookstore_python/ml.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ute_bookstore_python/sim_matrix.csv" beforeDir="false" afterPath="$PROJECT_DIR$/ute_bookstore_python/sim_matrix.csv" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/my-app/components/external-link.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/my-app/components/external-link.tsx" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/my-app/screens/profile/ChatScreen.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/my-app/screens/profile/ChatScreen.tsx" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/sql.sql" beforeDir="false" afterPath="$PROJECT_DIR$/sql.sql" afterDir="false" />
@@ -76,6 +82,10 @@
     &quot;url&quot;: &quot;https://github.com/NgocHuynh1509/App_BookstoreUTE&quot;,
     &quot;accountId&quot;: &quot;6b9bdd18-e36a-48cf-a862-048d0fb41bd2&quot;
   }
+}</component>
+  <component name="KubernetesApiPersistence">{}</component>
+  <component name="KubernetesApiProvider">{
+  &quot;isMigrated&quot;: true
 }</component>
   <component name="MavenImportPreferences">
     <option name="generalSettings">
@@ -175,6 +185,7 @@
       </set>
     </attachedChunks>
   </component>
+  <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
   <component name="TaskManager">
     <task active="true" id="Default" summary="Default task">
       <changelist id="90f2e1e5-d5bd-4083-a96e-40142505842d" name="Changes" comment="create order" />
@@ -200,11 +211,17 @@
       <workItem from="1776616400582" duration="9584000" />
       <workItem from="1776672795556" duration="606000" />
       <workItem from="1776673780877" duration="10003000" />
+      <updated>1776679192264</updated>
       <workItem from="1776679195457" duration="1086000" />
       <workItem from="1776693042933" duration="3853000" />
       <workItem from="1776738664728" duration="22440000" />
       <workItem from="1776780167993" duration="230000" />
       <workItem from="1776780417729" duration="4637000" />
+      <workItem from="1776689717680" duration="615000" />
+      <workItem from="1776741351528" duration="5063000" />
+      <workItem from="1776756727506" duration="11435000" />
+      <workItem from="1776771163475" duration="1333000" />
+      <workItem from="1776781176662" duration="2419000" />
     </task>
     <task id="LOCAL-00001" summary="sql">
       <option name="closed" value="true" />

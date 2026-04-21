@@ -45,9 +45,7 @@ public interface ChatMessageRepository extends JpaRepository<ChatMessage, String
 
     @Query("SELECT c FROM ChatMessage c WHERE c.createdAt IN " +
             "(SELECT MAX(m.createdAt) FROM ChatMessage m " +
-            " WHERE m.userName != 'admin' " +
-            " GROUP BY m.userName) " +
-            "AND c.userName != 'admin' " +
+            " GROUP BY CASE WHEN m.userName = 'admin' THEN m.receiverName ELSE m.userName END) " +
             "ORDER BY c.createdAt DESC")
     List<ChatMessage> findAllChatThreads();
 

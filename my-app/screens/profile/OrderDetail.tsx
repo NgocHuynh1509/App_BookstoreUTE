@@ -134,6 +134,8 @@ export default function OrderDetail() {
       });
       const data = await res.json();
       setOrderData(data?.items ? data : null);
+      // Thêm dòng log này để kiểm tra chính xác JSON trả về có gì
+          console.log("Dữ liệu Order nhận được:", data);
     } catch (error) {
       console.error("Lỗi lấy chi tiết:", error);
       Alert.alert("Lỗi", "Không thể tải thông tin đơn hàng");
@@ -572,32 +574,94 @@ export default function OrderDetail() {
             </TouchableOpacity>
         )}
 
-        {/* ── REVIEW ───────────────────────────────────────────── */}
-        {orderData.status === "completed" && (
-          <View style={s.card}>
-            <SectionHeader icon="star-outline" title="Đánh giá sản phẩm" />
-            <View style={s.reviewList}>
-              {orderData.items.map((item: any, index: number) => (
-                <TouchableOpacity
-                  key={index}
-                  style={s.reviewBtn}
-                  activeOpacity={0.85}
-                  onPress={() =>
-                    navigation.navigate("ReviewScreen", {
-                      book_id: item.book_id,
-                      order_id: orderId,
-                    })
-                  }
-                >
-                  <Text style={s.reviewBtnTxt} numberOfLines={1}>
-                    ✍️  {item.title}
+  {/* ── ACTIONS AFTER COMPLETED ─────────────────────────────────── */}
+          {orderData.status === "completed" && (
+            <View style={{ gap: 12 }}>
+              <View style={s.completedActions}>
+                {/* KIỂM TRA NẾU ĐÃ CÓ YÊU CẦU THÌ HIỆN "XEM", CHƯA CÓ THÌ HIỆN "HOÀN TRẢ" */}
+                {orderData.has_return_request ? (
+                  <TouchableOpacity
+                    style={[s.returnBtn, { borderColor: C.primaryMid, backgroundColor: C.primarySoft }]}
+                    onPress={() => navigation.navigate("ReturnDetailScreen", { orderId: orderId })}
+                    activeOpacity={0.85}
+                  >
+                    <Ionicons name="eye-outline" size={20} color={C.primaryMid} />
+                    <Text style={[s.returnBtnTxt, { color: C.primaryMid }]}>Xem yêu cầu hoàn trả</Text>
+                  </TouchableOpacity>
+                ) : (
+                  <TouchableOpacity
+                    style={s.returnBtn}
+                    onPress={() => navigation.navigate("ReturnRequestScreen", { orderId: orderId })}
+                    activeOpacity={0.85}
+                  >
+                    <Ionicons name="refresh-circle-outline" size={20} color={C.orange} />
+                    <Text style={s.returnBtnTxt}>Hoàn trả hàng</Text>
+                  </TouchableOpacity>
+                )}
+
+                {/* NÚT ĐÁNH GIÁ CHUNG (Chỉ hiện nếu CHƯA gửi yêu cầu hoàn trả) */}
+                {!orderData.has_return_request && (
+                  <View style={s.reviewActionBtn}>
+                     <Ionicons name="star-outline" size={20} color="#FFF" />
+                     <Text style={s.reviewActionBtnTxt}>Đánh giá ngay</Text>
+                  </View>
+                )}
+              </View>
+
+              {/* DANH SÁCH SẢN PHẨM ĐỂ ĐÁNH GIÁ - ẨN KHI ĐÃ GỬI HOÀN TRẢ */}
+              {!orderData.has_return_request ? (
+                <View style={s.card}>
+                  <SectionHeader icon="star-outline" title="Chi tiết đánh giá sản phẩm" />
+                  <View style={s.reviewList}>
+                    {orderData.items.map((item: any, index: number) => (
+                      <TouchableOpacity
+                        key={index}
+                        style={s.reviewBtn}
+                        activeOpacity={0.85}
+                        onPress={() =>
+                          navigation.navigate("ReviewScreen", {
+                            book_id: item.book_id,
+                            order_id: orderId,
+                          })
+                        }
+                      >
+                        <Text style={s.reviewBtnTxt} numberOfLines={1}>
+                          ✍️ Đánh giá: {item.title}
+                        </Text>
+                        <Ionicons name="chevron-forward" size={16} color={C.primaryMid} />
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                </View>
+              ) : (
+                /* HIỂN THỊ THÔNG BÁO NHẸ NHÀNG THAY VÌ ĐỂ TRỐNG */
+                <View style={s.returnNoteBox}>
+                  <Ionicons name="information-circle-outline" size={18} color={C.primaryMid} />
+                  <Text style={s.returnNoteTxt}>
+                    Bạn đã gửi yêu cầu hoàn trả cho đơn hàng này. Chức năng đánh giá tạm khóa cho đến khi có kết quả xử lý.
                   </Text>
-                  <Ionicons name="chevron-forward" size={16} color={C.primaryMid} />
-                </TouchableOpacity>
-              ))}
+                </View>
+              )}
             </View>
-          </View>
-        )}
+          )}
+
+        {/* ── CASE 1: ĐƠN HÀNG ĐÃ HOÀN TRẢ XONG (RETURNED) ──────────────── */}
+                {orderData.status === "returned" && (
+                  <View style={s.card}>
+                    <SectionHeader icon="refresh-circle-outline" title="Trạng thái hoàn trả" />
+                    <Text style={[s.returnNoteTxt, { marginBottom: 15, color: C.text2 }]}>
+                      Đơn hàng này đã kết thúc quy trình hoàn trả. Bạn có thể xem lại chi tiết yêu cầu bên dưới.
+                    </Text>
+                    <TouchableOpacity
+                      style={[s.returnBtn, { borderColor: C.primaryMid, backgroundColor: C.primarySoft }]}
+                      onPress={() => navigation.navigate("ReturnDetailScreen", { orderId: orderId })}
+                      activeOpacity={0.85}
+                    >
+                      <Ionicons name="eye-outline" size={20} color={C.primaryMid} />
+                      <Text style={[s.returnBtnTxt, { color: C.primaryMid }]}>Xem chi tiết hoàn trả</Text>
+                    </TouchableOpacity>
+                  </View>
+                )}
 
         <TouchableOpacity
             style={s.chatBtn}
@@ -911,4 +975,125 @@ const s = StyleSheet.create({
     fontWeight: "800",
     fontSize: 15,
   },
+  // Style cho cụm nút sau khi hoàn thành
+    completedActions: {
+      flexDirection: 'row',
+      gap: 12,
+      marginTop: 8,
+    },
+    returnBtn: {
+      flex: 1,
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "center",
+      gap: 8,
+      backgroundColor: C.surface,
+      borderRadius: 16,
+      borderWidth: 1.5,
+      borderColor: C.orange,
+      paddingVertical: 14,
+    },
+    returnBtnTxt: { color: C.orange, fontWeight: "800", fontSize: 15 },
+
+    reviewActionBtn: {
+      flex: 1,
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "center",
+      gap: 8,
+      backgroundColor: C.primaryMid,
+      borderRadius: 16,
+      paddingVertical: 14,
+    },
+    reviewActionBtnTxt: { color: "#FFF", fontWeight: "800", fontSize: 15 },
+    // Tìm đến phần s.returnBtn trong StyleSheet và s.returnBtnTxt
+    returnBtn: {
+      flex: 1,
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "center",
+      gap: 6,
+      paddingVertical: 12,
+      borderRadius: 12,
+      borderWidth: 1.5,
+      borderColor: C.orange, // Mặc định cho Hoàn trả
+      backgroundColor: "#FFF",
+    },
+    returnBtnTxt: {
+      fontSize: 14,
+      fontWeight: "700",
+      color: C.orange,
+    },
+
+    completedActions: {
+        flexDirection: 'row',
+        gap: 10,
+        marginBottom: 5,
+      },
+      returnBtn: {
+        flex: 1,
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        paddingVertical: 12,
+        borderRadius: 12,
+        borderWidth: 1,
+        borderColor: C.orange,
+        gap: 6,
+      },
+      returnBtnTxt: {
+        fontSize: 14,
+        fontWeight: '700',
+        color: C.orange,
+      },
+      reviewActionBtn: {
+        flex: 1,
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        backgroundColor: C.primaryMid,
+        borderRadius: 12,
+        paddingVertical: 12,
+        gap: 6,
+      },
+      reviewActionBtnTxt: {
+        color: '#FFF',
+        fontWeight: '700',
+        fontSize: 14,
+      },
+      reviewList: {
+        gap: 10,
+      },
+      reviewBtn: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        padding: 12,
+        backgroundColor: '#F8FAFF',
+        borderRadius: 10,
+        borderWidth: 1,
+        borderColor: '#E8F0FE',
+      },
+      reviewBtnTxt: {
+        flex: 1,
+        fontSize: 13,
+        color: C.text1,
+        fontWeight: '500',
+      },
+      returnNoteBox: {
+        flexDirection: 'row',
+        backgroundColor: C.primarySoft,
+        padding: 15,
+        borderRadius: 12,
+        alignItems: 'center',
+        gap: 10,
+        borderWidth: 1,
+        borderColor: C.primaryTint,
+      },
+      returnNoteTxt: {
+        flex: 1,
+        fontSize: 13,
+        color: C.primaryMid,
+        lineHeight: 18,
+      },
 });

@@ -8,6 +8,7 @@ import 'orders_screen.dart';
 import '../../../chat/presentation/chat_detail_screen.dart';
 import '../../../chat/data/chat_repository.dart';
 import '../../../core/session_storage.dart'; // Đường dẫn tới file SessionStorage của bạn
+import 'package:flutter/material.dart';
 
 final orderDetailProvider =
 FutureProvider.family<OrderDetailModel, String>((ref, orderId) async {
@@ -132,6 +133,70 @@ class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
     super.dispose();
   }
 
+  // --- THÊM HÀM XỬ LÝ DIALOG ---
+    void _showHandleReturnDialog(String orderId) {
+      final replyController = TextEditingController();
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text('Xử lý yêu cầu hoàn trả'),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text('Vui lòng nhập phản hồi cho khách hàng trước khi xác nhận hoặc từ chối.'),
+              const SizedBox(height: 12),
+              TextField(
+                controller: replyController,
+                decoration: InputDecoration(
+                  hintText: 'Nhập phản hồi...',
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+                maxLines: 3,
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Đóng'),
+            ),
+            TextButton(
+              onPressed: () => _processReturn(orderId, 'REJECTED', replyController.text),
+              child: const Text('Từ chối', style: TextStyle(color: Colors.red)),
+            ),
+            ElevatedButton(
+              onPressed: () => _processReturn(orderId, 'FINISHED', replyController.text),
+              style: ElevatedButton.styleFrom(backgroundColor: Colors.green, foregroundColor: Colors.white),
+              child: const Text('Chấp nhận hoàn trả'),
+            ),
+          ],
+        ),
+      );
+    }
+
+    // --- THÊM HÀM GỌI API ---
+    Future<void> _processReturn(String orderId, String status, String reply) async {
+      try {
+        // Đảm bảo bạn đã thêm hàm handleReturnRequest vào OrderApi class trong data
+        await ref.read(orderApiProvider).handleReturnRequest(orderId, status, reply);
+
+        ref.invalidate(orderDetailProvider(orderId));
+        if (mounted) {
+          Navigator.pop(context);
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Đã xử lý yêu cầu hoàn trả')),
+          );
+        }
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Lỗi: $e')),
+          );
+        }
+      }
+    }
+
   @override
   // 2. Sửa hàm build: bỏ tham số WidgetRef ref
   Widget build(BuildContext context) {
@@ -205,6 +270,16 @@ class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
                   ],
                 ),
               ),
+
+// --- CHỖ QUAN TRỌNG: HIỂN THỊ YÊU CẦU HOÀN TRẢ NẾU CÓ ---
+              if (order.returnRequest != null) ...[
+                _ReturnRequestCard(
+                  request: order.returnRequest!,
+                  onHandle: () => _showHandleReturnDialog(order.orderId),
+                ),
+                const SizedBox(height: 14),
+              ],
+
               const SizedBox(height: 14),
               _InfoCard(
                 title: 'Thông tin giao hàng',
@@ -377,7 +452,10 @@ class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
                 ),
               ),
               const SizedBox(height: 14),
-              _OrderActionSection(order: order),
+// 5. Xử lý đơn (Chỉ hiện nếu không phải đơn đang yêu cầu hoàn trả hoặc đã hoàn trả)
+              if (order.status.toUpperCase() != 'RETURNED')
+                _OrderActionSection(order: order),
+
               const SizedBox(height: 14),
               if (order.customerUsername.trim().isNotEmpty)
                 SizedBox(
@@ -544,6 +622,7 @@ class _OrderActionSection extends ConsumerWidget {
 
 }
 
+
 class _InfoCard extends StatelessWidget {
   const _InfoCard({
     required this.title,
@@ -650,6 +729,120 @@ class _DetailRow extends StatelessWidget {
   }
 }
 
+class _ReturnRequestCard extends StatelessWidget {
+  final ReturnRequestModel request;
+  final VoidCallback onHandle;
+
+  const _ReturnRequestCard({required this.request, required this.onHandle});
+
+  @override
+  Widget build(BuildContext context) {
+    return _InfoCard(
+      title: 'Yêu cầu hoàn trả',
+      icon: Icons.assignment_return_outlined,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _DetailRow(label: 'Lý do khách', value: request.reason),
+          _DetailRow(
+            label: 'Trạng thái xử lý',
+            value: request.status,
+            valueColor: request.status == 'PENDING' ? Colors.orange : Colors.green,
+          ),
+
+// --- HIỂN THỊ HÌNH ẢNH MINH CHỨNG (ĐÃ CẬP NHẬT ĐỂ MỞ TO) ---
+          if (request.images.isNotEmpty) ...[
+            const SizedBox(height: 12),
+            const Text('Hình ảnh minh chứng:', style: TextStyle(fontWeight: FontWeight.bold)),
+            const SizedBox(height: 8),
+            SizedBox(
+              height: 100,
+              child: ListView.separated(
+                scrollDirection: Axis.horizontal,
+                itemCount: request.images.length,
+                separatorBuilder: (_, __) => const SizedBox(width: 8),
+                itemBuilder: (context, index) {
+                  final rawUrl = request.images[index];
+                  // Xử lý URL đầy đủ
+                  final imgUrl = rawUrl.startsWith('http')
+                      ? rawUrl
+                      : 'http://10.0.2.2:8080/uploads/$rawUrl'; // Điều chỉnh IP theo server của bạn
+
+                  // Bọc InkWell để nhận sự kiện nhấn (Tap)
+                  return InkWell(
+                    onTap: () {
+                      // Khi nhấn vô, mở màn hình FullScreen
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => FullScreenImagePage(imageUrl: imgUrl),
+                        ),
+                      );
+                    },
+                    borderRadius: BorderRadius.circular(8),
+                    child: Hero(
+                      tag: imgUrl, // Tag Hero phải khớp với tag bên FullScreenImagePage
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(8),
+                        child: Image.network(
+                          imgUrl,
+                          width: 100,
+                          height: 100,
+                          fit: BoxFit.cover,
+                          errorBuilder: (_, __, ___) => Container(
+                            width: 100, color: Colors.grey.shade200, child: const Icon(Icons.broken_image),
+                          ),
+                        ),
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+          ],
+
+          // --- THÔNG TIN NGÂN HÀNG ---
+          if (request.bankName != null) ...[
+            const Divider(height: 24),
+            const Text(
+              'Thông tin hoàn tiền:',
+              style: TextStyle(fontWeight: FontWeight.bold, color: Colors.blue),
+            ),
+            const SizedBox(height: 8),
+            _DetailRow(label: 'Ngân hàng', value: request.bankName!),
+            _DetailRow(label: 'Chủ tài khoản', value: request.accountHolder ?? '---'), // Thêm tên chủ TK
+            _DetailRow(label: 'Số tài khoản', value: request.accountNumber!),
+          ],
+
+          // --- PHẦN XỬ LÝ ---
+          if (request.status == 'PENDING')
+            Padding(
+              padding: const EdgeInsets.only(top: 16),
+              child: ElevatedButton(
+                onPressed: onHandle,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.red,
+                  foregroundColor: Colors.white,
+                  minimumSize: const Size(double.infinity, 44),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                ),
+                child: const Text('Xử lý yêu cầu ngay'),
+              ),
+            )
+          else if (request.reply != null) ...[
+            const Divider(),
+            _DetailRow(
+              label: 'Phản hồi từ Admin',
+              value: request.reply!,
+              valueColor: Colors.blueGrey
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
 Future<void> _ensureSocketConnected(WidgetRef ref, ChatRepository repository) async {
     if (!repository.socket.isConnected) {
       final storage = SessionStorage(); // Hãy đảm bảo đã import SessionStorage
@@ -666,3 +859,40 @@ Future<void> _ensureSocketConnected(WidgetRef ref, ChatRepository repository) as
       }
     }
   }
+
+class FullScreenImagePage extends StatelessWidget {
+  final String imageUrl;
+
+  const FullScreenImagePage({super.key, required this.imageUrl});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.black, // Nền đen để nổi bật ảnh
+      appBar: AppBar(
+        backgroundColor: Colors.transparent, // AppBar trong suốt
+        elevation: 0,
+        foregroundColor: Colors.white,
+        title: const Text('Ảnh minh chứng'),
+      ),
+      body: Center(
+        // Hero widget để tạo hiệu ứng chuyển cảnh mượt mà
+        child: Hero(
+          tag: imageUrl, // Tag phải duy nhất, dùng luôn URL ảnh
+          child: InteractiveViewer( // Cho phép Admin dùng 2 ngón tay thu phóng (Zoom)
+            panEnabled: true, // Cho phép kéo ảnh khi phóng to
+            minScale: 0.5,
+            maxScale: 4.0,
+            child: Image.network(
+              imageUrl,
+              fit: BoxFit.contain, // Hiển thị trọn vẹn ảnh
+              errorBuilder: (_, __, ___) => const Center(
+                child: Icon(Icons.broken_image, color: Colors.white, size: 64),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}

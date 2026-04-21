@@ -21,6 +21,7 @@ public class AdminOrderDetailResponse {
     private String customerUsername;
 
     private List<AdminOrderDetailItemResponse> items;
+    private AdminReturnRequestResponse returnRequest; // Thêm field này
 
     public String getOrderId() { return orderId; }
     public void setOrderId(String orderId) { this.orderId = orderId; }
@@ -60,4 +61,7 @@ public class AdminOrderDetailResponse {
 
     public List<AdminOrderDetailItemResponse> getItems() { return items; }
     public void setItems(List<AdminOrderDetailItemResponse> items) { this.items = items; }
+
+    public AdminReturnRequestResponse getReturnRequest() { return returnRequest; }
+    public void setReturnRequest(AdminReturnRequestResponse returnRequest) { this.returnRequest = returnRequest; }
 }
