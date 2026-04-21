@@ -6,12 +6,31 @@
   <component name="ChangeListManager">
     <list default="true" id="90f2e1e5-d5bd-4083-a96e-40142505842d" name="Changes" comment="create order">
       <change beforePath="$PROJECT_DIR$/.idea/dataSources.local.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/dataSources.local.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/my-app/.env" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/my-app/app.config.js" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/my-app/components/BookRecommendCard.tsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/my-app/components/ChatBubble.tsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/my-app/services/gemini_service.ts" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/ute-bookstore-backend/src/main/java/com/hcmute/bookstore/Service/ChatIntentService.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/ute-bookstore-backend/src/main/java/com/hcmute/bookstore/Service/ChatResponseService.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/ute-bookstore-backend/src/main/java/com/hcmute/bookstore/Service/GeminiService.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/ute-bookstore-backend/src/main/java/com/hcmute/bookstore/dto/AiBookResponse.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/ute-bookstore-backend/src/main/java/com/hcmute/bookstore/dto/AiChatRequest.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/ute-bookstore-backend/src/main/java/com/hcmute/bookstore/dto/AiChatResponse.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/copilotDiffState.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/copilotDiffState.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/my-app/app.json" beforeDir="false" afterPath="$PROJECT_DIR$/my-app/app.json" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/my-app/screens/home.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/my-app/screens/home.tsx" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/ute_bookstore_python/books_latest.csv" beforeDir="false" afterPath="$PROJECT_DIR$/ute_bookstore_python/books_latest.csv" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/ute_bookstore_python/ml.py" beforeDir="false" afterPath="$PROJECT_DIR$/ute_bookstore_python/ml.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/ute_bookstore_python/sim_matrix.csv" beforeDir="false" afterPath="$PROJECT_DIR$/ute_bookstore_python/sim_matrix.csv" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/my-app/components/external-link.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/my-app/components/external-link.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/my-app/screens/profile/ChatScreen.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/my-app/screens/profile/ChatScreen.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/sql.sql" beforeDir="false" afterPath="$PROJECT_DIR$/sql.sql" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ute-bookstore-backend/src/main/java/com/hcmute/bookstore/Controller/ChatRestController.java" beforeDir="false" afterPath="$PROJECT_DIR$/ute-bookstore-backend/src/main/java/com/hcmute/bookstore/Controller/ChatRestController.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ute-bookstore-backend/src/main/java/com/hcmute/bookstore/Repository/BooksRepository.java" beforeDir="false" afterPath="$PROJECT_DIR$/ute-bookstore-backend/src/main/java/com/hcmute/bookstore/Repository/BooksRepository.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ute-bookstore-backend/src/main/java/com/hcmute/bookstore/Service/ChatService.java" beforeDir="false" afterPath="$PROJECT_DIR$/ute-bookstore-backend/src/main/java/com/hcmute/bookstore/Service/ChatService.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ute-bookstore-backend/ute_bookstore_python/books_latest.csv" beforeDir="false" afterPath="$PROJECT_DIR$/ute-bookstore-backend/ute_bookstore_python/books_latest.csv" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -36,7 +55,7 @@
     </selectedModels>
   </component>
   <component name="EmbeddingIndexingInfo">
-    <option name="cachedIndexableFilesCount" value="1679" />
+    <option name="cachedIndexableFilesCount" value="2787" />
     <option name="fileBasedEmbeddingIndicesEnabled" value="true" />
   </component>
   <component name="FileTemplateManagerImpl">
@@ -88,41 +107,50 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent">{
-  &quot;keyToString&quot;: {
-    &quot;Downloaded.Files.Path.Enabled&quot;: &quot;false&quot;,
-    &quot;ModuleVcsDetector.initialDetectionPerformed&quot;: &quot;true&quot;,
-    &quot;Repository.Attach.Annotations&quot;: &quot;false&quot;,
-    &quot;Repository.Attach.JavaDocs&quot;: &quot;false&quot;,
-    &quot;Repository.Attach.Sources&quot;: &quot;false&quot;,
-    &quot;RequestMappingsPanelOrder0&quot;: &quot;0&quot;,
-    &quot;RequestMappingsPanelOrder1&quot;: &quot;1&quot;,
-    &quot;RequestMappingsPanelWidth0&quot;: &quot;75&quot;,
-    &quot;RequestMappingsPanelWidth1&quot;: &quot;75&quot;,
-    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.cidr.known.project.marker&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.readMode.enableVisualFormatting&quot;: &quot;true&quot;,
-    &quot;SHARE_PROJECT_CONFIGURATION_FILES&quot;: &quot;true&quot;,
-    &quot;Spring Boot.UteBookstoreBackendApplication.executor&quot;: &quot;Run&quot;,
-    &quot;cf.first.check.clang-format&quot;: &quot;false&quot;,
-    &quot;cidr.known.project.marker&quot;: &quot;true&quot;,
-    &quot;com.google.services.firebase.aqiPopupShown&quot;: &quot;true&quot;,
-    &quot;git-widget-placeholder&quot;: &quot;main&quot;,
-    &quot;ignore.virus.scanning.warn.message&quot;: &quot;true&quot;,
-    &quot;kotlin-language-version-configured&quot;: &quot;true&quot;,
-    &quot;last_opened_file_path&quot;: &quot;D:/CNTT25-26/Mobile_Advance/DoAn/App_BookstoreUTE&quot;,
-    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
-    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
-    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
-    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
-    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
-    &quot;settings.editor.selected.configurable&quot;: &quot;preferences.pluginManager&quot;,
-    &quot;ts.external.directory.path&quot;: &quot;D:\\oD\\data o D\\HKII nam3\\LTDD Nang cao\\Project_cuoi_ky\\MoiNhat\\App_BookstoreUTE\\my-app\\node_modules\\typescript\\lib&quot;,
-    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "Downloaded.Files.Path.Enabled": "false",
+    "Maven.ute-bookstore-backend [clean].executor": "Run",
+    "Maven.ute-bookstore-backend [package].executor": "Run",
+    "ModuleVcsDetector.initialDetectionPerformed": "true",
+    "Repository.Attach.Annotations": "false",
+    "Repository.Attach.JavaDocs": "false",
+    "Repository.Attach.Sources": "false",
+    "RequestMappingsPanelOrder0": "0",
+    "RequestMappingsPanelOrder1": "1",
+    "RequestMappingsPanelWidth0": "75",
+    "RequestMappingsPanelWidth1": "75",
+    "RunOnceActivity.MCP Project settings loaded": "true",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252": "true",
+    "RunOnceActivity.cidr.known.project.marker": "true",
+    "RunOnceActivity.git.unshallow": "true",
+    "RunOnceActivity.readMode.enableVisualFormatting": "true",
+    "RunOnceActivity.typescript.service.memoryLimit.init": "true",
+    "SHARE_PROJECT_CONFIGURATION_FILES": "true",
+    "Spring Boot.UteBookstoreBackendApplication.executor": "Run",
+    "cf.first.check.clang-format": "false",
+    "cidr.known.project.marker": "true",
+    "com.google.services.firebase.aqiPopupShown": "true",
+    "com.intellij.ml.llm.matterhorn.ej.ui.settings.DefaultModelSelectionForGA.v1": "true",
+    "dart.analysis.tool.window.visible": "false",
+    "git-widget-placeholder": "AItuvan",
+    "ignore.virus.scanning.warn.message": "true",
+    "junie.onboarding.icon.badge.shown": "true",
+    "kotlin-language-version-configured": "true",
+    "last_opened_file_path": "C:/2025-2026HocKy2/LapTrinhDiDongNangCao/Flutter/App_BookstoreUTE",
+    "node.js.detected.package.eslint": "true",
+    "node.js.detected.package.tslint": "true",
+    "node.js.selected.package.eslint": "(autodetect)",
+    "node.js.selected.package.tslint": "(autodetect)",
+    "nodejs_package_manager_path": "npm",
+    "settings.editor.selected.configurable": "preferences.pluginManager",
+    "show.migrate.to.gradle.popup": "false",
+    "to.speed.mode.migration.done": "true",
+    "ts.external.directory.path": "C:\\2025-2026HocKy2\\LapTrinhDiDongNangCao\\Flutter\\App_BookstoreUTE\\my-app\\node_modules\\typescript\\lib",
+    "vue.rearranger.settings.migration": "true"
   }
-}</component>
+}]]></component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
       <recent name="D:\CNTT25-26\Mobile_Advance\DoAn\App_BookstoreUTE\ute-bookstore-backend\src\main" />
@@ -152,8 +180,8 @@
   <component name="SharedIndexes">
     <attachedChunks>
       <set>
-        <option value="bundled-jdk-9823dce3aa75-b114ca120d71-intellij.indexing.shared.core-IU-242.21829.142" />
-        <option value="bundled-js-predefined-d6986cc7102b-7c0b70fcd90d-JavaScript-IU-242.21829.142" />
+        <option value="bundled-jdk-30f59d01ecdd-2fc7cc6b9a17-intellij.indexing.shared.core-IU-253.32098.37" />
+        <option value="bundled-js-predefined-d6986cc7102b-9b0f141eb926-JavaScript-IU-253.32098.37" />
       </set>
     </attachedChunks>
   </component>
@@ -183,7 +211,12 @@
       <workItem from="1776616400582" duration="9584000" />
       <workItem from="1776672795556" duration="606000" />
       <workItem from="1776673780877" duration="10003000" />
+      <updated>1776679192264</updated>
       <workItem from="1776679195457" duration="1086000" />
+      <workItem from="1776693042933" duration="3853000" />
+      <workItem from="1776738664728" duration="22440000" />
+      <workItem from="1776780167993" duration="230000" />
+      <workItem from="1776780417729" duration="4637000" />
       <workItem from="1776689717680" duration="615000" />
       <workItem from="1776741351528" duration="5063000" />
       <workItem from="1776756727506" duration="11435000" />

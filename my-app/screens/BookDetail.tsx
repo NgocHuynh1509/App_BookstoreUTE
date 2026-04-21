@@ -178,6 +178,20 @@ export default function BookDetail() {
     });
   };
 
+  const handlePreview = () => {
+    const previewUrl = book?.preview_url;
+
+    if (!previewUrl) {
+      Alert.alert("Thông báo", "Sách này chưa có bản đọc thử.");
+      return;
+    }
+
+    navigation.navigate("BookPreview", {
+      title: book?.title || "Đọc thử",
+      pdfUrl: previewUrl,
+    });
+  };
+
   // ==========================
   // API LOGIC (all unchanged)
   // ==========================
@@ -189,17 +203,22 @@ export default function BookDetail() {
   const loadBook = async () => {
     try {
       const res = await api.get(`/books/${id}`);
-      setBook(res.data);
+      const normalized = {
+        ...res.data,
+        preview_url: res.data?.preview_url ?? res.data?.previewUrl ?? res.data?.previewURL ?? null,
+      };
+      console.log("BOOK DETAIL PREVIEW_URL:", normalized.preview_url);
+      setBook(normalized);
 
       // ── LƯU VÀO LỊCH SỬ XEM NGAY SAU KHI LOAD THÀNH CÔNG ────
       // Đây là chỗ duy nhất cần gọi saveRecentlyViewed
       saveRecentlyViewed({
-        id:             res.data.id,
-        title:         res.data.title,
-        author_name:   res.data.author_name,
-        cover_image:   res.data.cover_image,
-        price:         res.data.price,
-        original_price: res.data.original_price,
+        id:             normalized.id,
+        title:         normalized.title,
+        author_name:   normalized.author_name,
+        cover_image:   normalized.cover_image,
+        price:         normalized.price,
+        original_price: normalized.original_price,
       });
 
     } catch (error) { console.log("❌ Lỗi tải sách:", error); }
@@ -536,6 +555,10 @@ export default function BookDetail() {
             <Text style={s.priceMain}>{book.price?.toLocaleString("vi-VN")} ₫</Text>
             <View style={s.saleBadge}><Text style={{ color: "#FFF", fontSize: 11, fontWeight: "700" }}>Giá tốt</Text></View>
           </View>
+          <TouchableOpacity style={s.previewBtn} onPress={handlePreview} activeOpacity={0.86}>
+            <Text style={s.previewBtnIcon}>📖</Text>
+            <Text style={s.previewBtnText}>Đọc thử</Text>
+          </TouchableOpacity>
           <View style={s.publisherRow}>
             <Text style={{ fontSize: 13, color: C.text3 }}>Nhà xuất bản</Text>
             <Text style={{ fontSize: 13, color: C.text1, fontWeight: "600" }}>{book.publisher_name}</Text>
@@ -812,9 +835,24 @@ const s = StyleSheet.create({
 
   buyNowBtnTxt: {
     color: "#FFF",
-    fontSize: 15,
+    fontSize: 16,
     fontWeight: "800",
   },
+  previewBtn: {
+    marginTop: 12,
+    alignSelf: "flex-start",
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 10,
+    backgroundColor: C.blueSoft,
+    borderWidth: 1,
+    borderColor: "#CDE4FF",
+  },
+  previewBtnIcon: { fontSize: 16 },
+  previewBtnText: { color: C.blue, fontWeight: "700", fontSize: 13 },
 
   modalOverlay: {
     flex: 1,

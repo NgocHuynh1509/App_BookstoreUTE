@@ -60,6 +60,9 @@ public class Books {
     @NotNull
     private String picture;
 
+    @Column(name = "preview_url", length = 500)
+    private String previewUrl;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(
             name = "categoryId",
@@ -88,6 +91,9 @@ public class Books {
 
     public int getSoldQuantity() { return soldQuantity; }
     public void setSoldQuantity(int soldQuantity) { this.soldQuantity = soldQuantity; }
+
+    public String getPreviewUrl() { return previewUrl; }
+    public void setPreviewUrl(String previewUrl) { this.previewUrl = previewUrl; }
 
     // Các Getters/Setters cũ
     public String getBookId() { return bookId; }

@@ -48,3 +48,15 @@ Join our community of developers creating universal apps.
 
 - [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
 - [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+
+## Book Preview (Customer)
+
+The customer book detail screen uses the `preview_url` field from `books` to open a flip-style PDF preview. If `preview_url` is empty, the app shows "Sách này chưa có bản đọc thử".
+
+### Preview URL smoke check
+
+```powershell
+npm run preview:check -- "https://drive.google.com/file/d/<id>/view"
+```
+
+This prints the normalized Google Drive download link used by the preview screen.

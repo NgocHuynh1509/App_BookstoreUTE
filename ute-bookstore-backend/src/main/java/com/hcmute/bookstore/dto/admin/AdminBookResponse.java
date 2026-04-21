@@ -18,6 +18,8 @@ public class AdminBookResponse {
     private String picture;
     private String categoryId;
     private String categoryName;
+    private Double averageRating;
+    private Integer reviewCount;
 
     public String getBookId() {
         return bookId;
@@ -130,5 +132,20 @@ public class AdminBookResponse {
     public void setCategoryName(String categoryName) {
         this.categoryName = categoryName;
     }
-}
 
+    public Double getAverageRating() {
+        return averageRating;
+    }
+
+    public void setAverageRating(Double averageRating) {
+        this.averageRating = averageRating;
+    }
+
+    public Integer getReviewCount() {
+        return reviewCount;
+    }
+
+    public void setReviewCount(Integer reviewCount) {
+        this.reviewCount = reviewCount;
+    }
+}

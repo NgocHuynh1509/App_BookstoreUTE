@@ -4,6 +4,7 @@ import com.hcmute.bookstore.Entity.Books;
 import com.hcmute.bookstore.Entity.Category;
 import com.hcmute.bookstore.Repository.BooksRepository;
 import com.hcmute.bookstore.Repository.CategoryRepository;
+import com.hcmute.bookstore.Repository.ReviewRepository;
 import com.hcmute.bookstore.dto.admin.AdminBookRequest;
 import com.hcmute.bookstore.dto.admin.AdminBookResponse;
 import lombok.RequiredArgsConstructor;
@@ -17,6 +18,7 @@ public class AdminProductService {
 
     private final BooksRepository booksRepository;
     private final CategoryRepository categoryRepository;
+    private final ReviewRepository reviewRepository;
 
     public Page<AdminBookResponse> getBooks(String search, String categoryId, Pageable pageable) {
         Page<Books> page;
@@ -99,6 +101,10 @@ public class AdminProductService {
             response.setCategoryId(book.getCategory().getCategoryId());
             response.setCategoryName(book.getCategory().getCategoryName());
         }
+        final Double averageRating = reviewRepository.findAverageRatingByBookId(book.getBookId());
+        final int reviewCount = reviewRepository.countByBook_BookId(book.getBookId());
+        response.setAverageRating(averageRating != null ? averageRating : 0.0);
+        response.setReviewCount(reviewCount);
         return response;
     }
 }
