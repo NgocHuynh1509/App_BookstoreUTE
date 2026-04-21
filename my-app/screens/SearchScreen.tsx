@@ -88,7 +88,11 @@ export default function SearchScreen({ navigation }: any) {
   const handleSearch = () => {
     if (!keyword.trim()) return;
     saveSearchHistory(keyword);
-    navigation.navigate("SearchResult", { keyword });
+    navigation.navigate("SearchResult", {
+      keyword,
+      mode: "search",
+      bookId: "",
+    });
   };
 
   const clearHistory = async () => {
@@ -199,8 +203,11 @@ export default function SearchScreen({ navigation }: any) {
                   style={[s.histRow, idx === history.length - 1 && { borderBottomWidth: 0 }]}
                   onPress={() => {
                     setKeyword(item.keyword);
-                    navigation.navigate("SearchResult", { keyword: item.keyword });
-                  }}
+                    navigation.navigate("SearchResult", {
+                      keyword: item.keyword,
+                      mode: "search",
+                      bookId: "",
+                    });                  }}
                   activeOpacity={0.75}
                 >
                   <View style={s.histIconWrap}>

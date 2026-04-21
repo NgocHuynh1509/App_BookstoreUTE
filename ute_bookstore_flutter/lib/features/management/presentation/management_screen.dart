@@ -9,6 +9,7 @@ import '../../customers/presentation/customers_screen.dart';
 import '../../auth/presentation/admin_login_screen.dart';
 import '../../../../chat/presentation/chat_list_screen.dart';
 import '../../coupons/presentation/coupons_screen.dart';
+import '../../categories/presentation/category_screen.dart';
 
 class ManagementScreen extends ConsumerStatefulWidget {
   const ManagementScreen({super.key});
@@ -85,7 +86,7 @@ class _ManagementScreenState extends ConsumerState<ManagementScreen> {
         screen: ChatListScreen(repository: chatRepo),
         showDot: _hasUnread,
       ),
-      _MenuItem('Danh mục', Icons.category_outlined, screen: const PlaceholderScreen(title: 'Danh mục')),
+      _MenuItem('Danh mục', Icons.category_outlined, screen: const CategoryScreen()),
       _MenuItem('Mã giảm giá', Icons.local_offer_outlined, screen: const CouponsScreen()),
       _MenuItem('Thông báo', Icons.notifications_none_rounded, screen: const PlaceholderScreen(title: 'Thông báo')),
       _MenuItem(
