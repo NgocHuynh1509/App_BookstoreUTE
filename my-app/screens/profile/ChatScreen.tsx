@@ -14,6 +14,8 @@ import Constants from "expo-constants";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import SockJS from "sockjs-client";
 import { useHeaderHeight } from "@react-navigation/elements";
+import ChatBubble from "../../components/ChatBubble";
+import BookRecommendCard, { type RecommendBook } from "../../components/BookRecommendCard";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface Message {
@@ -39,6 +41,14 @@ interface Message {
     orderItemCount?: number;
     image?: string;
     userName?: string;
+}
+
+interface AiMessage {
+    id: string;
+    role: "USER" | "AI";
+    text: string;
+    createdAt: string;
+    recommendations?: RecommendBook[];
 }
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -90,8 +100,13 @@ const ChatScreen: React.FC = () => {
     const [showTimeId, setShowTimeId]         = useState<string | null>(null);
     const [replyMessage, setReplyMessage]     = useState<Message | null>(null);
 
+    const [aiMessages, setAiMessages]         = useState<AiMessage[]>([]);
+    const [aiInputText, setAiInputText]       = useState("");
+    const [aiLoading, setAiLoading]           = useState(false);
+
     const stompClient  = useRef<Client | null>(null);
     const reactionAnim = useRef<{ [key: string]: Animated.Value }>({});
+    const aiListRef    = useRef<FlatList<AiMessage> | null>(null);
 
     const { productPreview, orderPreview } = route.params || {};
     const [previewItem, setPreviewItem] = useState(productPreview);
@@ -291,7 +306,6 @@ const ChatScreen: React.FC = () => {
         }
     };
 
-    // ── Sub-renders ───────────────────────────────────────────────────────────────
     const renderReplyContent = (msg: Message) => {
         if (!msg.replyToId) return null;
         const isImage = msg.replyToMessageType === "IMAGE";
@@ -328,7 +342,7 @@ const ChatScreen: React.FC = () => {
                 )}
 
                 <TouchableOpacity
-                    onPress={() => setShowTimeId(prev => prev === item.id ? null : item.id)}
+                    onPress={() => setShowTimeId(prevState => prevState === item.id ? null : item.id)}
                     onLongPress={() => {
                         if (item.senderRole !== "ADMIN") return;
                         setSelectedMessage(item);
@@ -337,10 +351,8 @@ const ChatScreen: React.FC = () => {
                     activeOpacity={0.85}
                 >
                     <View style={[s.msgWrapper, isMe ? s.msgWrapperMe : s.msgWrapperOther]}>
-                        {/* Reply preview */}
                         {renderReplyContent(item)}
 
-                        {/* Book card */}
                         {item.bookId && (
                             <TouchableOpacity
                                 onPress={() => navigation.navigate("BookDetail", { id: item.bookId })}
@@ -363,7 +375,6 @@ const ChatScreen: React.FC = () => {
                             </TouchableOpacity>
                         )}
 
-                        {/* Order card */}
                         {item.orderId && (
                             <TouchableOpacity
                                 onPress={() => navigation.navigate("OrderDetail", { orderId: item.orderId })}
@@ -390,7 +401,6 @@ const ChatScreen: React.FC = () => {
                             </TouchableOpacity>
                         )}
 
-                        {/* Image */}
                         {item.messageType === "IMAGE" && item.mediaUrl && (
                             <Image
                                 source={{ uri: `${BASE_URL}${item.mediaUrl}` }}
@@ -399,7 +409,6 @@ const ChatScreen: React.FC = () => {
                             />
                         )}
 
-                        {/* Text bubble */}
                         {item.content ? (
                             <View style={[
                                 s.bubble,
@@ -421,7 +430,6 @@ const ChatScreen: React.FC = () => {
                             )
                         )}
 
-                        {/* Timestamp */}
                         {showTimeId === item.id && (
                             <Text style={[s.timeLabel, { textAlign: isMe ? "right" : "left" }]}>
                                 {formatTime(item.createdAt)}
@@ -429,6 +437,172 @@ const ChatScreen: React.FC = () => {
                         )}
                     </View>
                 </TouchableOpacity>
+            </View>
+        );
+    };
+
+    // ── AI helpers ──────────────────────────────────────────────────────────────
+
+    const parseAiResponse = (input: unknown) => {
+        if (input === null || input === undefined) {
+            return "Xin lỗi, tôi chưa thể trả lời lúc này.";
+        }
+        if (typeof input === "string") {
+            const raw = input.trim();
+            if (!raw) return "Xin lỗi, tôi chưa thể trả lời lúc này.";
+            if (raw.startsWith("{") && raw.endsWith("}")) {
+                try {
+                    const parsed = JSON.parse(raw);
+                    return parseAiResponse(parsed);
+                } catch {
+                    return raw;
+                }
+            }
+            return raw;
+        }
+        if (typeof input === "object") {
+            const obj = input as { reply?: string; message?: string; text?: string };
+            const text = obj.reply || obj.message || obj.text;
+            if (text && typeof text === "string") return text.trim();
+        }
+        return "Xin lỗi, tôi chưa thể trả lời lúc này.";
+    };
+
+    const buildBookImageUrl = (image?: string) => {
+        if (!image) return "";
+        if (image.startsWith("http")) return image;
+        if (image.startsWith("/uploads/")) return `${BASE_URL}${image}`;
+        if (image.startsWith("uploads/")) return `${BASE_URL}/${image}`;
+        return `${BASE_URL}/uploads/${image}`;
+    };
+
+    const InitialWelcomeMessage = ({ onSuggestionPress }: { onSuggestionPress: (text: string) => void }) => (
+        <View style={s.aiWelcomeBox}>
+            <View style={[s.aiBubble, s.aiBubbleOther, { alignSelf: "flex-start" }]}>
+                <Text style={s.aiBubbleTextOther}>
+                    {"Xin chào 👋\nMình là trợ lý AI của nhà sách.\nBạn muốn tìm thể loại sách nào?"}
+                </Text>
+            </View>
+            <SuggestionChips onPress={onSuggestionPress} />
+        </View>
+    );
+
+    const SuggestionChips = ({ onPress }: { onPress: (text: string) => void }) => {
+        const suggestions = ["Tình cảm", "Trinh thám", "Self-help", "Buồn cảm động", "Lập trình"];
+        return (
+            <View style={s.aiSuggestWrap}>
+                {suggestions.map((item) => (
+                    <TouchableOpacity
+                        key={item}
+                        style={s.aiSuggestChip}
+                        activeOpacity={0.85}
+                        onPress={() => onPress(item)}
+                    >
+                        <Text style={s.aiSuggestText}>{item}</Text>
+                    </TouchableOpacity>
+                ))}
+            </View>
+        );
+    };
+
+    const sendAiMessage = async (overrideText?: string) => {
+        const text = (overrideText ?? aiInputText).trim();
+        if (!text || aiLoading) return;
+
+        const userMsg: AiMessage = {
+            id: `ai-${Date.now()}`,
+            role: "USER",
+            text,
+            createdAt: new Date().toISOString(),
+        };
+
+        setAiMessages((prev) => [...prev, userMsg]);
+        setAiInputText("");
+        setAiLoading(true);
+
+        try {
+            const res = await axios.post(
+                `${BASE_URL}/chat/ai`,
+                { message: text, userName: userData?.username ?? null },
+                {
+                    timeout: 8000,
+                    ...(userData?.token
+                        ? { headers: { Authorization: `Bearer ${userData.token}` } }
+                        : {}),
+                }
+            );
+            const data = res?.data;
+            const replyText = parseAiResponse(
+                typeof data === "string" ? data : data?.reply ?? data?.message ?? data?.text ?? data
+            );
+            const rawBooks = data && typeof data === "object" ? data.books : undefined;
+            const books = Array.isArray(rawBooks)
+                ? rawBooks.map((b: any) => ({
+                    id: b.id,
+                    title: b.title,
+                    author: b.author,
+                    price: b.price,
+                    image: buildBookImageUrl(b.image),
+                }))
+                : [];
+
+            const aiMsg: AiMessage = {
+                id: `ai-${Date.now()}-r`,
+                role: "AI",
+                text: replyText,
+                createdAt: new Date().toISOString(),
+                recommendations: books,
+            };
+            setAiMessages((prev) => [...prev, aiMsg]);
+        } catch (e: any) {
+            const isTimeout = e?.code === "ECONNABORTED" || String(e?.message || "").toLowerCase().includes("timeout");
+            const fallbackText = isTimeout
+                ? "AI đang bận, mình gợi ý nhanh vài sách cho bạn nhé"
+                : "Xin lỗi, tôi chưa thể trả lời lúc này.";
+            const aiMsg: AiMessage = {
+                id: `ai-${Date.now()}-e`,
+                role: "AI",
+                text: fallbackText,
+                createdAt: new Date().toISOString(),
+            };
+            setAiMessages((prev) => [...prev, aiMsg]);
+        } finally {
+            setAiLoading(false);
+            requestAnimationFrame(() => aiListRef.current?.scrollToEnd({ animated: true }));
+        }
+    };
+
+    const AiMessageBubble = ({ message }: { message: AiMessage }) => {
+        const isMe = message.role === "USER";
+        return <ChatBubble text={message.text} isMe={isMe} />;
+    };
+
+
+    const AiTypingBubble = () => (
+        <View style={[s.aiBubble, s.aiBubbleOther, { alignSelf: "flex-start" }]}>
+            <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+                <ActivityIndicator size="small" color={C.mid} />
+                <Text style={s.aiBubbleTextOther}>Đang suy nghĩ...</Text>
+            </View>
+        </View>
+    );
+
+    const renderAiMessage = ({ item }: { item: AiMessage }) => {
+        const isMe = item.role === "USER";
+        return (
+            <View style={[s.aiMsgWrap, isMe ? s.aiMsgWrapMe : s.aiMsgWrapOther]}>
+                <AiMessageBubble message={item} />
+                {!!item.recommendations?.length && (
+                    <View style={s.aiRecommendList}>
+                        {item.recommendations.map((book) => (
+                            <BookRecommendCard
+                                key={String(book.id)}
+                                book={book}
+                                onPress={() => navigation.navigate("BookDetail", { id: book.id })}
+                            />
+                        ))}
+                    </View>
+                )}
             </View>
         );
     };
@@ -577,9 +751,38 @@ const ChatScreen: React.FC = () => {
                                 </>
                             )
                     ) : (
-                        <View style={s.emptyBox}>
-                            <Ionicons name="sparkles-outline" size={48} color={C.tint} />
-                            <Text style={s.emptyText}>Giao diện AI đang cập nhật...</Text>
+                        <View style={{ flex: 1 }}>
+                            <FlatList
+                                ref={aiListRef}
+                                data={aiMessages}
+                                keyExtractor={(item) => item.id}
+                                renderItem={renderAiMessage}
+                                contentContainerStyle={{ paddingHorizontal: 14, paddingVertical: 12 }}
+                                onContentSizeChange={() => aiListRef.current?.scrollToEnd({ animated: true })}
+                                onLayout={() => aiListRef.current?.scrollToEnd({ animated: true })}
+                                ListFooterComponent={aiLoading ? <AiTypingBubble /> : null}
+                                ListEmptyComponent={
+                                    <InitialWelcomeMessage onSuggestionPress={(text) => sendAiMessage(text)} />
+                                }
+                            />
+
+                            <View style={s.inputArea}>
+                                <TextInput
+                                    style={s.input}
+                                    placeholder="Hỏi BookAI về sách..."
+                                    placeholderTextColor={C.text3}
+                                    value={aiInputText}
+                                    onChangeText={setAiInputText}
+                                    multiline
+                                />
+                                <TouchableOpacity
+                                    onPress={() => sendAiMessage()}
+                                    style={[s.sendBtn, (!aiInputText.trim() || aiLoading) && s.sendBtnDisabled]}
+                                    disabled={!aiInputText.trim() || aiLoading}
+                                >
+                                    <Ionicons name="send" size={18} color="#FFF" />
+                                </TouchableOpacity>
+                            </View>
                         </View>
                     )}
                 </View>
@@ -653,7 +856,7 @@ const s = StyleSheet.create({
     bannerLabel:  { flex: 1, fontSize: 12, fontWeight: "700", color: C.mid },
     bannerBody:   { flexDirection: "row", alignItems: "center" },
     bannerImg:    { width: 44, height: 56, borderRadius: 8, backgroundColor: C.soft },
-    bannerTitle:  { fontSize: 13, fontWeight: "700", color: C.text1, marginBottom: 2 },
+    bannerTitle:  { fontSize: 13, fontWeight: "700", color: C.text1, lineHeight: 18, marginBottom: 2 },
     bannerPrice:  { fontSize: 13, fontWeight: "700", color: C.red },
     bannerBtn:    { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 10, backgroundColor: C.soft, borderWidth: 1, borderColor: C.tint },
     bannerBtnOrange: { backgroundColor: "#FFF3E0", borderColor: "#FFE0B2" },
@@ -752,6 +955,42 @@ const s = StyleSheet.create({
     modalDivider: { height: 0.5, backgroundColor: C.border, width: "100%", marginVertical: 14 },
     modalAction:  { flexDirection: "row", alignItems: "center", paddingVertical: 6 },
     modalActionText: { fontSize: 14, fontWeight: "700", color: C.mid },
+
+    // AI messages
+    aiMsgWrap:      { marginBottom: 12, maxWidth: "75%" },
+    aiMsgWrapMe:    { alignSelf: "flex-end" },
+    aiMsgWrapOther: { alignSelf: "flex-start" },
+    aiBubble:        { paddingHorizontal: 14, paddingVertical: 10, borderRadius: 18, marginTop: 2, position: "relative" },
+    aiBubbleMe:      { backgroundColor: C.msgMe, borderBottomRightRadius: 4 },
+    aiBubbleOther:   { backgroundColor: C.msgOther, borderBottomLeftRadius: 4, borderWidth: 0.5, borderColor: C.border },
+    aiBubbleTextMe:  { color: "#FFF", fontSize: 14.5, lineHeight: 20 },
+    aiBubbleTextOther: { color: C.text1, fontSize: 14.5, lineHeight: 20 },
+
+
+    // AI typing bubble
+    aiTypingBubble: {
+        backgroundColor: C.msgOther,
+        borderRadius: 18,
+        padding: 10,
+        marginTop: 2,
+        alignSelf: "flex-start",
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 8,
+    },
+    aiRecommendList: { paddingLeft: 6 },
+    aiWelcomeBox: { paddingHorizontal: 14, paddingVertical: 10 },
+    aiSuggestWrap: { flexDirection: "row", flexWrap: "wrap", gap: 8, marginTop: 10 },
+    aiSuggestChip: {
+        backgroundColor: C.surface,
+        borderWidth: 1,
+        borderColor: C.tint,
+        paddingHorizontal: 12,
+        paddingVertical: 6,
+        borderRadius: 16,
+    },
+    aiSuggestText: { fontSize: 12.5, color: C.text1, fontWeight: "600" },
 });
 
 export default ChatScreen;
+

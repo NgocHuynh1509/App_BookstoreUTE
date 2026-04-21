@@ -40,4 +40,21 @@ public interface BooksRepository extends JpaRepository<Books, String> {
             "select c.categoryName, count(b) from Books b left join b.category c group by c.categoryName"
     )
     java.util.List<Object[]> countBooksByCategory();
+
+    @org.springframework.data.jpa.repository.Query(
+            """
+            select b from Books b
+            left join b.category c
+            where b.isActive = true
+              and b.quantity > 0
+              and (
+                lower(b.title) like lower(concat('%', :keyword, '%'))
+                or lower(b.author) like lower(concat('%', :keyword, '%'))
+                or lower(b.description) like lower(concat('%', :keyword, '%'))
+                or lower(c.categoryName) like lower(concat('%', :keyword, '%'))
+              )
+            """
+    )
+    List<Books> searchForAi(@org.springframework.data.repository.query.Param("keyword") String keyword,
+                            org.springframework.data.domain.Pageable pageable);
 }

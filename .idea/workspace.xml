@@ -5,56 +5,26 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="90f2e1e5-d5bd-4083-a96e-40142505842d" name="Changes" comment="create order">
-      <change afterPath="$PROJECT_DIR$/.idea/copilotDiffState.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/deviceManager.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/sqldialects.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/my-app/screens/BookPreviewScreen.tsx" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/my-app/scripts/preview-smoke.js" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/ute-bookstore-backend/src/main/java/com/hcmute/bookstore/dto/ReviewSummaryResponse.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/ute_bookstore_flutter/lib/features/reviews/data/review_api.dart" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/ute_bookstore_flutter/lib/features/reviews/data/review_models.dart" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/ute_bookstore_flutter/lib/features/reviews/data/review_repository.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/App_BookstoreUTE.iml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/copilot.data.migration.agent.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/dataSources.local.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/dataSources.local.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/dataSources/26a95477-9f87-4a86-b2d9-fede8e545bc3.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/dataSources/26a95477-9f87-4a86-b2d9-fede8e545bc3.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/encodings.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/inspectionProfiles/Project_Default.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/jarRepositories.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/shelf/Uncommitted_changes_before_Update_at_4_19_2026_11_34_PM_[Changes]/shelved.patch" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/shelf/Uncommitted_changes_before_Update_at_4_19_2026_11_34_PM__Changes_.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/shelf/Uncommitted_changes_before_Update_at_4_20_2026_2_25_AM_[Changes]/shelved.patch" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/shelf/Uncommitted_changes_before_Update_at_4_20_2026_2_25_AM__Changes_.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/shelf/Uncommitted_changes_before_Update_at_4_20_2026_3_48_AM_[Changes]/linear_regression.joblib" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/shelf/Uncommitted_changes_before_Update_at_4_20_2026_3_48_AM_[Changes]/output.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/shelf/Uncommitted_changes_before_Update_at_4_20_2026_3_48_AM_[Changes]/shelved.patch" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/shelf/Uncommitted_changes_before_Update_at_4_20_2026_3_48_AM__Changes_.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/vcs.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/vcs.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/my-app/.env" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/my-app/app.config.js" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/my-app/components/BookRecommendCard.tsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/my-app/components/ChatBubble.tsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/my-app/services/gemini_service.ts" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/ute-bookstore-backend/src/main/java/com/hcmute/bookstore/Service/ChatIntentService.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/ute-bookstore-backend/src/main/java/com/hcmute/bookstore/Service/ChatResponseService.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/ute-bookstore-backend/src/main/java/com/hcmute/bookstore/Service/GeminiService.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/ute-bookstore-backend/src/main/java/com/hcmute/bookstore/dto/AiBookResponse.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/ute-bookstore-backend/src/main/java/com/hcmute/bookstore/dto/AiChatRequest.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/ute-bookstore-backend/src/main/java/com/hcmute/bookstore/dto/AiChatResponse.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/copilotDiffState.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/copilotDiffState.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/my-app/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/my-app/README.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/my-app/app.json" beforeDir="false" afterPath="$PROJECT_DIR$/my-app/app.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/my-app/navigation/AppNavigator.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/my-app/navigation/AppNavigator.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/my-app/package-lock.json" beforeDir="false" afterPath="$PROJECT_DIR$/my-app/package-lock.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/my-app/package.json" beforeDir="false" afterPath="$PROJECT_DIR$/my-app/package.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/my-app/screens/BookDetail.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/my-app/screens/BookDetail.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/my-app/components/external-link.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/my-app/components/external-link.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/my-app/screens/profile/ChatScreen.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/my-app/screens/profile/ChatScreen.tsx" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/sql.sql" beforeDir="false" afterPath="$PROJECT_DIR$/sql.sql" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ute-bookstore-backend/src/main/java/com/hcmute/bookstore/Controller/BookDetailController.java" beforeDir="false" afterPath="$PROJECT_DIR$/ute-bookstore-backend/src/main/java/com/hcmute/bookstore/Controller/BookDetailController.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ute-bookstore-backend/src/main/java/com/hcmute/bookstore/Entity/Books.java" beforeDir="false" afterPath="$PROJECT_DIR$/ute-bookstore-backend/src/main/java/com/hcmute/bookstore/Entity/Books.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ute-bookstore-backend/src/main/java/com/hcmute/bookstore/Repository/ReviewRepository.java" beforeDir="false" afterPath="$PROJECT_DIR$/ute-bookstore-backend/src/main/java/com/hcmute/bookstore/Repository/ReviewRepository.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ute-bookstore-backend/src/main/java/com/hcmute/bookstore/Service/AdminProductService.java" beforeDir="false" afterPath="$PROJECT_DIR$/ute-bookstore-backend/src/main/java/com/hcmute/bookstore/Service/AdminProductService.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ute-bookstore-backend/src/main/java/com/hcmute/bookstore/Service/BookDetailService.java" beforeDir="false" afterPath="$PROJECT_DIR$/ute-bookstore-backend/src/main/java/com/hcmute/bookstore/Service/BookDetailService.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ute-bookstore-backend/src/main/java/com/hcmute/bookstore/dto/BookDetailResponse.java" beforeDir="false" afterPath="$PROJECT_DIR$/ute-bookstore-backend/src/main/java/com/hcmute/bookstore/dto/BookDetailResponse.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ute-bookstore-backend/src/main/java/com/hcmute/bookstore/dto/ReviewResponse.java" beforeDir="false" afterPath="$PROJECT_DIR$/ute-bookstore-backend/src/main/java/com/hcmute/bookstore/dto/ReviewResponse.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ute-bookstore-backend/src/main/java/com/hcmute/bookstore/dto/admin/AdminBookResponse.java" beforeDir="false" afterPath="$PROJECT_DIR$/ute-bookstore-backend/src/main/java/com/hcmute/bookstore/dto/admin/AdminBookResponse.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ute_bookstore_flutter/lib/app/providers.dart" beforeDir="false" afterPath="$PROJECT_DIR$/ute_bookstore_flutter/lib/app/providers.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ute_bookstore_flutter/lib/chat/presentation/widgets/message_bubble.dart" beforeDir="false" afterPath="$PROJECT_DIR$/ute_bookstore_flutter/lib/chat/presentation/widgets/message_bubble.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ute_bookstore_flutter/lib/features/products/data/product_models.dart" beforeDir="false" afterPath="$PROJECT_DIR$/ute_bookstore_flutter/lib/features/products/data/product_models.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ute_bookstore_flutter/lib/features/products/presentation/product_detail_screen.dart" beforeDir="false" afterPath="$PROJECT_DIR$/ute_bookstore_flutter/lib/features/products/presentation/product_detail_screen.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ute_bookstore_flutter/lib/features/products/presentation/products_screen.dart" beforeDir="false" afterPath="$PROJECT_DIR$/ute_bookstore_flutter/lib/features/products/presentation/products_screen.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ute_bookstore_python/books_latest.csv" beforeDir="false" afterPath="$PROJECT_DIR$/ute_bookstore_python/books_latest.csv" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ute_bookstore_python/orders.csv" beforeDir="false" afterPath="$PROJECT_DIR$/ute_bookstore_python/orders.csv" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ute_bookstore_python/output.png" beforeDir="false" afterPath="$PROJECT_DIR$/ute_bookstore_python/output.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ute-bookstore-backend/src/main/java/com/hcmute/bookstore/Controller/ChatRestController.java" beforeDir="false" afterPath="$PROJECT_DIR$/ute-bookstore-backend/src/main/java/com/hcmute/bookstore/Controller/ChatRestController.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ute-bookstore-backend/src/main/java/com/hcmute/bookstore/Repository/BooksRepository.java" beforeDir="false" afterPath="$PROJECT_DIR$/ute-bookstore-backend/src/main/java/com/hcmute/bookstore/Repository/BooksRepository.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ute-bookstore-backend/src/main/java/com/hcmute/bookstore/Service/ChatService.java" beforeDir="false" afterPath="$PROJECT_DIR$/ute-bookstore-backend/src/main/java/com/hcmute/bookstore/Service/ChatService.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ute-bookstore-backend/ute_bookstore_python/books_latest.csv" beforeDir="false" afterPath="$PROJECT_DIR$/ute-bookstore-backend/ute_bookstore_python/books_latest.csv" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -74,12 +44,12 @@
   </component>
   <component name="CopilotUserSelectedModel">
     <selectedModels>
-      <entry key="chat-panel" value="Gemini 3.1 Pro" />
-      <entry key="agent-panel" value="Gemini 3.1 Pro" />
+      <entry key="chat-panel" value="GPT-5.2-Codex" />
+      <entry key="agent-panel" value="GPT-5.2-Codex" />
     </selectedModels>
   </component>
   <component name="EmbeddingIndexingInfo">
-    <option name="cachedIndexableFilesCount" value="2771" />
+    <option name="cachedIndexableFilesCount" value="2787" />
     <option name="fileBasedEmbeddingIndicesEnabled" value="true" />
   </component>
   <component name="FileTemplateManagerImpl">
@@ -130,6 +100,8 @@
   <component name="PropertiesComponent"><![CDATA[{
   "keyToString": {
     "Downloaded.Files.Path.Enabled": "false",
+    "Maven.ute-bookstore-backend [clean].executor": "Run",
+    "Maven.ute-bookstore-backend [package].executor": "Run",
     "ModuleVcsDetector.initialDetectionPerformed": "true",
     "Repository.Attach.Annotations": "false",
     "Repository.Attach.JavaDocs": "false",
@@ -156,7 +128,7 @@
     "ignore.virus.scanning.warn.message": "true",
     "junie.onboarding.icon.badge.shown": "true",
     "kotlin-language-version-configured": "true",
-    "last_opened_file_path": "D:/CNTT25-26/Mobile_Advance/DoAn/App_BookstoreUTE",
+    "last_opened_file_path": "C:/2025-2026HocKy2/LapTrinhDiDongNangCao/Flutter/App_BookstoreUTE",
     "node.js.detected.package.eslint": "true",
     "node.js.detected.package.tslint": "true",
     "node.js.selected.package.eslint": "(autodetect)",
@@ -230,7 +202,9 @@
       <workItem from="1776673780877" duration="10003000" />
       <workItem from="1776679195457" duration="1086000" />
       <workItem from="1776693042933" duration="3853000" />
-      <workItem from="1776738664728" duration="14162000" />
+      <workItem from="1776738664728" duration="22440000" />
+      <workItem from="1776780167993" duration="230000" />
+      <workItem from="1776780417729" duration="4637000" />
     </task>
     <task id="LOCAL-00001" summary="sql">
       <option name="closed" value="true" />

@@ -4600,6 +4600,7 @@ VALUES
     ('RV057', 'Sách hay, nội dung rõ ràng và dễ hiểu.', '2025-08-03', 4, 'CN04', 'CU10'),
     ('RV058', 'Đọc xong thấy rất hữu ích, sẽ giới thiệu thêm.', '2024-12-07', 5, 'CN04', 'CU36'),
     ('RV059', 'Sách hay, nội dung rõ ràng và dễ hiểu.', '2026-03-17', 5, 'CN04', 'CU42');
+
 ALTER TABLE books
     ADD COLUMN preview_url VARCHAR(500);
 UPDATE books
