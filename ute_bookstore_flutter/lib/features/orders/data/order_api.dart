@@ -35,5 +35,12 @@ class OrderApi {
     final response = await _client.dio.get('/admin/orders/$orderId');
     return OrderDetailModel.fromJson(response.data as Map<String, dynamic>);
   }
+
+  Future<void> handleReturnRequest(String orderId, String status, String reply) async {
+    await _client.dio.post('/admin/orders/$orderId/handle-return', data: {
+      'status': status,
+      'reply': reply,
+    });
+  }
 }
 

@@ -2,12 +2,14 @@ package com.hcmute.bookstore.Controller.Admin;
 
 import com.hcmute.bookstore.Service.AdminOrderService;
 import com.hcmute.bookstore.dto.admin.AdminOrderResponse;
+import com.hcmute.bookstore.dto.admin.HandleReturnRequest;
 import com.hcmute.bookstore.dto.admin.UpdateOrderStatusRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import com.hcmute.bookstore.dto.admin.AdminOrderDetailResponse;
@@ -42,5 +44,12 @@ public class AdminOrderController {
     @GetMapping("/{orderId}")
     public AdminOrderDetailResponse getOrderDetail(@PathVariable String orderId) {
         return adminOrderService.getOrderDetail(orderId);
+    }
+
+    // Trong AdminOrderController.java
+    @PostMapping("/{orderId}/handle-return")
+    public ResponseEntity<?> handleReturn(@PathVariable String orderId, @RequestBody HandleReturnRequest request) {
+        adminOrderService.handleReturnRequest(orderId, request);
+        return ResponseEntity.ok("Đã xử lý yêu cầu hoàn trả");
     }
 }

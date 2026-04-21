@@ -38,27 +38,7 @@ const List<_OrderTabItem> _orderTabs = [
 final ordersProvider =
 FutureProvider.family<List<OrderItem>, String?>((ref, status) async {
   final api = ref.read(orderApiProvider);
-//   // Nếu là tab "Đợi hoàn trả"
-//     if (status == 'RequestingReturn') {
-//       // Lấy các đơn Completed để lọc
-//       final data = await api.fetchOrders(page: 0, size: 100, status: 'Completed');
-//       final content = (data['content'] as List<dynamic>? ?? [])
-//           .map((e) => OrderItem.fromJson(e as Map<String, dynamic>))
-//           // CHỖ QUAN TRỌNG: Chỉ lấy những đơn có yêu cầu trả hàng
-//           .where((order) => order.hasReturnRequest == true)
-//           .toList();
-//
-//       content.sort((a, b) =>
-//           DateTime.parse(b.orderDate).compareTo(DateTime.parse(a.orderDate)));
-//       return content;
-//     }
-//   final data = await api.fetchOrders(page: 0, size: 20, status: status);
-//   final content = (data['content'] as List<dynamic>? ?? [])
-//       .map((e) => OrderItem.fromJson(e as Map<String, dynamic>))
-//       .toList();
-//   content.sort((a, b) =>
-//       DateTime.parse(b.orderDate).compareTo(DateTime.parse(a.orderDate)));
-//   return content;
+
 try {
     if (status == 'RequestingReturn') {
       // Gọi API với status đặc biệt mà mình đã viết ở Backend (ReturnRequest)
@@ -467,22 +447,65 @@ class _OrderCard extends StatelessWidget {
               ],
             ),
 
-                if (order.hasReturnRequest == true)
+//                 if (order.hasReturnRequest == true)
+//               Container(
+//                 margin: const EdgeInsets.only(bottom: 12), // Tăng margin một chút cho thoáng
+//                 padding: const EdgeInsets.all(8),
+//                 decoration: BoxDecoration(
+//                   color: Colors.red.shade50,
+//                   borderRadius: BorderRadius.circular(8),
+//                   border: Border.all(color: Colors.red.shade200),
+//                 ),
+//                 child: Row(
+//                   children: [
+//                     Icon(Icons.warning_amber_rounded, color: Colors.red.shade700, size: 16),
+//                     const SizedBox(width: 8),
+//                     Text(
+//                       'ĐƠN HÀNG ĐANG YÊU CẦU HOÀN TRẢ',
+//                       style: TextStyle(color: Colors.red.shade700, fontWeight: FontWeight.bold, fontSize: 11),
+//                     ),
+//                   ],
+//                 ),
+//               ),
+            // Tìm đến đoạn hiển thị Banner "ĐƠN HÀNG ĐANG YÊU CẦU HOÀN TRẢ"
+            if (order.hasReturnRequest == true)
               Container(
-                margin: const EdgeInsets.only(bottom: 12), // Tăng margin một chút cho thoáng
+                margin: const EdgeInsets.only(bottom: 12),
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: Colors.red.shade50,
+                  // Nếu khác PENDING thì cho màu xanh (đã xong), ngược lại màu đỏ (cần xử lý)
+                  color: order.returnRequestStatus == 'PENDING'
+                      ? Colors.red.shade50
+                      : Colors.green.shade50,
                   borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: Colors.red.shade200),
+                  border: Border.all(
+                      color: order.returnRequestStatus == 'PENDING'
+                          ? Colors.red.shade200
+                          : Colors.green.shade200),
                 ),
                 child: Row(
                   children: [
-                    Icon(Icons.warning_amber_rounded, color: Colors.red.shade700, size: 16),
+                    Icon(
+                      order.returnRequestStatus == 'PENDING'
+                          ? Icons.warning_amber_rounded
+                          : Icons.check_circle_outline_rounded,
+                      color: order.returnRequestStatus == 'PENDING'
+                          ? Colors.red.shade700
+                          : Colors.green.shade700,
+                      size: 16,
+                    ),
                     const SizedBox(width: 8),
                     Text(
-                      'ĐƠN HÀNG ĐANG YÊU CẦU HOÀN TRẢ',
-                      style: TextStyle(color: Colors.red.shade700, fontWeight: FontWeight.bold, fontSize: 11),
+                      order.returnRequestStatus == 'PENDING'
+                          ? 'YÊU CẦU HOÀN TRẢ MỚI'
+                          : 'YÊU CẦU HOÀN TRẢ: ĐÃ XỬ LÝ XONG',
+                      style: TextStyle(
+                        color: order.returnRequestStatus == 'PENDING'
+                            ? Colors.red.shade700
+                            : Colors.green.shade700,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 11,
+                      ),
                     ),
                   ],
                 ),
