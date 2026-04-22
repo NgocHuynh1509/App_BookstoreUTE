@@ -472,14 +472,6 @@ class _CouponCard extends StatelessWidget {
                   value: '${coupon.usedCount} / ${coupon.usageLimit ?? '∞'}',
                 ),
               ),
-              Expanded(
-                child: _InfoTile(
-                  label: 'Áp dụng',
-                  value: coupon.customerName?.isNotEmpty == true
-                      ? coupon.customerName!
-                      : coupon.scopeLabel,
-                ),
-              ),
             ],
           ),
         ],
