@@ -48,23 +48,23 @@ public class AdminProductService {
         }
 
         // Bước 2: Thực hiện chuỗi đồng bộ dữ liệu
-        try {
-            log.info("Bắt đầu đồng bộ dữ liệu cho sách mới: {}");
-
-            // Xuất dữ liệu từ DB ra file books_latest.csv
-            csvExportService.exportBooksToCsv();
-
-            // Đẩy dữ liệu CSV lên Meilisearch
-            meiliSearchService.syncCsvToMeilisearch();
-
-            // Cuối cùng mới gọi Python để build lại ma trận từ file CSV mới
-            triggerPythonBuild();
-
-            log.info("Hoàn tất toàn bộ tiến trình đồng bộ và build ML.");
-        } catch (Exception e) {
-            // Log lỗi nhưng không chặn việc trả về response (vì DB đã lưu xong)
-            log.error("Lỗi trong quá trình đồng bộ sau khi tạo sách: ", e);
-        }
+//        try {
+//            log.info("Bắt đầu đồng bộ dữ liệu cho sách mới: {}");
+//
+//            // Xuất dữ liệu từ DB ra file books_latest.csv
+//            csvExportService.exportBooksToCsv();
+//
+//            // Đẩy dữ liệu CSV lên Meilisearch
+//            meiliSearchService.syncCsvToMeilisearch();
+//
+//            // Cuối cùng mới gọi Python để build lại ma trận từ file CSV mới
+//            triggerPythonBuild();
+//
+//            log.info("Hoàn tất toàn bộ tiến trình đồng bộ và build ML.");
+//        } catch (Exception e) {
+//            // Log lỗi nhưng không chặn việc trả về response (vì DB đã lưu xong)
+//            log.error("Lỗi trong quá trình đồng bộ sau khi tạo sách: ", e);
+//        }
 
         return page.map(this::toResponse);
     }
@@ -181,5 +181,20 @@ public class AdminProductService {
         response.setAverageRating(averageRating != null ? averageRating : 0.0);
         response.setReviewCount(reviewCount);
         return response;
+    }
+
+    public void syncBooksAndRebuildMl() {
+        try {
+            log.info("Bắt đầu đồng bộ dữ liệu sách sang CSV + Meilisearch + Python ML");
+
+            csvExportService.exportBooksToCsv();
+            meiliSearchService.syncCsvToMeilisearch();
+            triggerPythonBuild();
+
+            log.info("Hoàn tất toàn bộ tiến trình đồng bộ và build ML.");
+        } catch (Exception e) {
+            log.error("Lỗi trong quá trình đồng bộ dữ liệu sách: ", e);
+            throw new RuntimeException("Đồng bộ dữ liệu thất bại: " + e.getMessage(), e);
+        }
     }
 }

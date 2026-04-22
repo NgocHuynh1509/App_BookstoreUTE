@@ -36,6 +36,9 @@ class ProductRepository {
       _api.update(bookId, request);
 
   Future<void> delete(String bookId) => _api.delete(bookId);
+
+  Future<void> syncSearchAndMl() => _api.syncSearchAndMl();
+
 }
 
 class ProductPage {

@@ -4,14 +4,22 @@
     <option name="autoReloadType" value="NONE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="ec56e615-c574-46af-93be-dd7e99257ed6" name="Changes" comment="">
+    <list default="true" id="90f2e1e5-d5bd-4083-a96e-40142505842d" name="Changes" comment="create order">
+      <change beforePath="$PROJECT_DIR$/.idea/dataSources.local.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/dataSources.local.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/my-app/app.json" beforeDir="false" afterPath="$PROJECT_DIR$/my-app/app.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ute-bookstore-backend/src/main/java/com/hcmute/bookstore/Export/CsvAutoScheduler.java" beforeDir="false" afterPath="$PROJECT_DIR$/ute-bookstore-backend/src/main/java/com/hcmute/bookstore/Export/CsvAutoScheduler.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/my-app/package-lock.json" beforeDir="false" afterPath="$PROJECT_DIR$/my-app/package-lock.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/my-app/package.json" beforeDir="false" afterPath="$PROJECT_DIR$/my-app/package.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/my-app/screens/welcome.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/my-app/screens/welcome.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ute-bookstore-backend/src/main/java/com/hcmute/bookstore/Controller/Admin/AdminProductController.java" beforeDir="false" afterPath="$PROJECT_DIR$/ute-bookstore-backend/src/main/java/com/hcmute/bookstore/Controller/Admin/AdminProductController.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/ute-bookstore-backend/src/main/java/com/hcmute/bookstore/Service/AdminProductService.java" beforeDir="false" afterPath="$PROJECT_DIR$/ute-bookstore-backend/src/main/java/com/hcmute/bookstore/Service/AdminProductService.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ute-bookstore-backend/src/main/java/com/hcmute/bookstore/Service/BookRecommendService.java" beforeDir="false" afterPath="$PROJECT_DIR$/ute-bookstore-backend/src/main/java/com/hcmute/bookstore/Service/BookRecommendService.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ute-bookstore-backend/src/main/java/com/hcmute/bookstore/UteBookstoreBackendApplication.java" beforeDir="false" afterPath="$PROJECT_DIR$/ute-bookstore-backend/src/main/java/com/hcmute/bookstore/UteBookstoreBackendApplication.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ute_bookstore_flutter/lib/features/orders/presentation/order_detail_screen.dart" beforeDir="false" afterPath="$PROJECT_DIR$/ute_bookstore_flutter/lib/features/orders/presentation/order_detail_screen.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ute_bookstore_flutter/lib/features/products/data/product_api.dart" beforeDir="false" afterPath="$PROJECT_DIR$/ute_bookstore_flutter/lib/features/products/data/product_api.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ute_bookstore_flutter/lib/features/products/data/product_repository.dart" beforeDir="false" afterPath="$PROJECT_DIR$/ute_bookstore_flutter/lib/features/products/data/product_repository.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ute_bookstore_flutter/lib/features/products/presentation/products_screen.dart" beforeDir="false" afterPath="$PROJECT_DIR$/ute_bookstore_flutter/lib/features/products/presentation/products_screen.dart" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/ute_bookstore_python/books_latest.csv" beforeDir="false" afterPath="$PROJECT_DIR$/ute_bookstore_python/books_latest.csv" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ute_bookstore_python/ml.py" beforeDir="false" afterPath="$PROJECT_DIR$/ute_bookstore_python/ml.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ute_bookstore_python/orders.csv" beforeDir="false" afterPath="$PROJECT_DIR$/ute_bookstore_python/orders.csv" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/ute_bookstore_python/sim_matrix.csv" beforeDir="false" afterPath="$PROJECT_DIR$/ute_bookstore_python/sim_matrix.csv" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -37,7 +45,7 @@
     </selectedModels>
   </component>
   <component name="EmbeddingIndexingInfo">
-    <option name="cachedIndexableFilesCount" value="1679" />
+    <option name="cachedIndexableFilesCount" value="2787" />
     <option name="fileBasedEmbeddingIndicesEnabled" value="true" />
   </component>
   <component name="FileTemplateManagerImpl">
@@ -62,8 +70,12 @@
   <component name="GithubPullRequestsUISettings">{
   &quot;selectedUrlAndAccountId&quot;: {
     &quot;url&quot;: &quot;https://github.com/NgocHuynh1509/App_BookstoreUTE&quot;,
-    &quot;accountId&quot;: &quot;06dbbb52-7f1f-4539-a06a-b1412efea5b8&quot;
+    &quot;accountId&quot;: &quot;6b9bdd18-e36a-48cf-a862-048d0fb41bd2&quot;
   }
+}</component>
+  <component name="KubernetesApiPersistence">{}</component>
+  <component name="KubernetesApiProvider">{
+  &quot;isMigrated&quot;: true
 }</component>
   <component name="MavenImportPreferences">
     <option name="generalSettings">
@@ -88,6 +100,8 @@
   <component name="PropertiesComponent">{
   &quot;keyToString&quot;: {
     &quot;Downloaded.Files.Path.Enabled&quot;: &quot;false&quot;,
+    &quot;Maven.ute-bookstore-backend [clean].executor&quot;: &quot;Run&quot;,
+    &quot;Maven.ute-bookstore-backend [package].executor&quot;: &quot;Run&quot;,
     &quot;ModuleVcsDetector.initialDetectionPerformed&quot;: &quot;true&quot;,
     &quot;Repository.Attach.Annotations&quot;: &quot;false&quot;,
     &quot;Repository.Attach.JavaDocs&quot;: &quot;false&quot;,
@@ -96,26 +110,33 @@
     &quot;RequestMappingsPanelOrder1&quot;: &quot;1&quot;,
     &quot;RequestMappingsPanelWidth0&quot;: &quot;75&quot;,
     &quot;RequestMappingsPanelWidth1&quot;: &quot;75&quot;,
+    &quot;RunOnceActivity.MCP Project settings loaded&quot;: &quot;true&quot;,
     &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
     &quot;RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252&quot;: &quot;true&quot;,
     &quot;RunOnceActivity.cidr.known.project.marker&quot;: &quot;true&quot;,
     &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
     &quot;RunOnceActivity.readMode.enableVisualFormatting&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.typescript.service.memoryLimit.init&quot;: &quot;true&quot;,
     &quot;SHARE_PROJECT_CONFIGURATION_FILES&quot;: &quot;true&quot;,
     &quot;Spring Boot.UteBookstoreBackendApplication.executor&quot;: &quot;Run&quot;,
     &quot;cf.first.check.clang-format&quot;: &quot;false&quot;,
     &quot;cidr.known.project.marker&quot;: &quot;true&quot;,
     &quot;com.google.services.firebase.aqiPopupShown&quot;: &quot;true&quot;,
+    &quot;com.intellij.ml.llm.matterhorn.ej.ui.settings.DefaultModelSelectionForGA.v1&quot;: &quot;true&quot;,
+    &quot;dart.analysis.tool.window.visible&quot;: &quot;false&quot;,
     &quot;git-widget-placeholder&quot;: &quot;main&quot;,
     &quot;ignore.virus.scanning.warn.message&quot;: &quot;true&quot;,
+    &quot;junie.onboarding.icon.badge.shown&quot;: &quot;true&quot;,
     &quot;kotlin-language-version-configured&quot;: &quot;true&quot;,
-    &quot;last_opened_file_path&quot;: &quot;D:/CNTT25-26/Mobile_Advance/DoAn/App_BookstoreUTE&quot;,
+    &quot;last_opened_file_path&quot;: &quot;C:/2025-2026HocKy2/LapTrinhDiDongNangCao/Flutter/App_BookstoreUTE&quot;,
     &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
     &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
     &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
     &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
     &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
     &quot;settings.editor.selected.configurable&quot;: &quot;preferences.pluginManager&quot;,
+    &quot;show.migrate.to.gradle.popup&quot;: &quot;false&quot;,
+    &quot;to.speed.mode.migration.done&quot;: &quot;true&quot;,
     &quot;ts.external.directory.path&quot;: &quot;D:\\oD\\data o D\\HKII nam3\\LTDD Nang cao\\Project_cuoi_ky\\MoiNhat\\App_BookstoreUTE\\my-app\\node_modules\\typescript\\lib&quot;,
     &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
   }
@@ -149,14 +170,15 @@
   <component name="SharedIndexes">
     <attachedChunks>
       <set>
-        <option value="bundled-jdk-9823dce3aa75-bf35d07a577b-intellij.indexing.shared.core-IU-252.27397.103" />
-        <option value="bundled-js-predefined-d6986cc7102b-3aa1da707db6-JavaScript-IU-252.27397.103" />
+        <option value="bundled-jdk-9823dce3aa75-b114ca120d71-intellij.indexing.shared.core-IU-242.21829.142" />
+        <option value="bundled-js-predefined-d6986cc7102b-7c0b70fcd90d-JavaScript-IU-242.21829.142" />
       </set>
     </attachedChunks>
   </component>
+  <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
   <component name="TaskManager">
     <task active="true" id="Default" summary="Default task">
-      <changelist id="ec56e615-c574-46af-93be-dd7e99257ed6" name="Changes" comment="" />
+      <changelist id="90f2e1e5-d5bd-4083-a96e-40142505842d" name="Changes" comment="create order" />
       <created>1776679192264</created>
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
@@ -180,7 +202,19 @@
       <workItem from="1776672795556" duration="606000" />
       <workItem from="1776673780877" duration="10003000" />
       <workItem from="1776679195457" duration="1086000" />
-      <workItem from="1776753362649" duration="5530000" />
+      <workItem from="1776693042933" duration="3853000" />
+      <workItem from="1776738664728" duration="22440000" />
+      <workItem from="1776780167993" duration="230000" />
+      <workItem from="1776780417729" duration="4637000" />
+      <workItem from="1776689717680" duration="615000" />
+      <workItem from="1776741351528" duration="5063000" />
+      <workItem from="1776756727506" duration="11435000" />
+      <workItem from="1776771163475" duration="1333000" />
+      <workItem from="1776781176662" duration="2592000" />
+      <workItem from="1776786044493" duration="3840000" />
+      <workItem from="1776795354239" duration="4375000" />
+      <workItem from="1776839547598" duration="7645000" />
+      <workItem from="1776852621756" duration="4922000" />
     </task>
     <task id="LOCAL-00001" summary="sql">
       <option name="closed" value="true" />

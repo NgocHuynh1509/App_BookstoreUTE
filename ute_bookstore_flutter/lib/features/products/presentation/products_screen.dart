@@ -38,6 +38,7 @@ class _ProductsScreenState extends ConsumerState<ProductsScreen> {
   _ProductSort _sort = _ProductSort.newest;
   _ProductStatusFilter _statusFilter = _ProductStatusFilter.all;
   final _categoryController = TextEditingController();
+  bool _isSyncing = false;
 
   @override
   void initState() {
@@ -248,6 +249,47 @@ class _ProductsScreenState extends ConsumerState<ProductsScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Sản phẩm'),
+        actions: [
+          IconButton(
+            onPressed: _isSyncing
+                ? null
+                : () async {
+              setState(() => _isSyncing = true);
+              try {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Đang đồng bộ dữ liệu...')),
+                );
+
+                await ref.read(productRepositoryProvider).syncSearchAndMl();
+
+                if (!mounted) return;
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Đồng bộ thành công')),
+                );
+              } catch (e) {
+                if (!mounted) return;
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('Lỗi: $e')),
+                );
+              } finally {
+                if (mounted) {
+                  setState(() => _isSyncing = false);
+                }
+              }
+            },
+            icon: _isSyncing
+                ? const SizedBox(
+              width: 20,
+              height: 20,
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                color: Colors.white,
+              ),
+            )
+                : const Icon(Icons.sync),
+            tooltip: 'Đồng bộ ML',
+          ),
+        ],
       ),
       body: Column(
         children: [

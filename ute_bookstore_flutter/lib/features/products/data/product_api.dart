@@ -43,5 +43,9 @@ class ProductApi {
   Future<void> delete(String bookId) async {
     await _client.dio.delete('/admin/products/$bookId');
   }
+
+  Future<void> syncSearchAndMl() async {
+    await _client.dio.post('/admin/products/sync-search');
+  }
 }
 

@@ -135,68 +135,68 @@ class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
   }
 
   // --- THÊM HÀM XỬ LÝ DIALOG ---
-    void _showHandleReturnDialog(String orderId) {
-      final replyController = TextEditingController();
-      showDialog(
-        context: context,
-        builder: (context) => AlertDialog(
-          title: const Text('Xử lý yêu cầu hoàn trả'),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Text('Vui lòng nhập phản hồi cho khách hàng trước khi xác nhận hoặc từ chối.'),
-              const SizedBox(height: 12),
-              TextField(
-                controller: replyController,
-                decoration: InputDecoration(
-                  hintText: 'Nhập phản hồi...',
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                ),
-                maxLines: 3,
+  void _showHandleReturnDialog(String orderId) {
+    final replyController = TextEditingController();
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Xử lý yêu cầu hoàn trả'),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text('Vui lòng nhập phản hồi cho khách hàng trước khi xác nhận hoặc từ chối.'),
+            const SizedBox(height: 12),
+            TextField(
+              controller: replyController,
+              decoration: InputDecoration(
+                hintText: 'Nhập phản hồi...',
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
               ),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Đóng'),
-            ),
-            TextButton(
-              onPressed: () => _processReturn(orderId, 'REJECTED', replyController.text),
-              child: const Text('Từ chối', style: TextStyle(color: Colors.red)),
-            ),
-            ElevatedButton(
-              onPressed: () => _processReturn(orderId, 'FINISHED', replyController.text),
-              style: ElevatedButton.styleFrom(backgroundColor: Colors.green, foregroundColor: Colors.white),
-              child: const Text('Chấp nhận hoàn trả'),
+              maxLines: 3,
             ),
           ],
         ),
-      );
-    }
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Đóng'),
+          ),
+          TextButton(
+            onPressed: () => _processReturn(orderId, 'REJECTED', replyController.text),
+            child: const Text('Từ chối', style: TextStyle(color: Colors.red)),
+          ),
+          ElevatedButton(
+            onPressed: () => _processReturn(orderId, 'FINISHED', replyController.text),
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.green, foregroundColor: Colors.white),
+            child: const Text('Chấp nhận hoàn trả'),
+          ),
+        ],
+      ),
+    );
+  }
 
-    // --- THÊM HÀM GỌI API ---
-    Future<void> _processReturn(String orderId, String status, String reply) async {
-      try {
-        // Đảm bảo bạn đã thêm hàm handleReturnRequest vào OrderApi class trong data
-        await ref.read(orderApiProvider).handleReturnRequest(orderId, status, reply);
+  // --- THÊM HÀM GỌI API ---
+  Future<void> _processReturn(String orderId, String status, String reply) async {
+    try {
+      // Đảm bảo bạn đã thêm hàm handleReturnRequest vào OrderApi class trong data
+      await ref.read(orderApiProvider).handleReturnRequest(orderId, status, reply);
 
-        ref.invalidate(orderDetailProvider(orderId));
-        if (mounted) {
-          Navigator.pop(context);
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Đã xử lý yêu cầu hoàn trả')),
-          );
-        }
-      } catch (e) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Lỗi: $e')),
-          );
-        }
+      ref.invalidate(orderDetailProvider(orderId));
+      if (mounted) {
+        Navigator.pop(context);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Đã xử lý yêu cầu hoàn trả')),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Lỗi: $e')),
+        );
       }
     }
+  }
 
   @override
   // 2. Sửa hàm build: bỏ tham số WidgetRef ref
@@ -215,6 +215,14 @@ class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
           'Chi tiết đơn hàng',
           style: TextStyle(fontWeight: FontWeight.w800),
         ),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.refresh),
+            onPressed: () {
+              ref.invalidate(orderDetailProvider(widget.orderId));
+            },
+          ),
+        ],
       ),
       body: detailAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
@@ -228,8 +236,8 @@ class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
           ),
         ),
         data: (order) {
-        // SỬA DÒNG NÀY: chatRepository -> widget.chatRepository
-                  Future.microtask(() => _ensureSocketConnected(ref, widget.chatRepository));
+          // SỬA DÒNG NÀY: chatRepository -> widget.chatRepository
+          Future.microtask(() => _ensureSocketConnected(ref, widget.chatRepository));
           print("USERNAME: ${order.customerUsername}");
 
           final subtotal = order.items.fold<double>(
@@ -469,7 +477,7 @@ class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
                           builder: (_) => ChatDetailScreen(
                             customerUsername: order.customerUsername,
                             repository: widget.chatRepository,
-                  // Truyền thông tin đơn hàng qua đây
+                            // Truyền thông tin đơn hàng qua đây
                             initialOrderId: order.orderId,
                             initialOrderPrice: order.totalAmount,
                             initialOrderItemCount: order.items.length,
@@ -787,23 +795,23 @@ class _ReturnRequestCard extends StatelessWidget {
                         borderRadius: BorderRadius.circular(8),
                         child: rawUrl.startsWith('data:image')
                             ? Image.memory(
-                                base64Decode(rawUrl.split(',').last),
-                                width: 100,
-                                height: 100,
-                                fit: BoxFit.cover,
-                                errorBuilder: (_, __, ___) => Container(
-                                  width: 100, color: Colors.grey.shade200, child: const Icon(Icons.broken_image),
-                                ),
-                              )
+                          base64Decode(rawUrl.split(',').last),
+                          width: 100,
+                          height: 100,
+                          fit: BoxFit.cover,
+                          errorBuilder: (_, __, ___) => Container(
+                            width: 100, color: Colors.grey.shade200, child: const Icon(Icons.broken_image),
+                          ),
+                        )
                             : Image.network(
-                                imgUrl,
-                                width: 100,
-                                height: 100,
-                                fit: BoxFit.cover,
-                                errorBuilder: (_, __, ___) => Container(
-                                  width: 100, color: Colors.grey.shade200, child: const Icon(Icons.broken_image),
-                                ),
-                              ),
+                          imgUrl,
+                          width: 100,
+                          height: 100,
+                          fit: BoxFit.cover,
+                          errorBuilder: (_, __, ___) => Container(
+                            width: 100, color: Colors.grey.shade200, child: const Icon(Icons.broken_image),
+                          ),
+                        ),
                       ),
                     ),
                   );
@@ -843,9 +851,9 @@ class _ReturnRequestCard extends StatelessWidget {
           else if (request.reply != null) ...[
             const Divider(),
             _DetailRow(
-              label: 'Phản hồi từ Admin',
-              value: request.reply!,
-              valueColor: Colors.blueGrey
+                label: 'Phản hồi từ Admin',
+                value: request.reply!,
+                valueColor: Colors.blueGrey
             ),
           ],
         ],
@@ -855,21 +863,21 @@ class _ReturnRequestCard extends StatelessWidget {
 }
 
 Future<void> _ensureSocketConnected(WidgetRef ref, ChatRepository repository) async {
-    if (!repository.socket.isConnected) {
-      final storage = SessionStorage(); // Hãy đảm bảo đã import SessionStorage
-      String? token = await storage.getToken();
-      if (token != null) {
-        repository.startSocketConnection(
-          token,
-          (newMessage) {
-            // Xử lý khi có tin nhắn mới (ví dụ hiện Notification nhỏ)
-            print("📩 Có tin nhắn mới từ: ${newMessage['userName']}");
-          },
-          (reaction) => print("Reactions updated"),
-        );
-      }
+  if (!repository.socket.isConnected) {
+    final storage = SessionStorage(); // Hãy đảm bảo đã import SessionStorage
+    String? token = await storage.getToken();
+    if (token != null) {
+      repository.startSocketConnection(
+        token,
+            (newMessage) {
+          // Xử lý khi có tin nhắn mới (ví dụ hiện Notification nhỏ)
+          print("📩 Có tin nhắn mới từ: ${newMessage['userName']}");
+        },
+            (reaction) => print("Reactions updated"),
+      );
     }
   }
+}
 
 class FullScreenImagePage extends StatelessWidget {
   final String imageUrl;
@@ -896,19 +904,19 @@ class FullScreenImagePage extends StatelessWidget {
             maxScale: 4.0,
             child: imageUrl.startsWith('data:image')
                 ? Image.memory(
-                    base64Decode(imageUrl.split(',').last),
-                    fit: BoxFit.contain,
-                    errorBuilder: (_, __, ___) => const Center(
-                      child: Icon(Icons.broken_image, color: Colors.white, size: 64),
-                    ),
-                  )
+              base64Decode(imageUrl.split(',').last),
+              fit: BoxFit.contain,
+              errorBuilder: (_, __, ___) => const Center(
+                child: Icon(Icons.broken_image, color: Colors.white, size: 64),
+              ),
+            )
                 : Image.network(
-                    imageUrl,
-                    fit: BoxFit.contain, // Hiển thị trọn vẹn ảnh
-                    errorBuilder: (_, __, ___) => const Center(
-                      child: Icon(Icons.broken_image, color: Colors.white, size: 64),
-                    ),
-                  ),
+              imageUrl,
+              fit: BoxFit.contain, // Hiển thị trọn vẹn ảnh
+              errorBuilder: (_, __, ___) => const Center(
+                child: Icon(Icons.broken_image, color: Colors.white, size: 64),
+              ),
+            ),
           ),
         ),
       ),
