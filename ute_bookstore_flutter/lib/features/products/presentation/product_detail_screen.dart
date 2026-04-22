@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
+import '../../../app/providers.dart';
+import '../../reviews/data/review_models.dart';
 import '../data/product_models.dart';
 import 'preview_screen.dart';
 
@@ -43,7 +46,7 @@ class ProductDetailScreen extends StatelessWidget {
     final conversion = views == 0 ? 0 : (purchases / views) * 100;
 
     return DefaultTabController(
-      length: 5,
+      length: 3,
       child: Scaffold(
         backgroundColor: const Color(0xFFF3F6FB),
         appBar: AppBar(
@@ -74,8 +77,6 @@ class ProductDetailScreen extends StatelessWidget {
               Tab(text: 'Tổng quan'),
               Tab(text: 'Kinh doanh'),
               Tab(text: 'Đánh giá'),
-              Tab(text: 'Lịch sử'),
-              Tab(text: 'Cài đặt'),
             ],
           ),
         ),
@@ -99,8 +100,6 @@ class ProductDetailScreen extends StatelessWidget {
               formatCurrency: _formatCurrency,
             ),
             _ReviewTab(product: product),
-            _HistoryTab(product: product),
-            _SettingsTab(product: product),
           ],
         ),
       ),
@@ -461,279 +460,239 @@ class _BusinessTab extends StatelessWidget {
   }
 }
 
-class _ReviewTab extends StatelessWidget {
+class _ReviewTab extends ConsumerStatefulWidget {
   const _ReviewTab({required this.product});
 
   final Product product;
 
   @override
-  Widget build(BuildContext context) {
-    final reviews = [
-      {
-        'name': 'Nguyễn Minh',
-        'rating': 5,
-        'comment': 'Sách đóng gói đẹp, nội dung chất lượng.',
-        'date': '12/04/2026',
-      },
-      {
-        'name': 'Trần Lan',
-        'rating': 4,
-        'comment': 'Giao hàng nhanh, nội dung ổn.',
-        'date': '05/04/2026',
-      },
-      {
-        'name': 'Phạm Huy',
-        'rating': 2,
-        'comment': 'Bìa bị trầy nhẹ, mong shop kiểm tra kỹ.',
-        'date': '01/04/2026',
-      },
-    ];
+  ConsumerState<_ReviewTab> createState() => _ReviewTabState();
+}
 
-    return ListView(
-      padding: const EdgeInsets.all(16),
-      children: [
-        _InfoCard(
-          title: 'Đánh giá khách hàng',
-          icon: Icons.rate_review_outlined,
-          child: Column(
-            children: reviews.map((review) {
-              final rating = review['rating'] as int;
-              return Container(
-                margin: const EdgeInsets.only(bottom: 12),
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFF8FAFD),
-                  borderRadius: BorderRadius.circular(16),
-                ),
+class _ReviewTabState extends ConsumerState<_ReviewTab> {
+  late Future<_ReviewPayload> _future;
+
+  @override
+  void initState() {
+    super.initState();
+    _future = _fetch();
+  }
+
+  Future<_ReviewPayload> _fetch() async {
+    final repository = ref.read(reviewRepositoryProvider);
+    final reviews = await repository.fetchReviews(widget.product.bookId);
+    final summary = await repository.fetchSummary(widget.product.bookId);
+    return _ReviewPayload(reviews: reviews, summary: summary);
+  }
+
+  Future<void> _refresh() async {
+    setState(() {
+      _future = _fetch();
+    });
+    await _future;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder<_ReviewPayload>(
+      future: _future,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        }
+
+        if (snapshot.hasError) {
+          return Center(
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(Icons.error_outline, size: 40, color: Colors.redAccent),
+                  const SizedBox(height: 12),
+                  Text(
+                    snapshot.error.toString(),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 12),
+                  OutlinedButton.icon(
+                    onPressed: _refresh,
+                    icon: const Icon(Icons.refresh),
+                    label: const Text('Thử lại'),
+                  ),
+                ],
+              ),
+            ),
+          );
+        }
+
+        final payload = snapshot.data;
+        final reviews = payload?.reviews ?? const <Review>[];
+        final summary = payload?.summary ?? ReviewSummary(averageRating: 0, reviewCount: 0);
+        final averageRating = summary.averageRating;
+        final reviewCount = summary.reviewCount;
+
+        return RefreshIndicator(
+          onRefresh: _refresh,
+          child: ListView(
+            padding: const EdgeInsets.all(16),
+            children: [
+              _InfoCard(
+                title: 'Đánh giá khách hàng',
+                icon: Icons.rate_review_outlined,
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Row(
-                      children: [
-                        Expanded(
-                          child: Text(
-                            review['name'] as String,
-                            style: const TextStyle(
-                              fontWeight: FontWeight.w700,
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF8FAFD),
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  averageRating.toStringAsFixed(1),
+                                  style: const TextStyle(
+                                    fontSize: 28,
+                                    fontWeight: FontWeight.w800,
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Row(
+                                  children: List.generate(
+                                    5,
+                                    (index) => Icon(
+                                      index < averageRating.round()
+                                          ? Icons.star
+                                          : Icons.star_border,
+                                      size: 16,
+                                      color: Colors.amber,
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  '$reviewCount đánh giá',
+                                  style: TextStyle(color: Colors.grey.shade600),
+                                ),
+                              ],
                             ),
                           ),
-                        ),
-                        Text(
-                          review['date'] as String,
-                          style: TextStyle(color: Colors.grey.shade600),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 6),
-                    Row(
-                      children: List.generate(
-                        5,
-                        (index) => Icon(
-                          index < rating ? Icons.star : Icons.star_border,
-                          size: 16,
-                          color: Colors.amber,
-                        ),
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.end,
+                            children: [
+                              Text(
+                                'Cập nhật từ DB',
+                                style: TextStyle(color: Colors.grey.shade600, fontSize: 12),
+                              ),
+                              const SizedBox(height: 6),
+                              Icon(Icons.verified_outlined, color: Colors.blue.shade400),
+                            ],
+                          ),
+                        ],
                       ),
                     ),
-                    const SizedBox(height: 6),
-                    Text(review['comment'] as String),
-                    const SizedBox(height: 10),
-                    Row(
-                      children: [
-                        TextButton.icon(
-                          onPressed: () {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text('Đã ẩn đánh giá này'),
+                    const SizedBox(height: 14),
+                    if (reviews.isEmpty)
+                      const Padding(
+                        padding: EdgeInsets.symmetric(vertical: 16),
+                        child: Center(child: Text('Chưa có đánh giá nào')),
+                      )
+                    else
+                      ...reviews.map((review) {
+                        return Container(
+                          margin: const EdgeInsets.only(bottom: 12),
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFF8FAFD),
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: Text(
+                                      review.fullName,
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.w700,
+                                      ),
+                                    ),
+                                  ),
+                                  Text(
+                                    review.creationDate.isEmpty ? '-' : review.creationDate,
+                                    style: TextStyle(color: Colors.grey.shade600),
+                                  ),
+                                ],
                               ),
-                            );
-                          },
-                          icon: const Icon(Icons.visibility_off_outlined),
-                          label: const Text('Ẩn review'),
-                        ),
-                        const SizedBox(width: 6),
-                        TextButton.icon(
-                          onPressed: () {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text('Mở phản hồi khách hàng'),
+                              const SizedBox(height: 6),
+                              Row(
+                                children: List.generate(
+                                  5,
+                                  (index) => Icon(
+                                    index < review.rating ? Icons.star : Icons.star_border,
+                                    size: 16,
+                                    color: Colors.amber,
+                                  ),
+                                ),
                               ),
-                            );
-                          },
-                          icon: const Icon(Icons.reply_outlined),
-                          label: const Text('Phản hồi'),
-                        ),
-                      ],
-                    ),
+                              const SizedBox(height: 6),
+                              Text(review.comment),
+                              const SizedBox(height: 10),
+                              Row(
+                                children: [
+                                  TextButton.icon(
+                                    onPressed: () {
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        const SnackBar(
+                                          content: Text('Đã ẩn đánh giá này'),
+                                        ),
+                                      );
+                                    },
+                                    icon: const Icon(Icons.visibility_off_outlined),
+                                    label: const Text('Ẩn review'),
+                                  ),
+                                  const SizedBox(width: 6),
+                                  TextButton.icon(
+                                    onPressed: () {
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        const SnackBar(
+                                          content: Text('Mở phản hồi khách hàng'),
+                                        ),
+                                      );
+                                    },
+                                    icon: const Icon(Icons.reply_outlined),
+                                    label: const Text('Phản hồi'),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        );
+                      }).toList(),
                   ],
                 ),
-              );
-            }).toList(),
-          ),
-        ),
-        const SizedBox(height: 20),
-      ],
-    );
-  }
-}
-
-class _HistoryTab extends StatelessWidget {
-  const _HistoryTab({required this.product});
-
-  final Product product;
-
-  @override
-  Widget build(BuildContext context) {
-    final events = [
-      {
-        'title': 'Tạo sản phẩm',
-        'subtitle': 'Sản phẩm được tạo bởi admin hệ thống.',
-        'time': '12/03/2026',
-      },
-      {
-        'title': 'Cập nhật giá',
-        'subtitle': 'Giảm giá 10% cho chiến dịch tháng 4.',
-        'time': '01/04/2026',
-      },
-      {
-        'title': 'Nhập kho',
-        'subtitle': 'Nhập thêm 120 cuốn từ nhà cung cấp.',
-        'time': '08/04/2026',
-      },
-      {
-        'title': 'Bán hàng',
-        'subtitle': 'Hoàn tất 32 đơn hàng trong 7 ngày.',
-        'time': '15/04/2026',
-      },
-    ];
-
-    return ListView(
-      padding: const EdgeInsets.all(16),
-      children: [
-        _InfoCard(
-          title: 'Lịch sử hoạt động',
-          icon: Icons.timeline_outlined,
-          child: Column(
-            children: events.map((event) {
-              return _TimelineItem(
-                title: event['title'] as String,
-                subtitle: event['subtitle'] as String,
-                time: event['time'] as String,
-              );
-            }).toList(),
-          ),
-        ),
-        const SizedBox(height: 20),
-      ],
-    );
-  }
-}
-
-class _SettingsTab extends StatelessWidget {
-  const _SettingsTab({required this.product});
-
-  final Product product;
-
-  @override
-  Widget build(BuildContext context) {
-    return ListView(
-      padding: const EdgeInsets.all(16),
-      children: [
-        _InfoCard(
-          title: 'Quản trị sản phẩm',
-          icon: Icons.settings_outlined,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const _SectionTitle(title: 'Thao tác nhanh'),
-              const SizedBox(height: 12),
-              LayoutBuilder(
-                builder: (context, constraints) {
-                  final itemWidth = (constraints.maxWidth - 12) / 2;
-                  return Wrap(
-                    spacing: 12,
-                    runSpacing: 12,
-                    children: [
-                      _AdminActionButton(
-                        width: itemWidth,
-                        icon: Icons.edit_outlined,
-                        label: 'Chỉnh sửa sản phẩm',
-                      ),
-                      _AdminActionButton(
-                        width: itemWidth,
-                        icon: Icons.price_change_outlined,
-                        label: 'Cập nhật giá',
-                      ),
-                      _AdminActionButton(
-                        width: itemWidth,
-                        icon: Icons.inventory_2_outlined,
-                        label: 'Cập nhật tồn kho',
-                      ),
-                      _AdminActionButton(
-                        width: itemWidth,
-                        icon: Icons.visibility_off_outlined,
-                        label: 'Ẩn / Hiện sản phẩm',
-                      ),
-                      _AdminActionButton(
-                        width: itemWidth,
-                        icon: Icons.copy_outlined,
-                        label: 'Nhân bản sản phẩm',
-                      ),
-                      _AdminActionButton(
-                        width: itemWidth,
-                        icon: Icons.local_fire_department_outlined,
-                        label: 'Đánh dấu Hot',
-                      ),
-                      _AdminActionButton(
-                        width: itemWidth,
-                        icon: Icons.workspace_premium_outlined,
-                        label: 'Đánh dấu Best Seller',
-                      ),
-                      _AdminActionButton(
-                        width: itemWidth,
-                        icon: Icons.new_releases_outlined,
-                        label: 'Đánh dấu New',
-                      ),
-                      _AdminActionButton(
-                        width: itemWidth,
-                        icon: Icons.confirmation_number_outlined,
-                        label: 'Gắn voucher',
-                      ),
-                      _AdminActionButton(
-                        width: itemWidth,
-                        icon: Icons.image_outlined,
-                        label: 'Upload ảnh mới',
-                      ),
-                      _AdminActionButton(
-                        width: itemWidth,
-                        icon: Icons.picture_as_pdf_outlined,
-                        label: 'Upload PDF đọc thử',
-                      ),
-                      _AdminActionButton(
-                        width: itemWidth,
-                        icon: Icons.delete_outline,
-                        label: 'Xóa sản phẩm',
-                        isDanger: true,
-                      ),
-                    ],
-                  );
-                },
               ),
-              const SizedBox(height: 16),
-              const _SectionTitle(title: 'Ghi chú nội bộ'),
-              const SizedBox(height: 8),
-              Text(
-                'Có thể thêm ghi chú về tình trạng sản phẩm, nhà cung cấp, hoặc '
-                'các chiến dịch marketing.',
-                style: Theme.of(context).textTheme.bodyMedium,
-              ),
+              const SizedBox(height: 20),
             ],
           ),
-        ),
-        const SizedBox(height: 20),
-      ],
+        );
+      },
     );
   }
+}
+
+class _ReviewPayload {
+  const _ReviewPayload({required this.reviews, required this.summary});
+
+  final List<Review> reviews;
+  final ReviewSummary summary;
 }
 
 class _InfoCard extends StatelessWidget {
@@ -974,61 +933,6 @@ class _InsightTile extends StatelessWidget {
   }
 }
 
-class _TimelineItem extends StatelessWidget {
-  const _TimelineItem({
-    required this.title,
-    required this.subtitle,
-    required this.time,
-  });
-
-  final String title;
-  final String subtitle;
-  final String time;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            width: 12,
-            height: 12,
-            margin: const EdgeInsets.only(top: 6),
-            decoration: BoxDecoration(
-              color: Colors.blue,
-              borderRadius: BorderRadius.circular(999),
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: const TextStyle(fontWeight: FontWeight.w700),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  subtitle,
-                  style: TextStyle(color: Colors.grey.shade700),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  time,
-                  style: TextStyle(color: Colors.grey.shade500, fontSize: 12),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
 class _TagChip extends StatelessWidget {
   const _TagChip({required this.label});
 
@@ -1050,47 +954,3 @@ class _TagChip extends StatelessWidget {
   }
 }
 
-class _AdminActionButton extends StatelessWidget {
-  const _AdminActionButton({
-    required this.width,
-    required this.icon,
-    required this.label,
-    this.isDanger = false,
-  });
-
-  final double width;
-  final IconData icon;
-  final String label;
-  final bool isDanger;
-
-  @override
-  Widget build(BuildContext context) {
-    final color = isDanger ? Colors.redAccent : Colors.blue;
-    return SizedBox(
-      width: width,
-      child: OutlinedButton.icon(
-        onPressed: () {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(label)),
-          );
-        },
-        icon: Icon(icon, color: color, size: 18),
-        label: Text(
-          label,
-          style: TextStyle(
-            color: color,
-            fontWeight: FontWeight.w600,
-            fontSize: 12.5,
-          ),
-        ),
-        style: OutlinedButton.styleFrom(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-          side: BorderSide(color: color.withOpacity(0.5)),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(14),
-          ),
-        ),
-      ),
-    );
-  }
-}

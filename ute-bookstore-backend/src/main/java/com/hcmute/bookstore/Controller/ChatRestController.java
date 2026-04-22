@@ -1,6 +1,7 @@
 package com.hcmute.bookstore.Controller;
 
 import com.hcmute.bookstore.Service.ChatService;
+import com.hcmute.bookstore.dto.AiChatRequest;
 import com.hcmute.bookstore.dto.ChatMessageResponse;
 import com.hcmute.bookstore.Entity.ChatMessage;
 import com.hcmute.bookstore.Repository.ChatMessageRepository;
@@ -55,5 +56,18 @@ public class ChatRestController {
     @GetMapping("/unread-status/{userName}")
     public ResponseEntity<Boolean> getUnreadStatus(@PathVariable String userName) {
         return ResponseEntity.ok(chatService.hasAnyUnreadMessagesForUser(userName));
+    }
+
+    @PostMapping("/ai")
+    public ResponseEntity<ChatService.AiChatResult> chatWithAi(@RequestBody AiChatRequest request) {
+        String message = request != null ? request.getMessage() : "";
+        String userName = request != null ? request.getUserName() : null;
+        if (message == null || message.isBlank()) {
+            return ResponseEntity.ok(new ChatService.AiChatResult(
+                    "Xin lỗi, tôi chưa thể trả lời lúc này.",
+                    java.util.List.of()
+            ));
+        }
+        return ResponseEntity.ok(chatService.getAiChatReply(message, userName));
     }
 }

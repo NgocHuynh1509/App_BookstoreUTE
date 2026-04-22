@@ -13,6 +13,8 @@ class Product {
   final String picture;
   final String categoryId;
   final String categoryName;
+  final double averageRating;
+  final int reviewCount;
 
   Product({
     required this.bookId,
@@ -29,6 +31,8 @@ class Product {
     required this.picture,
     required this.categoryId,
     required this.categoryName,
+    required this.averageRating,
+    required this.reviewCount,
   });
 
   factory Product.fromJson(Map<String, dynamic> json) {
@@ -47,6 +51,8 @@ class Product {
       picture: json['picture']?.toString() ?? '',
       categoryId: json['categoryId']?.toString() ?? '',
       categoryName: json['categoryName']?.toString() ?? '',
+      averageRating: (json['averageRating'] as num?)?.toDouble() ?? 0,
+      reviewCount: (json['reviewCount'] as num?)?.toInt() ?? 0,
     );
   }
 }
@@ -97,4 +103,3 @@ class ProductRequest {
     };
   }
 }
-

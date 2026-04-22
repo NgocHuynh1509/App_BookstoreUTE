@@ -43,5 +43,12 @@ public class Category {
         this.categoryName = categoryName;
     }
 
+    public List<Books> getBooks() {
+        return books;
+    }
+
+    public void setBooks(List<Books> books) {
+        this.books = books;
+    }
 
 }

@@ -15,6 +15,7 @@ public class BookDetailResponse {
     private String publisher_name;
     private Integer buyersCount;
     private Integer reviewsCount;
+    private String preview_url;
 
     public BookDetailResponse() {
     }
@@ -31,7 +32,8 @@ public class BookDetailResponse {
             String category_name,
             String publisher_name,
             Integer buyersCount,
-            Integer reviewsCount
+            Integer reviewsCount,
+            String preview_url
     ) {
         this.id = id;
         this.title = title;
@@ -45,6 +47,7 @@ public class BookDetailResponse {
         this.publisher_name = publisher_name;
         this.buyersCount = buyersCount;
         this.reviewsCount = reviewsCount;
+        this.preview_url = preview_url;
     }
 
     public String getId() { return id; }
@@ -59,4 +62,5 @@ public class BookDetailResponse {
     public String getPublisher_name() { return publisher_name; }
     public Integer getBuyersCount() { return buyersCount; }
     public Integer getReviewsCount() { return reviewsCount; }
+    public String getPreview_url() { return preview_url; }
 }

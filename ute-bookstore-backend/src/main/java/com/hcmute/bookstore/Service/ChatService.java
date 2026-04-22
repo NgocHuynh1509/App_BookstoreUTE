@@ -1,13 +1,16 @@
 package com.hcmute.bookstore.Service;
 
+import com.hcmute.bookstore.Entity.Books;
 import com.hcmute.bookstore.Entity.ChatMessage;
 import com.hcmute.bookstore.Entity.MessageStatus;
 import com.hcmute.bookstore.Entity.Orders;
 import com.hcmute.bookstore.Repository.ChatMessageRepository;
+import com.hcmute.bookstore.Repository.BooksRepository;
 import com.hcmute.bookstore.dto.ChatMessageResponse;
 import com.hcmute.bookstore.dto.admin.ChatThreadDTO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -19,6 +22,9 @@ import java.util.stream.Collectors;
 public class ChatService {
     @Autowired
     private ChatMessageRepository chatRepository;
+    private final BooksRepository booksRepository;
+    private final GeminiService geminiService;
+    private final ChatResponseService chatResponseService;
 
     public ChatMessageResponse mapToResponse(ChatMessage entity) {
         ChatMessageResponse.ChatMessageResponseBuilder builder = ChatMessageResponse.builder()
@@ -147,4 +153,17 @@ public class ChatService {
     public boolean hasAnyUnreadMessagesForUser(String userName) {
         return chatRepository.existsUnreadForUser(userName);
     }
+
+    public AiChatResult getAiChatReply(String message) {
+        return chatResponseService.respond(message);
+    }
+
+    public AiChatResult getAiChatReply(String message, String userName) {
+        return chatResponseService.respond(message, userName);
+    }
+
+    public record AiBookResult(String id, String title, String author, java.math.BigDecimal price, String image) {}
+
+    public record AiChatResult(String reply, java.util.List<AiBookResult> books) {}
+
 }

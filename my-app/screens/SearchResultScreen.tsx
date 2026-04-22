@@ -217,23 +217,29 @@ export default function SearchResultScreen({ route, navigation }: any) {
               <Ionicons name="chevron-back" size={22} color="#FFF" />
             </TouchableOpacity>
 
-            <View style={s.searchBar}>
+            <TouchableOpacity
+                style={s.searchBar}
+                activeOpacity={0.85}
+                onPress={() =>
+                    navigation.navigate("SearchScreen", {
+                      keyword: searchText,
+                    })
+                }
+            >
               <Ionicons name="search-outline" size={17} color={C.primaryMid} />
-              <TextInput
-                  style={s.searchInput}
-                  placeholder="Tìm tên sách, tác giả..."
-                  placeholderTextColor={C.text3}
-                  value={searchText}
-                  onChangeText={t => setSearchText(t)}
-                  onSubmitEditing={handleManualSearch}
-                  returnKeyType="search"
-              />
+
+              <Text
+                  style={[s.searchInput, { color: searchText ? C.text1 : C.text3 }]}
+                  numberOfLines={1}
+                  ellipsizeMode="tail"
+              >
+                {searchText || "Tìm tên sách, tác giả..."}
+              </Text>
+
               {searchText.length > 0 && (
-                  <TouchableOpacity onPress={() => setSearchText("")}>
-                    <Ionicons name="close-circle" size={16} color={C.text3} />
-                  </TouchableOpacity>
+                  <Ionicons name="chevron-forward" size={16} color={C.text3} />
               )}
-            </View>
+            </TouchableOpacity>
 
             <TouchableOpacity style={s.goBtn} onPress={handleManualSearch}>
               <Ionicons name="arrow-forward" size={18} color="#FFF" />
@@ -394,8 +400,12 @@ const s = StyleSheet.create({
     alignItems: "center",
     flexShrink: 0,
   },
+
   searchBar: {
-    flex: 1,
+    flexShrink: 1,
+    flexGrow: 0,
+    width: "100%",
+    maxWidth: 220,
     flexDirection: "row",
     alignItems: "center",
     gap: 8,
@@ -409,8 +419,10 @@ const s = StyleSheet.create({
     shadowOpacity: 0.10,
     shadowRadius: 4,
   },
+
   searchInput: {
     flex: 1,
+    minWidth: 0,
     fontSize: 14,
     color: C.text1,
     paddingVertical: 0,

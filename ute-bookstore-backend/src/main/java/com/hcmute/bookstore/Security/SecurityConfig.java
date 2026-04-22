@@ -57,7 +57,12 @@ public class SecurityConfig {
                 .sessionManagement(sess -> sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/ws-bookstore/**").permitAll()
-                        .requestMatchers("/admin/**", "/api/admin/**", "/products/**", "/orders/**")
+                        .requestMatchers(
+                                "/admin/**",
+                                "/api/admin/**",
+                                "/products/**",
+                                "/orders/**",
+                                "/api/admin/categories/**")
                         .hasAnyRole("ADMIN", "STAFF")
                         .requestMatchers(
                                 "/auth/**",
