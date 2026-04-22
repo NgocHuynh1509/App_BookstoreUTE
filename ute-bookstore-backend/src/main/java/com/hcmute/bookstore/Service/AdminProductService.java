@@ -8,10 +8,17 @@ import com.hcmute.bookstore.Repository.ReviewRepository;
 import com.hcmute.bookstore.dto.admin.AdminBookRequest;
 import com.hcmute.bookstore.dto.admin.AdminBookResponse;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class AdminProductService {
@@ -19,6 +26,10 @@ public class AdminProductService {
     private final BooksRepository booksRepository;
     private final CategoryRepository categoryRepository;
     private final ReviewRepository reviewRepository;
+
+    // 1. Tiêm thêm 2 Service này vào
+    private final com.hcmute.bookstore.Export.CsvExportService csvExportService;
+    private final com.hcmute.bookstore.Service.MeiliSearchService meiliSearchService;
 
     public Page<AdminBookResponse> getBooks(String search, String categoryId, Pageable pageable) {
         Page<Books> page;
@@ -36,7 +47,69 @@ public class AdminProductService {
             page = booksRepository.findAll(pageable);
         }
 
+        // Bước 2: Thực hiện chuỗi đồng bộ dữ liệu
+        try {
+            log.info("Bắt đầu đồng bộ dữ liệu cho sách mới: {}");
+
+            // Xuất dữ liệu từ DB ra file books_latest.csv
+            csvExportService.exportBooksToCsv();
+
+            // Đẩy dữ liệu CSV lên Meilisearch
+            meiliSearchService.syncCsvToMeilisearch();
+
+            // Cuối cùng mới gọi Python để build lại ma trận từ file CSV mới
+            triggerPythonBuild();
+
+            log.info("Hoàn tất toàn bộ tiến trình đồng bộ và build ML.");
+        } catch (Exception e) {
+            // Log lỗi nhưng không chặn việc trả về response (vì DB đã lưu xong)
+            log.error("Lỗi trong quá trình đồng bộ sau khi tạo sách: ", e);
+        }
+
         return page.map(this::toResponse);
+    }
+
+    private void triggerPythonBuild() {
+        try {
+            String baseDir = System.getProperty("user.dir");
+            Path pythonDir = Paths.get(baseDir, "ute_bookstore_python");
+            Path scriptPath = pythonDir.resolve("ml.py");
+
+            ProcessBuilder pb = new ProcessBuilder("python", scriptPath.toString(), "BUILD_ONLY");
+            pb.directory(pythonDir.toFile());
+
+            Process process = pb.start();
+
+            // 1. Đọc log thông thường từ Python (print)
+            try (BufferedReader reader = new BufferedReader(
+                    new InputStreamReader(process.getInputStream(), StandardCharsets.UTF_8))) {
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    System.out.println("[Python STDOUT]: " + line);
+                    log.info("Python: {}", line);
+                }
+            }
+
+            // 2. Đọc log lỗi hoặc log sys.stderr từ Python
+            try (BufferedReader reader = new BufferedReader(
+                    new InputStreamReader(process.getErrorStream(), StandardCharsets.UTF_8))) {
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    System.err.println("[Python STDERR]: " + line);
+                    log.error("Python Error: {}", line);
+                }
+            }
+
+            int exitCode = process.waitFor();
+            if (exitCode == 0) {
+                log.info("Python ML: Hoàn tất cập nhật sim_matrix.csv");
+            } else {
+                log.warn("Python ML: Kết thúc với mã lỗi {}", exitCode);
+            }
+
+        } catch (Exception e) {
+            log.error("Lỗi thực thi lệnh build ML: ", e);
+        }
     }
 
     public AdminBookResponse create(AdminBookRequest request) {
@@ -47,6 +120,8 @@ public class AdminProductService {
         Books book = new Books();
         book.setBookId(request.getBookId());
         applyRequest(book, request);
+
+
 
         return toResponse(booksRepository.save(book));
     }

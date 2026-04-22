@@ -17,7 +17,7 @@ public class CsvAutoScheduler {
 
     // fixedRate = 120,000ms = 2 phút (để bạn test cho nhanh)
     // Nếu muốn đúng 10 phút, hãy đổi thành: 600_000
-    @Scheduled(fixedRate = 120_000)
+//    @Scheduled(fixedRate = 120_000)
     public void autoSyncTask() {
         try {
             System.out.println("=== [BẮT ĐẦU] TIẾN TRÌNH TỰ ĐỘNG ĐỒNG BỘ ===");

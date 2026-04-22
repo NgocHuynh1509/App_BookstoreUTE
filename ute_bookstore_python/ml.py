@@ -230,6 +230,19 @@ def recommend_books(book_id, df, sim_df, top_k=6, include_self=False):
 
     return results
 
+# Trong ml.py
+def load_only_mode():
+    """Chế độ chỉ load, không bao giờ build lại"""
+    df = load_books()
+    sim_df = load_similarity()
+
+    if df is None or sim_df is None:
+        # Nếu thiếu file, in ra lỗi để Java bắt được
+        print("Error: sim_matrix.csv missing. Please build first.", file=sys.stderr)
+        return None, None
+
+    return df, sim_df
+
 
 if __name__ == "__main__":
     book_id = sys.argv[1] if len(sys.argv) > 1 else ""
@@ -238,8 +251,20 @@ if __name__ == "__main__":
         print("[]")
         sys.exit(0)
 
+    # Thêm logic này: Nếu truyền vào chữ "BUILD_ONLY" thì chỉ chạy khởi tạo rồi thoát
+    if book_id == "BUILD_ONLY":
+        try:
+            ensure_cache_ready()
+            print("SUCCESS")
+            sys.exit(0)
+        except Exception as e:
+            print(f"Build error: {e}", file=sys.stderr)
+            sys.exit(1)
+
     try:
-        df, sim_df = ensure_cache_ready()
+        # df, sim_df = ensure_cache_ready()
+        # THAY ĐỔI Ở ĐÂY: Dùng load_only_mode thay vì ensure_cache_ready
+        df, sim_df = load_only_mode()
 
         if df is None or sim_df is None:
             print("[]")
