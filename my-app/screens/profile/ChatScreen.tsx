@@ -55,21 +55,50 @@ interface AiMessage {
 const BASE_URL = Constants.expoConfig?.extra?.API_URL || "http://192.168.1.22:8080";
 
 const C = {
-    primary:    "#1565C0",
-    mid:        "#1E88E5",
-    light:      "#42A5F5",
-    soft:       "#E3F2FD",
-    tint:       "#BBDEFB",
-    bg:         "#F0F6FF",
+    // Màu đỏ chủ đạo (chuẩn logo UTE và màu cờ)
+    primary:    "#B8001A",
+
+    // Đỏ trung bình cho các trạng thái Active/Hover
+    mid:        "#D0001F",
+
+    // Đỏ sáng cho các icon hoặc điểm nhấn
+    light:      "#E53935",
+
+    // Nền đỏ cực nhạt cho các block nội dung
+    soft:       "#FFF5F5",
+
+    // Màu highlight hồng nhạt khi chọn item
+    tint:       "#FFDADA",
+
+    // Nền app: trắng pha chút kem ấm (không bị lạnh như xanh)
+    bg:         "#FFFBFB",
+
+    // Bề mặt các thẻ/card trắng tinh
     surface:    "#FFFFFF",
-    border:     "#DDEEFF",
-    text1:      "#0D1B3E",
-    text2:      "#4A5980",
-    text3:      "#9AA8C8",
+
+    // Viền tone hồng xám nhạt
+    border:     "#FEE2E2",
+
+    // Văn bản chính: Nâu đen đậm (hợp với đỏ hơn đen thuần)
+    text1:      "#2D0A0A",
+
+    // Văn bản phụ
+    text2:      "#6D5B5B",
+
+    // Văn bản mờ/Ghi chú
+    text3:      "#AFA0A0",
+
+    // Màu cam (giữ nguyên hoặc chỉnh nhẹ cho ấm hơn)
     orange:     "#FF8A00",
+
+    // Màu đỏ thông báo/lỗi
     red:        "#E53935",
-    msgMe:      "#1E88E5",
-    msgOther:   "#FFFFFF",
+
+    // Tin nhắn của mình: Chuyển sang màu đỏ thương hiệu
+    msgMe:      "#B8001A",
+
+    // Tin nhắn người khác: Giữ trắng hoặc xám nhạt
+    msgOther:   "#F5F5F5",
 };
 
 const REACTIONS = [
@@ -875,17 +904,47 @@ const s = StyleSheet.create({
 
     msgImage: { width: 200, height: 200, borderRadius: 14, marginTop: 2 },
 
-    // Reply bubbles
-    replyBubble:      { borderRadius: 10, padding: 8, marginBottom: 4, borderLeftWidth: 3 },
-    replyBubbleMe:    { backgroundColor: "rgba(255,255,255,0.15)", borderLeftColor: "rgba(255,255,255,0.6)" },
-    replyBubbleOther: { backgroundColor: C.soft, borderLeftColor: C.mid },
-    replySender:      { fontSize: 11, fontWeight: "700", marginBottom: 2 },
-    replySenderMe:    { color: "rgba(255,255,255,0.9)" },
-    replySenderOther: { color: C.mid },
-    replyText:        { fontSize: 12, flexShrink: 1 },
-    replyTextMe:      { color: "rgba(255,255,255,0.8)" },
-    replyTextOther:   { color: C.text2 },
-    replyThumb:       { width: 28, height: 28, borderRadius: 4, marginRight: 6 },
+    // ─── PHẦN REPLY (Đã tăng độ tương phản) ──────────────────────
+        replyBubble: {
+            padding: 8,
+            borderRadius: 8,
+            marginBottom: 6,
+            borderLeftWidth: 4,
+            borderLeftColor: C.primary,
+        },
+        replyBubbleMe: {
+            // Khi mình reply trong bong bóng đỏ, dùng màu đỏ tối hơn để làm nền reply
+            backgroundColor: "rgba(0, 0, 0, 0.15)",
+        },
+        replyBubbleOther: {
+            // Nền hồng đậm hơn một chút để chữ Nâu/Đen nổi lên
+            backgroundColor: "#FADADD",
+        },
+        replySender: {
+            fontSize: 12,
+            fontWeight: "700",
+            marginBottom: 2,
+        },
+        // Chữ người gửi: Luôn để đậm
+        replySenderMe: { color: "#800010" },
+        replySenderOther: { color: "#800010" }, // Đỏ đô đậm
+
+        replyText: {
+            fontSize: 13,
+            fontWeight: "500", // Tăng độ dày chữ một chút cho rõ
+        },
+        // Nội dung tin nhắn được reply
+        replyTextMe: { color: "#800010" },    // Hồng nhạt (trên nền đỏ của mình)
+        replyTextOther: { color: "#4A3F3F" },  // Nâu xám đậm (trên nền hồng của khách)
+
+        replyThumb: {
+            width: 32,
+            height: 32,
+            borderRadius: 4,
+            marginRight: 8,
+            backgroundColor: "#CCC"
+        },
+
 
     // Reaction badges
     reactionBadge:    { position: "absolute", bottom: -10, backgroundColor: "#FFF", borderRadius: 10, paddingHorizontal: 5, paddingVertical: 2, borderWidth: 0.5, borderColor: C.border, elevation: 2 },

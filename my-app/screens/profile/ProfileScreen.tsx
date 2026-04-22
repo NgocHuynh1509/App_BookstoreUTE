@@ -19,19 +19,41 @@ import { RefreshControl } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const BASE_URL = Constants.expoConfig?.extra?.API_URL;
-// ─── Palette — light blue ─────────────────────────────────────────────────────
+// ─── Palette — Red & Gold ─────────────────────────────────────────────────────
 const C = {
-  primary:     "#1565C0",   // deep blue
-  primaryMid:  "#1E88E5",   // medium blue
-  primaryLight:"#42A5F5",   // sky blue
-  primarySoft: "#E3F2FD",   // very light blue
-  primaryTint: "#BBDEFB",   // tint for borders
-  bg:          "#F0F6FF",   // blue-tinted page bg
+  // Màu đỏ chủ đạo (Chuẩn màu cờ và logo UTE)
+  primary:     "#B8001A",   // deep red
+
+  // Màu đỏ trung bình cho các nút bấm khi nhấn (Active)
+  primaryMid:  "#D0001F",   // medium red
+
+  // Màu đỏ sáng cho các icon hoặc điểm nhấn nhỏ
+  primaryLight:"#E53935",   // bright red
+
+  // Nền đỏ cực nhạt cho các khối nội dung (thay cho màu xanh nhạt cũ)
+  primarySoft: "#FFF5F5",   // very light rose
+
+  // Màu hồng nhạt để làm viền hoặc highlight nhẹ
+  primaryTint: "#FFDADA",   // soft pink tint
+
+  // Nền ứng dụng: Trắng sứ ấm (Tránh mỏi mắt, hợp với tone đỏ)
+  bg:          "#FFFBFB",   // warm page bg
+
   surface:     "#FFFFFF",
-  border:      "#DDEEFF",
-  text1:       "#0D1B3E",   // deep navy
-  text2:       "#4A5980",
-  text3:       "#9AA8C8",
+
+  // Viền: Màu hồng xám nhạt (Đồng bộ với tone ấm)
+  border:      "#FEE2E2",
+
+  // Văn bản chính: Nâu đen đậm (Sang hơn xanh đen, cực kỳ dịu mắt)
+  text1:       "#2D0A0A",   // deep dark mocha
+
+  // Văn bản phụ
+  text2:       "#6D5B5B",
+
+  // Văn bản mờ, ghi chú
+  text3:       "#AFA0A0",
+
+  // Màu vàng kim (Dành cho ngôi sao, huy hiệu hoặc các nút quan trọng)
   gold:        "#FFB300",
 };
 

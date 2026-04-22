@@ -11,20 +11,47 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 
 // ─── Palette ──────────────────────────────────────────────────────────────────
 const C = {
-  primary:     "#1565C0",
-  primaryMid:  "#1E88E5",
-  primarySoft: "#E3F2FD",
-  primaryTint: "#BBDEFB",
-  bg:          "#F0F6FF",
+  // Màu đỏ chuẩn UTE - Mạnh mẽ và trang trọng
+  primary:     "#B8001A",
+
+  // Đỏ sáng hơn cho các trạng thái nhấn nút (Active)
+  primaryMid:  "#D0001F",
+
+  // Nền nhẹ cho các thông báo nhạt (thay cho xanh nhạt)
+  primarySoft: "#FFF5F5",
+
+  // Màu highlight nhẹ khi chọn item
+  primaryTint: "#FFDADA",
+
+  // Nền ứng dụng: Trắng sứ ấm áp (không bị lạnh như màu xanh cũ)
+  bg:          "#FFFBFB",
+
+  // Bề mặt các thẻ nội dung
   surface:     "#FFFFFF",
-  border:      "#DDEEFF",
-  borderFocus: "#1E88E5",
-  text1:       "#0D1B3E",
-  text2:       "#4A5980",
-  text3:       "#9AA8C8",
-  placeholder: "#B0C4DE",
+
+  // Viền: Màu hồng xám nhạt để đồng bộ tone nóng
+  border:      "#FEE2E2",
+
+  // Viền khi focus vào ô nhập liệu
+  borderFocus: "#B8001A",
+
+  // Văn bản chính: Nâu đen đậm (Giúp mắt dễ chịu hơn xanh đen)
+  text1:       "#2D0A0A",
+
+  // Văn bản phụ: Xám đỏ trung tính
+  text2:       "#6D5B5B",
+
+  // Văn bản mờ, ghi chú
+  text3:       "#AFA0A0",
+
+  // Gợi ý trong ô nhập liệu
+  placeholder: "#D1C4C4",
+
+  // Trạng thái lỗi (Giữ đỏ tươi đặc trưng)
   error:       "#E53935",
   errorBg:     "#FFF1EE",
+
+  // Giữ xanh lá cho các thông báo Thành công/Còn hàng
   green:       "#00897B",
   greenBg:     "#E0F2F1",
 };

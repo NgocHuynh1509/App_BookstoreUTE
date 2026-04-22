@@ -10,18 +10,43 @@ import api from "../../services/api";
 
 // ─── Palette ──────────────────────────────────────────────────────────────────
 const C = {
-  primary:     "#1565C0",
-  primaryMid:  "#1E88E5",
-  primarySoft: "#E3F2FD",
-  primaryTint: "#BBDEFB",
-  bg:          "#F0F6FF",
+  // Đỏ đậm chủ đạo - Sang trọng và uy tín
+  primary:     "#B8001A",
+
+  // Đỏ sáng - Dùng cho các nút bấm, icon khi active
+  primaryMid:  "#D0001F",
+
+  // Đỏ cực nhạt - Làm nền cho các thông báo hoặc block nhẹ
+  primarySoft: "#FFF5F6",
+
+  // Hồng nhạt - Dùng cho highlight hoặc các vùng chọn
+  primaryTint: "#FFDDE1",
+
+  // Nền ứng dụng - Trắng sứ ấm (thay cho màu xanh lạnh cũ)
+  bg:          "#FFF9F9",
+
+  // Bề mặt các thẻ, Card
   surface:     "#FFFFFF",
-  border:      "#DDEEFF",
-  borderFocus: "#1E88E5",
-  text1:       "#0D1B3E",
-  text2:       "#4A5980",
-  text3:       "#9AA8C8",
-  placeholder: "#B0C4DE",
+
+  // Viền nhẹ nhàng tone hồng xám
+  border:      "#FEE2E2",
+
+  // Viền khi người dùng nhấn vào ô nhập liệu
+  borderFocus: "#D0001F",
+
+  // Chữ chính - Nâu đen đậm (hợp với đỏ hơn là xanh đen)
+  text1:       "#2D0A0A",
+
+  // Chữ phụ
+  text2:       "#6D5B5B",
+
+  // Chữ mờ, ghi chú
+  text3:       "#AFA0A0",
+
+  // Màu chữ gợi ý trong ô nhập liệu
+  placeholder: "#D1C4C4",
+
+  // Giữ nguyên xanh lá để báo "Thành công" hoặc "Còn hàng"
   green:       "#00897B",
   greenBg:     "#E0F2F1",
 };

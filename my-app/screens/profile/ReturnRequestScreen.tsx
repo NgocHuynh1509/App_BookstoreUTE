@@ -179,23 +179,96 @@ export default function ReturnRequestScreen() {
 }
 
 const s = StyleSheet.create({
-  // ... các style cũ giữ nguyên
-  container: { flex: 1, backgroundColor: "#F8F9FA" },
-  header: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", padding: 16, backgroundColor: "#FFF" },
-  headerTitle: { fontSize: 18, fontWeight: "bold" },
+  // Nền container chuyển sang màu trắng kem ấm áp
+  container: { flex: 1, backgroundColor: "#FFFBFB" },
+
+  header: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    padding: 16,
+    backgroundColor: "#FFFFFF",
+    borderBottomWidth: 1,
+    borderBottomColor: "#FEE2E2", // Viền hồng nhạt
+  },
+
+  headerTitle: { fontSize: 18, fontWeight: "bold", color: "#2D0A0A" }, // Chữ nâu đen
+
   scroll: { padding: 16 },
-  label: { fontSize: 14, fontWeight: "600", marginBottom: 8, color: "#444" },
-  input: { backgroundColor: "#FFF", borderWidth: 1, borderColor: "#DDD", borderRadius: 8, padding: 12, marginBottom: 16 },
+
+  label: { fontSize: 14, fontWeight: "600", marginBottom: 8, color: "#5F4B4B" }, // Chữ phụ xám đỏ
+
+  input: {
+    backgroundColor: "#FFF",
+    borderWidth: 1,
+    borderColor: "#FEE2E2", // Viền hồng nhạt
+    borderRadius: 8,
+    padding: 12,
+    marginBottom: 16,
+    color: "#2D0A0A"
+  },
+
   textArea: { height: 100, textAlignVertical: "top" },
 
-  // Style mới cho danh sách ảnh
-  addMoreBtn: { width: 80, height: 80, backgroundColor: "#EEE", borderRadius: 8, justifyContent: "center", alignItems: "center", marginRight: 10 },
+  // Style cho danh sách ảnh
+  addMoreBtn: {
+    width: 80,
+    height: 80,
+    backgroundColor: "#FFF5F5", // Đỏ cực nhạt
+    borderRadius: 8,
+    justifyContent: "center",
+    alignItems: "center",
+    marginRight: 10,
+    borderWidth: 1,
+    borderStyle: 'dashed',
+    borderColor: "#FFDADA", // Viền hồng
+  },
+
   imageWrapper: { position: 'relative', marginRight: 10 },
   previewImageMini: { width: 80, height: 80, borderRadius: 8 },
-  removeBadge: { position: 'absolute', top: -5, right: -5, backgroundColor: '#FFF', borderRadius: 10 },
 
-  bankCard: { backgroundColor: "#FFF", padding: 16, borderRadius: 12, borderWidth: 1, borderColor: "#E3F2FD", marginBottom: 20 },
-  bankTitle: { fontSize: 16, fontWeight: "bold", color: "#1565C0", marginBottom: 15 },
-  submitBtn: { backgroundColor: "#E53935", padding: 16, borderRadius: 12, alignItems: "center" },
-  submitTxt: { color: "#FFF", fontWeight: "bold", fontSize: 16 },
+  removeBadge: {
+    position: 'absolute',
+    top: -5,
+    right: -5,
+    backgroundColor: '#B8001A', // Nút xóa màu đỏ đậm
+    borderRadius: 10,
+    elevation: 2,
+  },
+
+  // Bank Card chuyển sang tone Đỏ/Vàng sang trọng
+  bankCard: {
+    backgroundColor: "#FFF",
+    padding: 16,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: "#FFDADA", // Thay Xanh dương bằng Hồng nhạt
+    marginBottom: 20,
+    shadowColor: "#B8001A",
+    shadowOpacity: 0.05,
+    shadowRadius: 10,
+    elevation: 2,
+  },
+
+  bankTitle: {
+    fontSize: 16,
+    fontWeight: "bold",
+    color: "#B8001A", // Màu đỏ thương hiệu
+    marginBottom: 15
+  },
+
+  // Nút gửi đơn hàng rực rỡ
+  submitBtn: {
+    backgroundColor: "#B8001A", // Đỏ chuẩn UTE
+    padding: 16,
+    borderRadius: 12,
+    alignItems: "center",
+    shadowColor: "#B8001A",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 5,
+  },
+
+  submitTxt: { color: "#FFF", fontWeight: "bold", fontSize: 16, letterSpacing: 0.5 },
 });

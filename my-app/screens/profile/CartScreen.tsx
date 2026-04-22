@@ -15,18 +15,40 @@ import { CommonActions } from "@react-navigation/native";
 
 const API_URL = Constants.expoConfig?.extra?.API_URL;
 
+// ─── Palette Tone Đỏ (Red & Warm) ──────────────────────────────────────────────
 const C = {
-  primary:     "#1565C0",
-  primaryMid:  "#1E88E5",
-  primarySoft: "#E3F2FD",
-  primaryTint: "#BBDEFB",
-  bg:          "#F0F6FF",
+  // Màu đỏ chủ đạo (như màu cờ/logo UTE)
+  primary:     "#B8001A",
+
+  // Màu đỏ tươi hơn cho các trạng thái Active/Hover
+  primaryMid:  "#E60026",
+
+  // Màu nền đỏ cực nhạt, dùng thay cho xanh nhạt cũ
+  primarySoft: "#FFF5F5",
+
+  // Màu highlight hồng nhạt cho các vùng chọn (Selection)
+  primaryTint: "#FFDADA",
+
+  // Nền app: trắng pha chút kem ấm (thay cho màu xanh lạnh)
+  bg:          "#FFFBFB",
+
+  // Bề mặt các thẻ/card
   surface:     "#FFFFFF",
-  border:      "#DDEEFF",
-  sale:        "#E53935",
-  text1:       "#0D1B3E",
-  text2:       "#4A5980",
-  text3:       "#9AA8C8",
+
+  // Màu viền: xám hồng nhạt
+  border:      "#FEE2E2",
+
+  // Màu Sale: đỏ cam rực rỡ để kích thích mua hàng
+  sale:        "#FF4D4D",
+
+  // Văn bản chính: Nâu đen đậm (giúp mắt dễ chịu hơn đen thuần khi đi với đỏ)
+  text1:       "#2D0A0A",
+
+  // Văn bản phụ
+  text2:       "#6D5B5B",
+
+  // Văn bản mờ/Ghi chú
+  text3:       "#AFA0A0",
 };
 
 export default function CartScreen() {

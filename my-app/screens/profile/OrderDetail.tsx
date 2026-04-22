@@ -20,24 +20,49 @@ import { WebView } from "react-native-webview"; // Thêm cái này
 
 const BASE_URL = Constants.expoConfig?.extra?.API_URL;
 
-// ─── Palette ──────────────────────────────────────────────────────────────────
+// ─── Palette UTE BookStore (Tone Đỏ & Vàng Ấm) ──────────────────────────────────
 const C = {
-  primary:     "#1565C0",
-  primaryMid:  "#1E88E5",
-  primarySoft: "#E3F2FD",
-  primaryTint: "#BBDEFB",
-  bg:          "#F0F6FF",
+  // Màu đỏ chuẩn UTE - Mạnh mẽ và trang trọng
+  primary:     "#B8001A",
+
+  // Đỏ sáng hơn cho các trạng thái nhấn nút (Active)
+  primaryMid:  "#D0001F",
+
+  // Nền đỏ cực nhạt cho các block nội dung (thay cho màu xanh nhạt cũ)
+  primarySoft: "#FFF5F5",
+
+  // Màu hồng nhạt để highlight các vùng chọn
+  primaryTint: "#FFDADA",
+
+  // Nền ứng dụng: Trắng sứ ấm áp (không bị lạnh như màu xanh cũ)
+  bg:          "#FFFBFB",
+
+  // Bề mặt các thẻ (Card), khung nội dung trắng tinh
   surface:     "#FFFFFF",
-  border:      "#DDEEFF",
-  text1:       "#0D1B3E",
-  text2:       "#4A5980",
-  text3:       "#9AA8C8",
+
+  // Viền: Màu hồng xám nhạt để đồng bộ tone nóng
+  border:      "#FEE2E2",
+
+  // Văn bản chính: Nâu đen đậm (Giúp mắt dễ chịu hơn xanh đen)
+  text1:       "#2D0A0A",
+
+  // Văn bản phụ: Xám đỏ trung tính
+  text2:       "#6D5B5B",
+
+  // Văn bản mờ, ghi chú
+  text3:       "#AFA0A0",
+
+  // Trạng thái Sale: Giữ đỏ tươi nhưng làm ấm nền
   sale:        "#E53935",
-  saleBg:      "#FFF1EE",
+  saleBg:      "#FFF1F0",
+
+  // Trạng thái Thành công: Giữ xanh lá nhưng khử lạnh ở nền
   green:       "#00897B",
-  greenBg:     "#E0F2F1",
+  greenBg:     "#F0F9F8",
+
+  // Màu vàng cam (Đại diện cho sắc vàng trên lá cờ/ngôi sao)
   orange:      "#F57C00",
-  orangeBg:    "#FFF3E0",
+  orangeBg:    "#FFF8E1",
 };
 
 // ─── Status steps ─────────────────────────────────────────────────────────────

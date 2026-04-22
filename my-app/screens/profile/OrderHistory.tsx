@@ -21,26 +21,56 @@ import { Ionicons } from "@expo/vector-icons";
 const BASE_URL = Constants.expoConfig?.extra?.API_URL;
 
 // ─── Palette ──────────────────────────────────────────────────────────────────
+// ─── Palette UTE BookStore (Tone Đỏ & Vàng Ấm) ──────────────────────────────────
 const C = {
-  primary:     "#1565C0",
-  primaryMid:  "#1E88E5",
-  primarySoft: "#E3F2FD",
-  primaryTint: "#BBDEFB",
-  bg:          "#F0F6FF",
+  // Màu đỏ chuẩn UTE - Mạnh mẽ và trang trọng
+  primary:     "#B8001A",
+
+  // Đỏ sáng hơn cho các trạng thái nhấn nút (Active)
+  primaryMid:  "#D0001F",
+
+  // Nền đỏ cực nhạt cho các block nội dung (thay cho màu xanh nhạt cũ)
+  primarySoft: "#FFF5F5",
+
+  // Màu hồng nhạt để highlight các vùng chọn
+  primaryTint: "#FFDADA",
+
+  // Nền ứng dụng: Trắng sứ ấm áp (không bị lạnh như màu xanh cũ)
+  bg:          "#FFFBFB",
+
+  // Bề mặt các thẻ (Card), khung nội dung trắng tinh
   surface:     "#FFFFFF",
-  border:      "#DDEEFF",
-  text1:       "#0D1B3E",
-  text2:       "#4A5980",
-  text3:       "#9AA8C8",
+
+  // Viền: Màu hồng xám nhạt để đồng bộ tone nóng
+  border:      "#FEE2E2",
+
+  // Văn bản chính: Nâu đen đậm (Giúp mắt dễ chịu và sang hơn xanh đen)
+  text1:       "#2D0A0A",
+
+  // Văn bản phụ: Xám đỏ trung tính
+  text2:       "#6D5B5B",
+
+  // Văn bản mờ, ghi chú
+  text3:       "#AFA0A0",
+
+  // Trạng thái Sale: Đỏ rực rỡ đặc trưng
   sale:        "#E53935",
+
+  // Trạng thái Thành công: Giữ xanh lá nhưng làm ấm nền lại
   green:       "#00897B",
-  greenBg:     "#E0F2F1",
+  greenBg:     "#F0F9F8",
+
+  // Màu vàng cam (Đại diện cho sắc vàng trên lá cờ/ngôi sao)
   orange:      "#F57C00",
-  orangeBg:    "#FFF3E0",
-  purple:      "#6A1B9A",
-  purpleBg:    "#F3E5F5",
-  grey:        "#546E7A",
-  greyBg:      "#ECEFF1",
+  orangeBg:    "#FFF8E1",
+
+  // Màu tím: Chỉnh sang tone Tím rượu vang để hợp với màu Đỏ
+  purple:      "#800080",
+  purpleBg:    "#FDF2FD",
+
+  // Màu xám: Chỉnh sang xám ấm (Warm Grey)
+  grey:        "#706565",
+  greyBg:      "#F5EEEE",
 };
 
 // ─── Status config ────────────────────────────────────────────────────────────
