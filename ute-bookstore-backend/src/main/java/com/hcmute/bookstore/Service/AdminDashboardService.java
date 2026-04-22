@@ -37,6 +37,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.YearMonth;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
@@ -247,9 +248,9 @@ public class AdminDashboardService {
             recentUsers = usersRepository.findAllByOrderByRegistrationDateDesc(PageRequest.of(0, safeLimit * 2));
         }
         for (Users user : recentUsers) {
-            Date userTime = user.getCreatedAt();
+            LocalDateTime userTime = user.getCreatedAt();
             if (userTime == null && user.getRegistrationDate() != null) {
-                userTime = Date.from(user.getRegistrationDate().atStartOfDay(ZoneId.systemDefault()).toInstant());
+                userTime = user.getRegistrationDate().atStartOfDay();
             }
             if (userTime == null) {
                 continue;
@@ -262,8 +263,8 @@ public class AdminDashboardService {
                 subtitle = user.getCustomer().getFullName();
             }
             activity.setSubtitle(subtitle != null ? subtitle : "Tài khoản mới");
-            activity.setTime(formatActivityTime(userTime));
-            entries.add(new ActivityEntry(userTime, activity));
+            activity.setTime(formatActivityTime(Date.from(userTime.atZone(ZoneId.systemDefault()).toInstant())));
+            entries.add(new ActivityEntry(Date.from(userTime.atZone(ZoneId.systemDefault()).toInstant()), activity));
         }
 
         entries.sort((a, b) -> b.time.compareTo(a.time));

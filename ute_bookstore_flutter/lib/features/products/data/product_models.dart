@@ -58,7 +58,7 @@ class Product {
 }
 
 class ProductRequest {
-  final String bookId;
+  final String? bookId;
   final String title;
   final String author;
   final String publisher;
@@ -72,7 +72,7 @@ class ProductRequest {
   final String categoryId;
 
   ProductRequest({
-    required this.bookId,
+    this.bookId,
     required this.title,
     required this.author,
     required this.publisher,
@@ -88,7 +88,7 @@ class ProductRequest {
 
   Map<String, dynamic> toJson() {
     return {
-      'bookId': bookId,
+      if (bookId != null && bookId!.isNotEmpty) 'bookId': bookId,
       'title': title,
       'author': author,
       'publisher': publisher,

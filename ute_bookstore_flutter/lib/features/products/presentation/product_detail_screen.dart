@@ -442,18 +442,6 @@ class _BusinessTab extends StatelessWidget {
             ],
           ),
         ),
-        const SizedBox(height: 16),
-        _InfoCard(
-          title: 'Kho & phân phối',
-          icon: Icons.warehouse_outlined,
-          child: Column(
-            children: const [
-              _KeyValueRow(label: 'Kho chính', value: 'Kho TP.HCM'),
-              _KeyValueRow(label: 'Kho phụ', value: 'Kho Hà Nội'),
-              _KeyValueRow(label: 'Khu vực bán chạy', value: 'Quận 9, TP.HCM'),
-            ],
-          ),
-        ),
         const SizedBox(height: 20),
       ],
     );

@@ -4,9 +4,10 @@ import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
+import lombok.Builder.Default;
 
 import java.time.LocalDate;
-import java.util.Date;
+import java.time.LocalDateTime;
 
 @Entity
 @Builder
@@ -30,7 +31,6 @@ public class Users {
     @Column(name = "fullName", length = 50, nullable = false)
     private String fullName;
 
-    @Temporal(TemporalType.DATE)
     @Column(name = "registrationDate")
     private LocalDate registrationDate;
 
@@ -38,21 +38,22 @@ public class Users {
     private String avatar;
 
     @Column(name = "reward_points")
+    @Default
     private Integer rewardPoints = 0;
 
-    @Temporal(TemporalType.TIMESTAMP)
     @Column(name = "created_at", insertable = false, updatable = false)
-    private Date createdAt;
+    private LocalDateTime createdAt;
 
-    @Temporal(TemporalType.TIMESTAMP)
     @Column(name = "updated_at", insertable = false, updatable = false)
-    private Date updatedAt;
+    private LocalDateTime updatedAt;
 
     @Column(name = "enabled")
-    private Boolean enabled;
+    @Default
+    private Boolean enabled = true;
 
     @Column(name = "email_verified")
-    private Boolean emailVerified;
+    @Default
+    private Boolean emailVerified = false;
 
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(
@@ -141,11 +142,11 @@ public class Users {
         this.rewardPoints = rewardPoints;
     }
 
-    public Date getCreatedAt() {
+    public LocalDateTime getCreatedAt() {
         return createdAt;
     }
 
-    public Date getUpdatedAt() {
+    public LocalDateTime getUpdatedAt() {
         return updatedAt;
     }
 

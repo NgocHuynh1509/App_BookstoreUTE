@@ -15,7 +15,6 @@ public class Payment {
 
     @Column(name = "paymentTime", nullable = false)
     @NotNull
-    @Temporal(TemporalType.TIMESTAMP)
     private Date paymentTime;
 
     // --- BỔ SUNG MỚI ĐỂ KHỚP VỚI SQL ---

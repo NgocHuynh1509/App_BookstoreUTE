@@ -226,36 +226,42 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                 const SizedBox(height: 8),
                 AnimatedEntry(
                   delay: const Duration(milliseconds: 360),
-                  child: SizedBox(
-                    height: 190,
-                    child: chartsAsync.when(
-                      data: (charts) => ListView(
-                        scrollDirection: Axis.horizontal,
-                        children: [
-                          SizedBox(
-                            width: 220,
-                            child: OrderStatusPieChart(items: charts.orderStatus),
+                  child: LayoutBuilder(
+                    builder: (context, constraints) {
+                      final cardWidth = constraints.maxWidth < 520 ? constraints.maxWidth * 0.86 : 260.0;
+                      final chartHeight = constraints.maxWidth < 520 ? 248.0 : 236.0;
+                      return SizedBox(
+                        height: chartHeight,
+                        child: chartsAsync.when(
+                          data: (charts) => ListView(
+                            scrollDirection: Axis.horizontal,
+                            children: [
+                              SizedBox(
+                                width: cardWidth,
+                                child: OrderStatusPieChart(items: charts.orderStatus),
+                              ),
+                              const SizedBox(width: 12),
+                              SizedBox(
+                                width: cardWidth,
+                                child: BooksSoldBarChart(points: charts.booksSoldSeries),
+                              ),
+                            ],
                           ),
-                          const SizedBox(width: 12),
-                          SizedBox(
-                            width: 220,
-                            child: BooksSoldBarChart(points: charts.booksSoldSeries),
+                          loading: () => ListView(
+                            scrollDirection: Axis.horizontal,
+                            children: [
+                              SizedBox(width: cardWidth, child: const _SkeletonBox()),
+                              const SizedBox(width: 12),
+                              SizedBox(width: cardWidth, child: const _SkeletonBox()),
+                            ],
                           ),
-                        ],
-                      ),
-                      loading: () => ListView(
-                        scrollDirection: Axis.horizontal,
-                        children: const [
-                          SizedBox(width: 220, child: _SkeletonBox()),
-                          SizedBox(width: 12),
-                          SizedBox(width: 220, child: _SkeletonBox()),
-                        ],
-                      ),
-                      error: (error, _) => _ErrorCard(
-                        message: error.toString(),
-                        onRetry: () => ref.invalidate(dashboardChartsProvider(range)),
-                      ),
-                    ),
+                          error: (error, _) => _ErrorCard(
+                            message: error.toString(),
+                            onRetry: () => ref.invalidate(dashboardChartsProvider(range)),
+                          ),
+                        ),
+                      );
+                    },
                   ),
                 ),
                 const SizedBox(height: 16),
@@ -397,11 +403,12 @@ class SectionHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.end,
+    return Wrap(
+      crossAxisAlignment: WrapCrossAlignment.end,
+      runSpacing: 4,
+      spacing: 8,
       children: [
         Text(title, style: GoogleFonts.beVietnamPro(fontWeight: FontWeight.w600, fontSize: 16)),
-        const SizedBox(width: 8),
         Text(
           subtitle,
           style: GoogleFonts.beVietnamPro(fontSize: 12, color: AdminColors.textSecondary),
@@ -469,8 +476,6 @@ class QuickStatsGrid extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final visits = (summary.totalUsers * 18 + summary.totalOrders * 2).toDouble();
-    final conversion = visits == 0 ? 0.0 : (summary.totalOrders / visits) * 100;
     return LayoutBuilder(
       builder: (context, constraints) {
         final width = constraints.maxWidth;
@@ -494,44 +499,22 @@ class QuickStatsGrid extends StatelessWidget {
             trendLabel: 'so với hôm qua',
           ),
           StatCard(
-            title: 'Đơn hàng',
+            title: ' Tổng đơn hàng',
             value: summary.totalOrders.toDouble(),
             icon: Icons.receipt_long,
             accentColor: AdminColors.secondary,
-            trendPercent: 8.2,
-            trendLabel: 'so với hôm qua',
           ),
           StatCard(
-            title: 'Khách hàng',
+            title: 'Tổng khách hàng',
             value: summary.totalUsers.toDouble(),
             icon: Icons.people,
             accentColor: AdminColors.success,
-            trendPercent: 5.1,
-            trendLabel: 'so với hôm qua',
           ),
           StatCard(
-            title: 'Sản phẩm',
+            title: 'Tổng sản phẩm',
             value: summary.totalBooks.toDouble(),
             icon: Icons.menu_book,
             accentColor: AdminColors.warning,
-            trendPercent: 3.3,
-            trendLabel: 'so với hôm qua',
-          ),
-          StatCard(
-            title: 'Lượt truy cập',
-            value: visits,
-            icon: Icons.show_chart_rounded,
-            accentColor: const Color(0xFF00B4D8),
-            trendPercent: 15.7,
-            trendLabel: 'so với hôm qua',
-          ),
-          StatCard(
-            title: 'Tỷ lệ chuyển đổi',
-            value: conversion,
-            icon: Icons.trending_up_rounded,
-            accentColor: const Color(0xFF9B5DE5),
-            trendPercent: 1.2,
-            trendLabel: 'so với hôm qua',
           ),
         ];
 
@@ -564,6 +547,7 @@ class RevenueSummaryCard extends StatelessWidget {
       padding: const EdgeInsets.all(16),
       decoration: _cardDecoration,
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           CircleAvatar(
             backgroundColor: const Color(0xFF4C6FFF).withOpacity(0.12),
@@ -583,15 +567,20 @@ class RevenueSummaryCard extends StatelessWidget {
               ],
             ),
           ),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-            decoration: BoxDecoration(
-              color: changeColor.withOpacity(0.12),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Text(
-              '${revenue.changePercent.toStringAsFixed(1)}%',
-              style: TextStyle(color: changeColor, fontWeight: FontWeight.w600),
+          Flexible(
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                decoration: BoxDecoration(
+                  color: changeColor.withOpacity(0.12),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Text(
+                  '${revenue.changePercent.toStringAsFixed(1)}%',
+                  style: TextStyle(color: changeColor, fontWeight: FontWeight.w600),
+                ),
+              ),
             ),
           ),
         ],
@@ -611,6 +600,7 @@ class OrdersSummaryCard extends StatelessWidget {
       padding: const EdgeInsets.all(16),
       decoration: _cardDecoration,
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           CircleAvatar(
             backgroundColor: const Color(0xFF00C2A8).withOpacity(0.12),
@@ -629,15 +619,20 @@ class OrdersSummaryCard extends StatelessWidget {
               ],
             ),
           ),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-            decoration: BoxDecoration(
-              color: const Color(0xFF4C6FFF).withOpacity(0.12),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Text(
-              '${orders.completionRate.toStringAsFixed(1)}%',
-              style: const TextStyle(color: Color(0xFF4C6FFF), fontWeight: FontWeight.w600),
+          Flexible(
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF4C6FFF).withOpacity(0.12),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Text(
+                  '${orders.completionRate.toStringAsFixed(1)}%',
+                  style: const TextStyle(color: Color(0xFF4C6FFF), fontWeight: FontWeight.w600),
+                ),
+              ),
             ),
           ),
         ],
@@ -705,7 +700,7 @@ class BooksSoldBarChart extends StatelessWidget {
     return AnimatedChartCard(
       title: 'Sách đã bán',
       child: SizedBox(
-        height: 150,
+        height: 120,
         child: BarChart(
           BarChartData(
             gridData: const FlGridData(show: false),
@@ -758,11 +753,11 @@ class _PieChartCard extends StatelessWidget {
     return AnimatedChartCard(
       title: title,
       child: SizedBox(
-        height: 150,
+        height: 120,
         child: PieChart(
           PieChartData(
             sectionsSpace: 2,
-            centerSpaceRadius: 24,
+            centerSpaceRadius: 16,
             sections: List.generate(items.length, (index) {
               final item = items[index];
               final percent = total == 0 ? 0 : (item.count / total * 100);
@@ -770,8 +765,8 @@ class _PieChartCard extends StatelessWidget {
                 value: item.count.toDouble(),
                 title: '${percent.toStringAsFixed(0)}%',
                 color: colors[index % colors.length],
-                radius: 52,
-                titleStyle: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 11),
+                radius: 40,
+                titleStyle: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 9),
               );
             }),
           ),

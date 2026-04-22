@@ -1,5 +1,6 @@
 import '../../../core/api_client.dart';
 import 'product_models.dart';
+import 'package:dio/dio.dart';
 
 class ProductApi {
   ProductApi(this._client);
@@ -46,6 +47,21 @@ class ProductApi {
 
   Future<void> syncSearchAndMl() async {
     await _client.dio.post('/admin/products/sync-search');
+  }
+
+  Future<List<Map<String, dynamic>>> fetchCategories() async {
+    final response = await _client.dio.get('/categories');
+    final data = response.data as List<dynamic>? ?? [];
+    return data.map((e) => (e as Map<String, dynamic>)).toList();
+  }
+
+  Future<String> uploadCover(String filePath, String fileName) async {
+    final form = FormData.fromMap({
+      'file': await MultipartFile.fromFile(filePath, filename: fileName),
+    });
+    final response = await _client.dio.post('/admin/products/upload-cover', data: form);
+    final body = response.data as Map<String, dynamic>;
+    return body['imageUrl']?.toString() ?? '';
   }
 }
 

@@ -7,7 +7,6 @@ import java.math.BigDecimal;
 
 public class AdminBookRequest {
 
-    @NotBlank
     private String bookId;
 
     @NotBlank

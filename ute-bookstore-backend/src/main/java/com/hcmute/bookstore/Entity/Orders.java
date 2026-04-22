@@ -22,7 +22,6 @@ public class Orders {
 
     @Column(name = "orderDate")
     @NotNull
-    @Temporal(TemporalType.TIMESTAMP)
     private Date orderDate = new Date(); // Khớp với DEFAULT CURRENT_TIMESTAMP
 
     @Column(name = "totalAmount", precision = 12, scale = 0) // Cập nhật scale = 2

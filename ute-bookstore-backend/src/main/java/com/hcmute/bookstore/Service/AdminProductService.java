@@ -12,12 +12,18 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.io.BufferedReader;
+import java.io.File;
+import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -113,12 +119,15 @@ public class AdminProductService {
     }
 
     public AdminBookResponse create(AdminBookRequest request) {
-        if (booksRepository.existsById(request.getBookId())) {
+        String newBookId = (request.getBookId() == null || request.getBookId().isBlank())
+                ? generateBookId()
+                : request.getBookId().trim();
+        if (booksRepository.existsById(newBookId)) {
             throw new RuntimeException("BookId đã tồn tại");
         }
 
         Books book = new Books();
-        book.setBookId(request.getBookId());
+        book.setBookId(newBookId);
         applyRequest(book, request);
 
 
@@ -135,10 +144,29 @@ public class AdminProductService {
     }
 
     public void delete(String bookId) {
-        if (!booksRepository.existsById(bookId)) {
-            throw new RuntimeException("Không tìm thấy sách");
+        Books book = booksRepository.findById(bookId)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy sách"));
+        book.setIsActive(false);
+        booksRepository.save(book);
+    }
+
+    public String uploadCover(MultipartFile file) {
+        if (file == null || file.isEmpty()) {
+            throw new RuntimeException("File ảnh không hợp lệ");
         }
-        booksRepository.deleteById(bookId);
+        try {
+            String uploadDir = System.getProperty("user.dir") + File.separator + "uploads" + File.separator + "products";
+            Path uploadPath = Paths.get(uploadDir);
+            Files.createDirectories(uploadPath);
+
+            String safeName = DateTimeFormatter.ofPattern("yyyyMMddHHmmssSSS").format(LocalDateTime.now())
+                    + "_" + (file.getOriginalFilename() == null ? "cover.jpg" : file.getOriginalFilename().replaceAll("\\s+", "_"));
+            Path target = uploadPath.resolve(safeName);
+            Files.write(target, file.getBytes());
+            return "/uploads/products/" + safeName;
+        } catch (IOException e) {
+            throw new RuntimeException("Upload ảnh thất bại", e);
+        }
     }
 
     private void applyRequest(Books book, AdminBookRequest request) {
@@ -154,7 +182,7 @@ public class AdminProductService {
         book.setOriginalPrice(request.getOriginalPrice());
         book.setQuantity(request.getQuantity());
         book.setPicture(request.getPicture());
-        book.setIsActive(request.getIsActive() != null ? request.getIsActive() : true);
+        book.setIsActive(Boolean.TRUE.equals(request.getIsActive()) || request.getIsActive() == null);
         book.setCategory(category);
     }
 
@@ -196,5 +224,20 @@ public class AdminProductService {
             log.error("Lỗi trong quá trình đồng bộ dữ liệu sách: ", e);
             throw new RuntimeException("Đồng bộ dữ liệu thất bại: " + e.getMessage(), e);
         }
+    }
+
+    private String generateBookId() {
+        String prefix = "BK";
+        int next = booksRepository.findTopByBookIdStartingWithOrderByBookIdDesc(prefix)
+                .map(b -> {
+                    String id = b.getBookId();
+                    try {
+                        return Integer.parseInt(id.substring(prefix.length())) + 1;
+                    } catch (Exception ignored) {
+                        return 1;
+                    }
+                })
+                .orElse(1);
+        return String.format("BK%04d", next);
     }
 }

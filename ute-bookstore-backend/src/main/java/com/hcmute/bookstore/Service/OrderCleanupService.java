@@ -30,7 +30,7 @@ public class OrderCleanupService {
         long oneDayAgoMillis = System.currentTimeMillis() - (24 * 60 * 60 * 1000);
         Date expiryDate = new Date(oneDayAgoMillis);
 
-        List<Orders> expiredOrders = ordersRepository.findExpiredVnpayOrders(expiryDate);
+        List<Orders> expiredOrders = ordersRepository.findExpiredVnPayOrders(expiryDate);
 
         if (!expiredOrders.isEmpty()) {
             System.out.println("⏰ [Hệ thống] Đang xử lý hoàn kho cho " + expiredOrders.size() + " đơn quá hạn...");

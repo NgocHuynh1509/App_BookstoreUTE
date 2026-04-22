@@ -44,4 +44,9 @@ public class MeiliSearchService {
             System.err.println("❌ Lỗi đồng bộ: " + e.getMessage());
         }
     }
+
+    // Stub for searchBookIds
+    public java.util.List<String> searchBookIds(String query, String filter, int limit) {
+        return java.util.Collections.emptyList();
+    }
 }

@@ -27,6 +27,77 @@ public class GeminiService {
 
     public record HistoryEntry(String role, String text) {}
 
+    public QueryUnderstandingService.SemanticQuery understandUserQuery(String userText, List<HistoryEntry> history) {
+        QueryUnderstandingService.SemanticQuery parsed = new QueryUnderstandingService.SemanticQuery();
+        parsed.rawQuery = userText;
+        parsed.keyword = userText;
+        parsed.valid = false;
+        if (userText == null || userText.isBlank()) {
+            return parsed;
+        }
+        if (geminiApiKey == null || geminiApiKey.isBlank()) {
+            return parsed;
+        }
+        try {
+            String prompt = "Extract semantic search query JSON with fields: rawQuery,keyword,category,author,minPrice,maxPrice,intent,valid.\n"
+                    + "User query: " + userText;
+            String raw = callGemini(prompt);
+            if (raw == null || raw.isBlank()) {
+                return parsed;
+            }
+            JsonNode root = objectMapper.readTree(raw);
+            JsonNode parts = root.path("candidates").path(0).path("content").path("parts");
+            String combined = "";
+            if (parts.isArray()) {
+                StringBuilder sb = new StringBuilder();
+                for (JsonNode p : parts) {
+                    sb.append(p.path("text").asText(""));
+                }
+                combined = sb.toString().trim();
+            }
+            JsonNode result = objectMapper.readTree(extractJson(combined));
+            parsed.rawQuery = result.path("rawQuery").asText(userText);
+            parsed.keyword = result.path("keyword").asText(userText);
+            parsed.category = result.path("category").asText("");
+            parsed.author = result.path("author").asText("");
+            parsed.minPrice = result.has("minPrice") ? result.path("minPrice").asDouble() : null;
+            parsed.maxPrice = result.has("maxPrice") ? result.path("maxPrice").asDouble() : null;
+            parsed.intent = result.path("intent").asText("BOOK_SEARCH");
+            parsed.valid = result.path("valid").asBoolean(true);
+            return parsed;
+        } catch (Exception ignored) {
+            return parsed;
+        }
+    }
+
+    public String generateEmpatheticReply(String userText, QueryUnderstandingService.SemanticQuery query, int bookCount) {
+        if (geminiApiKey == null || geminiApiKey.isBlank()) {
+            return "";
+        }
+        try {
+            String prompt = "Write natural Vietnamese reply for bookstore assistant. "
+                    + "Book count: " + bookCount + ". Query: " + userText
+                    + ". Intent: " + query.intent + ", category: " + query.category
+                    + ". Return JSON: {\"reply\":\"...\"}";
+            String raw = callGemini(prompt);
+            if (raw == null || raw.isBlank()) return "";
+            JsonNode root = objectMapper.readTree(raw);
+            JsonNode parts = root.path("candidates").path(0).path("content").path("parts");
+            String combined = "";
+            if (parts.isArray()) {
+                StringBuilder sb = new StringBuilder();
+                for (JsonNode p : parts) {
+                    sb.append(p.path("text").asText(""));
+                }
+                combined = sb.toString().trim();
+            }
+            JsonNode result = objectMapper.readTree(extractJson(combined));
+            return result.path("reply").asText("");
+        } catch (Exception ignored) {
+            return "";
+        }
+    }
+
     public GeminiResult generateRecommendations(String userText, List<Books> candidates) {
         return generateRecommendations(userText, candidates, List.of());
     }

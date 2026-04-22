@@ -10,7 +10,9 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.Map;
 
@@ -52,6 +54,12 @@ public class AdminProductController {
     @DeleteMapping("/{bookId}")
     public void delete(@PathVariable String bookId) {
         adminProductService.delete(bookId);
+    }
+
+    @PostMapping("/upload-cover")
+    public ResponseEntity<Map<String, String>> uploadCover(@RequestParam("file") MultipartFile file) {
+        String imageUrl = adminProductService.uploadCover(file);
+        return ResponseEntity.ok(Map.of("imageUrl", imageUrl));
     }
 
     @PostMapping("/sync-search")

@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:intl/intl.dart';
+import 'package:image_picker/image_picker.dart';
+import 'dart:io';
 
 import '../../../widgets/admin/admin_button.dart';
 import '../../../widgets/admin/search_bar_widget.dart';
@@ -363,30 +365,6 @@ class _ProductsScreenState extends ConsumerState<ProductsScreen> {
                         label: const Text('Bộ lọc'),
                       ),
                     ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: OutlinedButton.icon(
-                        onPressed: () {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Chức năng nhập CSV đang hoàn thiện.')),
-                          );
-                        },
-                        icon: const Icon(Icons.file_upload_outlined),
-                        label: const Text('Nhập CSV'),
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: OutlinedButton.icon(
-                        onPressed: () {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Chức năng xuất báo cáo đang hoàn thiện.')),
-                          );
-                        },
-                        icon: const Icon(Icons.file_download_outlined),
-                        label: const Text('Xuất báo cáo'),
-                      ),
-                    ),
                   ],
                 ),
                 const SizedBox(height: 8),
@@ -713,11 +691,15 @@ class _ProductFormState extends ConsumerState<_ProductForm> {
   late final TextEditingController _priceController;
   late final TextEditingController _quantityController;
   late final TextEditingController _pictureController;
-  late final TextEditingController _categoryController;
+  String? _selectedCategoryId;
+  List<Map<String, dynamic>> _categories = [];
+  bool _loadingCategories = false;
+  bool _submitting = false;
   late final TextEditingController _publisherController;
   late final TextEditingController _originalPriceController;
   late final TextEditingController _descriptionController;
   bool _isActive = true;
+  File? _localImage;
 
   @override
   void initState() {
@@ -729,11 +711,12 @@ class _ProductFormState extends ConsumerState<_ProductForm> {
     _priceController = TextEditingController(text: p?.price.toString() ?? '');
     _quantityController = TextEditingController(text: p?.quantity.toString() ?? '');
     _pictureController = TextEditingController(text: p?.picture ?? '');
-    _categoryController = TextEditingController(text: p?.categoryId ?? '');
+    _selectedCategoryId = p?.categoryId;
     _publisherController = TextEditingController(text: p?.publisher ?? '');
     _originalPriceController = TextEditingController(text: p?.originalPrice?.toString() ?? '');
     _descriptionController = TextEditingController(text: p?.description ?? '');
     _isActive = p?.isActive ?? true;
+    _loadCategories();
   }
 
   @override
@@ -744,11 +727,55 @@ class _ProductFormState extends ConsumerState<_ProductForm> {
     _priceController.dispose();
     _quantityController.dispose();
     _pictureController.dispose();
-    _categoryController.dispose();
     _publisherController.dispose();
     _originalPriceController.dispose();
     _descriptionController.dispose();
     super.dispose();
+  }
+
+  Future<void> _loadCategories() async {
+    setState(() => _loadingCategories = true);
+    try {
+      final data = await ref.read(productRepositoryProvider).fetchCategories();
+      if (!mounted) return;
+      setState(() {
+        _categories = data;
+        if (_selectedCategoryId == null && data.isNotEmpty) {
+          _selectedCategoryId = (data.first['id'] ?? data.first['categoryId'])?.toString();
+        }
+      });
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Không tải được danh mục.')),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _loadingCategories = false);
+    }
+  }
+
+  Future<void> _pickAndUploadImage() async {
+    final picker = ImagePicker();
+    final picked = await picker.pickImage(source: ImageSource.gallery, imageQuality: 85);
+    if (picked == null) return;
+    setState(() => _localImage = File(picked.path));
+    try {
+      final url = await ref
+          .read(productRepositoryProvider)
+          .uploadCover(picked.path, picked.name);
+      if (!mounted) return;
+      setState(() => _pictureController.text = url);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Upload ảnh thành công')),
+      );
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Upload ảnh thất bại')),
+        );
+      }
+    }
   }
 
   @override
@@ -772,11 +799,17 @@ class _ProductFormState extends ConsumerState<_ProductForm> {
               style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 16),
             ),
             const SizedBox(height: 12),
-            TextFormField(
-              controller: _bookIdController,
-              decoration: const InputDecoration(labelText: 'Mã sách / ISBN'),
-              validator: (value) => value == null || value.isEmpty ? 'Không được trống' : null,
-            ),
+            if (widget.product != null)
+              TextFormField(
+                controller: _bookIdController,
+                readOnly: true,
+                decoration: const InputDecoration(labelText: 'Mã sách'),
+              ),
+            if (widget.product == null)
+              const Padding(
+                padding: EdgeInsets.only(bottom: 8),
+                child: Text('Mã sách sẽ được hệ thống tự sinh (BK0001...)'),
+              ),
             TextFormField(
               controller: _titleController,
               decoration: const InputDecoration(labelText: 'Tên sách'),
@@ -792,10 +825,23 @@ class _ProductFormState extends ConsumerState<_ProductForm> {
               decoration: const InputDecoration(labelText: 'Nhà xuất bản'),
               validator: (value) => value == null || value.isEmpty ? 'Không được trống' : null,
             ),
-            TextFormField(
-              controller: _categoryController,
-              decoration: const InputDecoration(labelText: 'Danh mục (CategoryId)'),
-            ),
+            _loadingCategories
+                ? const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 12),
+                    child: Center(child: CircularProgressIndicator()),
+                  )
+                : DropdownButtonFormField<String>(
+                    value: _selectedCategoryId,
+                    decoration: const InputDecoration(labelText: 'Danh mục'),
+                    items: _categories
+                        .map((c) => DropdownMenuItem<String>(
+                              value: (c['id'] ?? c['categoryId'])?.toString(),
+                              child: Text((c['name'] ?? c['categoryName'])?.toString() ?? ''),
+                            ))
+                        .toList(),
+                    onChanged: (v) => setState(() => _selectedCategoryId = v),
+                    validator: (v) => (v == null || v.isEmpty) ? 'Vui lòng chọn danh mục' : null,
+                  ),
             TextFormField(
               controller: _priceController,
               decoration: const InputDecoration(labelText: 'Giá bán'),
@@ -813,10 +859,41 @@ class _ProductFormState extends ConsumerState<_ProductForm> {
               keyboardType: TextInputType.number,
               validator: (value) => value == null || value.isEmpty ? 'Không được trống' : null,
             ),
-            TextFormField(
-              controller: _pictureController,
-              decoration: const InputDecoration(labelText: 'Ảnh bìa (URL)'),
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                Expanded(
+                  child: TextFormField(
+                    controller: _pictureController,
+                    decoration: const InputDecoration(labelText: 'Ảnh bìa (URL)'),
+                    validator: (value) => value == null || value.isEmpty ? 'Vui lòng upload ảnh bìa' : null,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                ElevatedButton.icon(
+                  onPressed: _pickAndUploadImage,
+                  icon: const Icon(Icons.image),
+                  label: const Text('Chọn'),
+                )
+              ],
             ),
+            const SizedBox(height: 8),
+            if (_localImage != null)
+              ClipRRect(
+                borderRadius: BorderRadius.circular(8),
+                child: Image.file(_localImage!, height: 120, fit: BoxFit.cover),
+              )
+            else if (_pictureController.text.isNotEmpty)
+              ClipRRect(
+                borderRadius: BorderRadius.circular(8),
+                child: Image.network(
+                  _pictureController.text.startsWith('http')
+                      ? _pictureController.text
+                      : 'http://10.0.2.2:8080${_pictureController.text}',
+                  height: 120,
+                  fit: BoxFit.cover,
+                ),
+              ),
             TextFormField(
               controller: _descriptionController,
               decoration: const InputDecoration(labelText: 'Mô tả chi tiết'),
@@ -832,11 +909,12 @@ class _ProductFormState extends ConsumerState<_ProductForm> {
             ),
             const SizedBox(height: 12),
             AdminButton(
-              label: 'Lưu',
-              onPressed: () async {
+              label: _submitting ? 'Đang lưu...' : 'Lưu',
+              onPressed: _submitting ? null : () async {
                 if (!_formKey.currentState!.validate()) return;
+                setState(() => _submitting = true);
                 final request = ProductRequest(
-                  bookId: _bookIdController.text.trim(),
+                  bookId: widget.product == null ? null : _bookIdController.text.trim(),
                   title: _titleController.text.trim(),
                   author: _authorController.text.trim(),
                   publisher: _publisherController.text.trim(),
@@ -847,17 +925,29 @@ class _ProductFormState extends ConsumerState<_ProductForm> {
                   quantity: int.tryParse(_quantityController.text.trim()) ?? 0,
                   picture: _pictureController.text.trim(),
                   isActive: _isActive,
-                  categoryId: _categoryController.text.trim(),
+                  categoryId: _selectedCategoryId ?? '',
                 );
 
-                if (widget.product == null) {
-                  await repository.create(request);
-                } else {
-                  await repository.update(widget.product!.bookId, request);
+                try {
+                  if (widget.product == null) {
+                    await repository.create(request);
+                  } else {
+                    await repository.update(widget.product!.bookId, request);
+                  }
+                  if (!mounted) return;
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text(widget.product == null ? 'Thêm sách thành công' : 'Cập nhật sách thành công')),
+                  );
+                  Navigator.of(context).pop(true);
+                } catch (e) {
+                  if (mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('Lưu thất bại: $e')),
+                    );
+                  }
+                } finally {
+                  if (mounted) setState(() => _submitting = false);
                 }
-
-                if (!mounted) return;
-                Navigator.of(context).pop(true);
               },
             ),
           ],

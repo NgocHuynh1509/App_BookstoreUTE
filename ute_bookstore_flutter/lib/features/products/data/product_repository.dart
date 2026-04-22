@@ -39,6 +39,11 @@ class ProductRepository {
 
   Future<void> syncSearchAndMl() => _api.syncSearchAndMl();
 
+  Future<List<Map<String, dynamic>>> fetchCategories() => _api.fetchCategories();
+
+  Future<String> uploadCover(String filePath, String fileName) =>
+      _api.uploadCover(filePath, fileName);
+
 }
 
 class ProductPage {

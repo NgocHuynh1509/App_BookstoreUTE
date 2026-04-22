@@ -12,6 +12,7 @@ import java.util.List;
 public interface BooksRepository extends JpaRepository<Books, String> {
 
     List<Books> findByIsActiveTrue();
+    java.util.Optional<Books> findTopByBookIdStartingWithOrderByBookIdDesc(String prefix);
 
     List<Books> findByIsActiveTrueAndCategory_CategoryId(String categoryId);
 
@@ -57,4 +58,40 @@ public interface BooksRepository extends JpaRepository<Books, String> {
     )
     List<Books> searchForAi(@org.springframework.data.repository.query.Param("keyword") String keyword,
                             org.springframework.data.domain.Pageable pageable);
+
+    @org.springframework.data.jpa.repository.Query(
+            """
+            select b from Books b
+            left join b.category c
+            where b.isActive = true
+              and b.quantity > 0
+              and lower(c.categoryName) like lower(concat('%', :categoryKeyword, '%'))
+              and (
+                lower(b.title) like lower(concat('%', :keyword, '%'))
+                or lower(b.description) like lower(concat('%', :keyword, '%'))
+                or lower(b.author) like lower(concat('%', :keyword, '%'))
+              )
+            order by b.soldQuantity desc
+            """
+    )
+    List<Books> searchByCategory(
+            @org.springframework.data.repository.query.Param("categoryKeyword") String categoryKeyword,
+            @org.springframework.data.repository.query.Param("keyword") String keyword,
+            org.springframework.data.domain.Pageable pageable
+    );
+
+    @org.springframework.data.jpa.repository.Query(
+            """
+            select b from Books b
+            left join b.category c
+            where b.isActive = true
+              and b.quantity > 0
+              and lower(c.categoryName) like lower(concat('%', :categoryName, '%'))
+            order by b.soldQuantity desc
+            """
+    )
+    List<Books> findByCategoryNameOrderBySoldQuantity(
+            @org.springframework.data.repository.query.Param("categoryName") String categoryName,
+            org.springframework.data.domain.Pageable pageable
+    );
 }

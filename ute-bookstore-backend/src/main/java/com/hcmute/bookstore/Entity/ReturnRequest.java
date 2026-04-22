@@ -49,7 +49,6 @@ public class ReturnRequest {
     private String status; // PENDING (Chờ), APPROVED (Đã duyệt), REFUNDED (Đã trả tiền), REJECTED (Từ chối)
 
     @Column(name = "created_at")
-    @Temporal(TemporalType.TIMESTAMP)
     private Date createdAt = new Date();
 
     public ReturnRequest() {}

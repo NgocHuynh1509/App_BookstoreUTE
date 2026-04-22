@@ -4,10 +4,10 @@ import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
+import lombok.Builder.Default;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 
 @Entity
@@ -35,11 +35,11 @@ public class Customers {
     @Column(name = "address", length = 100, nullable = false)
     private String address;
 
-    @Temporal(TemporalType.DATE)
     @Column(name = "dateOfBirth")
     private LocalDate dateOfBirth;
 
     @OneToMany(mappedBy = "customer", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @Default
     private List<Review> reviews = new ArrayList<>();
 
     @OneToOne(mappedBy = "customer", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
@@ -49,6 +49,7 @@ public class Customers {
     private Users user;
 
     @OneToMany(mappedBy = "customer", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @Default
     private List<Orders> orders = new ArrayList<>();
 
     public Customers() {
