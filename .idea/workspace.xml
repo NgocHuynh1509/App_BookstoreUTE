@@ -5,42 +5,22 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="ec56e615-c574-46af-93be-dd7e99257ed6" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/.idea/copilot.data.migration.agent.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/copilotDiffState.xml" beforeDir="false" />
+      <change afterPath="$PROJECT_DIR$/.idea/shelf/Uncommitted_changes_before_Update_at_4_22_2026_3_36_PM_[Changes]/shelved.patch" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.idea/shelf/Uncommitted_changes_before_Update_at_4_22_2026_3_36_PM__Changes_.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/uploads/e0878aa2-4024-493e-b8d0-58c3655de851.jpg" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/dataSources.local.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/dataSources.local.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/my-app/app.config.js" beforeDir="false" afterPath="$PROJECT_DIR$/my-app/app.config.js" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/my-app/app.json" beforeDir="false" afterPath="$PROJECT_DIR$/my-app/app.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/my-app/components/BookRecommendCard.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/my-app/components/BookRecommendCard.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/my-app/components/ChatBubble.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/my-app/components/ChatBubble.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/my-app/components/external-link.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/my-app/components/external-link.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/my-app/package-lock.json" beforeDir="false" afterPath="$PROJECT_DIR$/my-app/package-lock.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/my-app/package.json" beforeDir="false" afterPath="$PROJECT_DIR$/my-app/package.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/my-app/screens/BookDetail.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/my-app/screens/BookDetail.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/my-app/screens/BookPreviewScreen.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/my-app/screens/BookPreviewScreen.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/my-app/screens/NotificationScreen.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/my-app/screens/NotificationScreen.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/my-app/screens/ReviewScreen.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/my-app/screens/ReviewScreen.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/my-app/screens/SearchResultScreen.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/my-app/screens/SearchResultScreen.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/my-app/screens/SearchScreen.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/my-app/screens/SearchScreen.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/my-app/screens/forgot-password.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/my-app/screens/forgot-password.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/my-app/screens/home.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/my-app/screens/home.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/my-app/screens/index.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/my-app/screens/index.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/my-app/screens/profile/AddressForm.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/my-app/screens/profile/AddressForm.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/my-app/screens/profile/AddressList.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/my-app/screens/profile/AddressList.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/my-app/screens/profile/CartScreen.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/my-app/screens/profile/CartScreen.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/my-app/screens/profile/ChangeEmailScreen.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/my-app/screens/profile/ChangeEmailScreen.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/my-app/screens/profile/ChangePasswordScreen.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/my-app/screens/profile/ChangePasswordScreen.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/my-app/screens/profile/ChatScreen.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/my-app/screens/profile/ChatScreen.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/my-app/screens/profile/CheckoutScreen.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/my-app/screens/profile/CheckoutScreen.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/my-app/screens/profile/EditInfoScreen.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/my-app/screens/profile/EditInfoScreen.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/my-app/screens/profile/OrderDetail.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/my-app/screens/profile/OrderDetail.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/my-app/screens/profile/OrderHistory.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/my-app/screens/profile/OrderHistory.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/my-app/screens/profile/ProfileScreen.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/my-app/screens/profile/ProfileScreen.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/my-app/screens/profile/ReturnDetailScreen.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/my-app/screens/profile/ReturnDetailScreen.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/my-app/screens/profile/ReturnRequestScreen.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/my-app/screens/profile/ReturnRequestScreen.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/my-app/screens/register.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/my-app/screens/register.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/my-app/screens/welcome.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/my-app/screens/welcome.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/my-app/services/gemini_service.ts" beforeDir="false" afterPath="$PROJECT_DIR$/my-app/services/gemini_service.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ute-bookstore-backend/src/main/java/com/hcmute/bookstore/Controller/Admin/AdminProductController.java" beforeDir="false" afterPath="$PROJECT_DIR$/ute-bookstore-backend/src/main/java/com/hcmute/bookstore/Controller/Admin/AdminProductController.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ute-bookstore-backend/src/main/java/com/hcmute/bookstore/Service/AdminProductService.java" beforeDir="false" afterPath="$PROJECT_DIR$/ute-bookstore-backend/src/main/java/com/hcmute/bookstore/Service/AdminProductService.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ute-bookstore-backend/src/main/java/com/hcmute/bookstore/UteBookstoreBackendApplication.java" beforeDir="false" afterPath="$PROJECT_DIR$/ute-bookstore-backend/src/main/java/com/hcmute/bookstore/UteBookstoreBackendApplication.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ute_bookstore_flutter/lib/features/orders/presentation/order_detail_screen.dart" beforeDir="false" afterPath="$PROJECT_DIR$/ute_bookstore_flutter/lib/features/orders/presentation/order_detail_screen.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ute_bookstore_flutter/lib/features/products/data/product_api.dart" beforeDir="false" afterPath="$PROJECT_DIR$/ute_bookstore_flutter/lib/features/products/data/product_api.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ute_bookstore_flutter/lib/features/products/data/product_repository.dart" beforeDir="false" afterPath="$PROJECT_DIR$/ute_bookstore_flutter/lib/features/products/data/product_repository.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ute_bookstore_flutter/lib/features/products/presentation/products_screen.dart" beforeDir="false" afterPath="$PROJECT_DIR$/ute_bookstore_flutter/lib/features/products/presentation/products_screen.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ute_bookstore_python/books_latest.csv" beforeDir="false" afterPath="$PROJECT_DIR$/ute_bookstore_python/books_latest.csv" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/ute_bookstore_python/orders.csv" beforeDir="false" afterPath="$PROJECT_DIR$/ute_bookstore_python/orders.csv" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ute_bookstore_python/sim_matrix.csv" beforeDir="false" afterPath="$PROJECT_DIR$/ute_bookstore_python/sim_matrix.csv" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -90,7 +70,7 @@
   <component name="GithubPullRequestsUISettings">{
   &quot;selectedUrlAndAccountId&quot;: {
     &quot;url&quot;: &quot;https://github.com/NgocHuynh1509/App_BookstoreUTE&quot;,
-    &quot;accountId&quot;: &quot;6b9bdd18-e36a-48cf-a862-048d0fb41bd2&quot;
+    &quot;accountId&quot;: &quot;06dbbb52-7f1f-4539-a06a-b1412efea5b8&quot;
   }
 }</component>
   <component name="MavenImportPreferences">
@@ -134,7 +114,7 @@
     "cf.first.check.clang-format": "false",
     "cidr.known.project.marker": "true",
     "com.google.services.firebase.aqiPopupShown": "true",
-    "git-widget-placeholder": "main",
+    "git-widget-placeholder": "Merging main",
     "ignore.virus.scanning.warn.message": "true",
     "kotlin-language-version-configured": "true",
     "last_opened_file_path": "D:/CNTT25-26/Mobile_Advance/DoAn/App_BookstoreUTE",
@@ -209,7 +189,6 @@
       <workItem from="1776673780877" duration="10003000" />
       <workItem from="1776679195457" duration="1086000" />
       <workItem from="1776753362649" duration="5530000" />
-      <workItem from="1776857931870" duration="895000" />
     </task>
     <task id="LOCAL-00001" summary="sql">
       <option name="closed" value="true" />

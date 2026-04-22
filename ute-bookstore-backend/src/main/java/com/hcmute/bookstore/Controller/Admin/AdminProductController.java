@@ -8,8 +8,11 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.Map;
 
 @RestController
 @RequestMapping({"/admin/products", "/products"})
@@ -49,5 +52,16 @@ public class AdminProductController {
     @DeleteMapping("/{bookId}")
     public void delete(@PathVariable String bookId) {
         adminProductService.delete(bookId);
+    }
+
+    @PostMapping("/sync-search")
+    public ResponseEntity<?> syncSearchAndMl() {
+        adminProductService.syncBooksAndRebuildMl();
+        return ResponseEntity.ok(
+                Map.of(
+                        "success", true,
+                        "message", "Đồng bộ CSV, Meilisearch và build ML thành công"
+                )
+        );
     }
 }
