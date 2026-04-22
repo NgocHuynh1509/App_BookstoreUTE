@@ -432,9 +432,9 @@ export default function WelcomeScreen({ navigation }: any) {
     ]).start();
 
     // Progress
-    Animated.timing(progressAnim, { toValue: 1, duration: 10000, delay: 500, useNativeDriver: false }).start();
+    Animated.timing(progressAnim, { toValue: 1, duration: 60000, delay: 500, useNativeDriver: false }).start();
 
-    const navTimer = setTimeout(() => navigation.replace("MainTabs"), 10500);
+    const navTimer = setTimeout(() => navigation.replace("MainTabs"), 60500);
     return () => clearTimeout(navTimer);
   }, []);
 
@@ -574,7 +574,7 @@ export default function WelcomeScreen({ navigation }: any) {
             <Animated.View style={[styles.progressFill, { width: progressWidth }]} />
             <Animated.View style={[styles.progressGlowTip, { left: progressWidth }]} />
           </View>
-          <Text style={styles.progressHint}>Tự động chuyển sau 10 giây</Text>
+          <Text style={styles.progressHint}>Tự động chuyển sau 60 giây</Text>
         </View>
       </Animated.View>
 
