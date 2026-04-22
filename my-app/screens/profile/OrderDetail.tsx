@@ -421,7 +421,7 @@ export default function OrderDetail() {
 
         {/* ── PRODUCTS ─────────────────────────────────────────── */}
         <View style={s.card}>
-          <SectionHeader icon="books-outline" title={`Sản phẩm đã đặt (${orderData.items.length})`} />
+          <SectionHeader icon="book-outline" title={`Sản phẩm đã đặt (${orderData.items.length})`} />
           {orderData.items.map((item: any, index: number) => (
             <View
               key={index}

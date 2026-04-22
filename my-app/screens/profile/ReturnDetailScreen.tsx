@@ -166,11 +166,17 @@ export default function ReturnDetailScreen() {
             <View style={s.imageSection}>
               <Text style={[s.label, { marginBottom: 12 }]}>Minh chứng hình ảnh</Text>
               <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-                {returnData.imageEvidences.map((img: string, i: number) => (
-                  <TouchableOpacity key={i} onPress={() => setSelectedImage(img)}>
-                    <Image source={{ uri: img }} style={s.evidenceImageMini} />
-                  </TouchableOpacity>
-                ))}
+                {returnData.imageEvidences.map((img: string, i: number) => {
+                  const imageUrl = img.startsWith('data:image') || img.startsWith('http')
+                    ? img
+                    : `${BASE_URL}/uploads/${img}`;
+
+                  return (
+                    <TouchableOpacity key={i} onPress={() => setSelectedImage(imageUrl)}>
+                      <Image source={{ uri: imageUrl }} style={s.evidenceImageMini} />
+                    </TouchableOpacity>
+                  );
+                })}
               </ScrollView>
             </View>
           )}

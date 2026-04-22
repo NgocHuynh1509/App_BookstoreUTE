@@ -24,6 +24,7 @@ public class BookRecommendService {
             pb.directory(pythonDir.toFile());
 
             Process process = pb.start();
+            long start = System.currentTimeMillis();
 
             String stdout;
             try (BufferedReader reader = new BufferedReader(
@@ -38,6 +39,7 @@ public class BookRecommendService {
             }
 
             int exitCode = process.waitFor();
+            log.info("Thời gian Python chạy: {} ms", (System.currentTimeMillis() - start));
 
             if (exitCode != 0) {
                 log.error("Python ML error: {}", stderr);

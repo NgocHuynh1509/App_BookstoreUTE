@@ -26,6 +26,9 @@ public class AdminOrderService {
     @Autowired
     ReturnRequestRepository returnRequestRepository;
 
+    @Autowired
+    private PaymentRepository paymentRepository;
+
 //    public Page<AdminOrderResponse> getOrders(String status, Pageable pageable) {
 //
 //        if ("ReturnRequest".equalsIgnoreCase(status)) {
@@ -261,19 +264,32 @@ public Page<AdminOrderResponse> getOrders(String status, Pageable pageable) {
     // Trong AdminOrderService.java
     @Transactional
     public void handleReturnRequest(String orderId, HandleReturnRequest request) {
+        // 1. Tìm yêu cầu hoàn trả
         ReturnRequest rr = returnRequestRepository.findByOrder_OrderId(orderId)
                 .orElseThrow(() -> new RuntimeException("Yêu cầu không tồn tại"));
 
+        // 2. Cập nhật thông tin xử lý của Admin
         rr.setStatus(request.getStatus());
         rr.setReply(request.getReply());
 
-        // Nếu đồng ý (APPROVED), cập nhật trạng thái đơn hàng sang Returned
+        // Trong AdminOrderService.java
         if ("FINISHED".equals(request.getStatus())) {
             Orders order = rr.getOrder();
             order.setStatus("Returned");
             ordersRepository.save(order);
+
+            // Cập nhật trạng thái Payment
+            Payment payment = paymentRepository.findByOrder_OrderId(orderId);
+            if (payment != null) {
+                payment.setStatus("returned");
+                paymentRepository.save(payment);
+            } else {
+                // Log hoặc báo lỗi nếu cần thiết khi đơn hàng không có thông tin thanh toán
+                System.out.println("Cảnh báo: Không tìm thấy payment cho đơn: " + orderId);
+            }
         }
 
+        // Lưu lại ReturnRequest
         returnRequestRepository.save(rr);
     }
 }

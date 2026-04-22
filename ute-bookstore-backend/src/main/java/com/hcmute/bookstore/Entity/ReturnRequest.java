@@ -30,7 +30,7 @@ public class ReturnRequest {
     // 2. Sửa trường này
     @ElementCollection
     @CollectionTable(name = "return_images", joinColumns = @JoinColumn(name = "returnId"))
-    @Column(name = "image_url")
+    @Column(name = "image_url", columnDefinition = "LONGTEXT")
     private List<String> imageEvidences = new ArrayList<>(); // Khởi tạo mảng rỗng để tránh NullPointerException
 
 
@@ -78,7 +78,6 @@ public class ReturnRequest {
 
     public String getAccountNumber() { return accountNumber; }
     public void setAccountNumber(String accountNumber) { this.accountNumber = accountNumber; }
-
     public String getStatus() { return status; }
     public void setStatus(String status) { this.status = status; }
 

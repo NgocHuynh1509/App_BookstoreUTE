@@ -141,7 +141,7 @@ export default function EditInfoScreen() {
 
   const pickImage = async () => {
     let result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      mediaTypes: ['images'],
       allowsEditing: true, quality: 1,
     });
     if (!result.canceled) uploadAvatar(result.assets[0]);

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+import 'dart:convert';
 
 import '../../../app/providers.dart';
 import '../data/order_detail_model.dart';
@@ -764,7 +765,7 @@ class _ReturnRequestCard extends StatelessWidget {
                 itemBuilder: (context, index) {
                   final rawUrl = request.images[index];
                   // Xử lý URL đầy đủ
-                  final imgUrl = rawUrl.startsWith('http')
+                  final imgUrl = (rawUrl.startsWith('http') || rawUrl.startsWith('data:image'))
                       ? rawUrl
                       : 'http://10.0.2.2:8080/uploads/$rawUrl'; // Điều chỉnh IP theo server của bạn
 
@@ -784,15 +785,25 @@ class _ReturnRequestCard extends StatelessWidget {
                       tag: imgUrl, // Tag Hero phải khớp với tag bên FullScreenImagePage
                       child: ClipRRect(
                         borderRadius: BorderRadius.circular(8),
-                        child: Image.network(
-                          imgUrl,
-                          width: 100,
-                          height: 100,
-                          fit: BoxFit.cover,
-                          errorBuilder: (_, __, ___) => Container(
-                            width: 100, color: Colors.grey.shade200, child: const Icon(Icons.broken_image),
-                          ),
-                        ),
+                        child: rawUrl.startsWith('data:image')
+                            ? Image.memory(
+                                base64Decode(rawUrl.split(',').last),
+                                width: 100,
+                                height: 100,
+                                fit: BoxFit.cover,
+                                errorBuilder: (_, __, ___) => Container(
+                                  width: 100, color: Colors.grey.shade200, child: const Icon(Icons.broken_image),
+                                ),
+                              )
+                            : Image.network(
+                                imgUrl,
+                                width: 100,
+                                height: 100,
+                                fit: BoxFit.cover,
+                                errorBuilder: (_, __, ___) => Container(
+                                  width: 100, color: Colors.grey.shade200, child: const Icon(Icons.broken_image),
+                                ),
+                              ),
                       ),
                     ),
                   );
@@ -883,13 +894,21 @@ class FullScreenImagePage extends StatelessWidget {
             panEnabled: true, // Cho phép kéo ảnh khi phóng to
             minScale: 0.5,
             maxScale: 4.0,
-            child: Image.network(
-              imageUrl,
-              fit: BoxFit.contain, // Hiển thị trọn vẹn ảnh
-              errorBuilder: (_, __, ___) => const Center(
-                child: Icon(Icons.broken_image, color: Colors.white, size: 64),
-              ),
-            ),
+            child: imageUrl.startsWith('data:image')
+                ? Image.memory(
+                    base64Decode(imageUrl.split(',').last),
+                    fit: BoxFit.contain,
+                    errorBuilder: (_, __, ___) => const Center(
+                      child: Icon(Icons.broken_image, color: Colors.white, size: 64),
+                    ),
+                  )
+                : Image.network(
+                    imageUrl,
+                    fit: BoxFit.contain, // Hiển thị trọn vẹn ảnh
+                    errorBuilder: (_, __, ___) => const Center(
+                      child: Icon(Icons.broken_image, color: Colors.white, size: 64),
+                    ),
+                  ),
           ),
         ),
       ),

@@ -8,6 +8,7 @@ import * as ImagePicker from 'expo-image-picker';
 import { Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import Constants from "expo-constants";
+import * as FileSystem from 'expo-file-system/legacy';
 
 const BASE_URL = Constants.expoConfig?.extra?.API_URL;
 
@@ -28,16 +29,16 @@ export default function ReturnRequestScreen() {
   // 2. LOGIC CHỌN NHIỀU ẢNH
   const pickImages = async () => {
     let result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      mediaTypes: ['images'],
       allowsMultipleSelection: true, // Cho phép chọn nhiều
       selectionLimit: 0, // Giới hạn tối đa 5 ảnh
-      quality: 0.5,
+      quality: 0.3, // Giảm chất lượng xuống để giảm dung lượng
     });
 
     if (!result.canceled) {
       // Lấy danh sách URI từ các ảnh đã chọn
       const selectedUris = result.assets.map(asset => asset.uri);
-      setImages(selectedUris);
+      setImages(prev => [...prev, ...selectedUris]);
     }
   };
 
@@ -75,6 +76,17 @@ export default function ReturnRequestScreen() {
     try {
       const token = await AsyncStorage.getItem("token");
 
+      const base64Images = await Promise.all(
+        images.map(async (uri) => {
+          const base64 = await FileSystem.readAsStringAsync(uri, {
+            encoding: 'base64',
+          });
+          const extension = uri.split('.').pop()?.toLowerCase() || 'jpeg';
+          const mimeType = extension === 'png' ? 'image/png' : 'image/jpeg';
+          return `data:${mimeType};base64,${base64}`;
+        })
+      );
+
       const response = await fetch(`${BASE_URL}/api/orders/returns/submit`, {
         method: "POST",
         headers: {
@@ -87,7 +99,7 @@ export default function ReturnRequestScreen() {
           bankName,
           accountHolder: accHolder,
           accountNumber: accNumber,
-          imageEvidences: images, // 3. TÊN BIẾN PHẢI KHỚP VỚI DTO BACKEND (có 's')
+          imageEvidences: base64Images, // 3. TÊN BIẾN PHẢI KHỚP VỚI DTO BACKEND (có 's')
         }),
       });
 
@@ -99,8 +111,9 @@ export default function ReturnRequestScreen() {
         const errorData = await response.json();
         Alert.alert("Lỗi", errorData.message || "Không thể gửi yêu cầu");
       }
-    } catch (error) {
-      Alert.alert("Lỗi", "Kết nối server thất bại");
+    } catch (error: any) {
+      console.log("SUBMIT ERROR:", error);
+      Alert.alert("Lỗi", `Kết nối server thất bại: ${error.message}`);
     } finally {
       setLoading(false);
     }
