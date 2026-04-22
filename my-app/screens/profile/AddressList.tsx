@@ -14,18 +14,41 @@ const BASE_URL = Constants.expoConfig?.extra?.API_URL;
 
 // ─── Palette ──────────────────────────────────────────────────────────────────
 const C = {
-  primary:     "#1565C0",
-  primaryMid:  "#1E88E5",
-  primarySoft: "#E3F2FD",
-  primaryTint: "#BBDEFB",
-  bg:          "#F0F6FF",
+  // Màu chính: Đỏ đậm (Deep Red) - Sang trọng, chuyên nghiệp
+  primary:     "#B8001A",
+
+  // Màu trung bình: Đỏ sáng hơn một chút cho các nút bấm (Actions)
+  primaryMid:  "#D0001F",
+
+  // Màu nền của các Component: Hồng nhạt cực nhẹ
+  primarySoft: "#FFF5F6",
+
+  // Màu highlight: Hồng nhạt (Tint) cho các vùng chọn
+  primaryTint: "#FFDDE1",
+
+  // Nền ứng dụng: Màu trắng sứ pha chút ấm (Tránh cảm giác lạnh lẽo của xanh)
+  bg:          "#FFF9F9",
+
+  // Bề mặt trắng tinh của các Card
   surface:     "#FFFFFF",
-  border:      "#DDEEFF",
-  text1:       "#0D1B3E",
-  text2:       "#4A5980",
-  text3:       "#9AA8C8",
+
+  // Viền: Màu xám hồng nhạt để đồng nhất với tone đỏ
+  border:      "#FEE2E2",
+
+  // Văn bản chính: Màu nâu đen (Gần đen nhưng ấm hơn, hợp với tone đỏ)
+  text1:       "#2D0A0A",
+
+  // Văn bản phụ: Màu xám đỏ trung tính
+  text2:       "#6D5B5B",
+
+  // Văn bản mờ/Ghi chú
+  text3:       "#AFA0A0",
+
+  // Giữ nguyên màu Sale là đỏ tươi (vốn đã là đỏ nên rất nổi bật)
   sale:        "#E53935",
-  saleBg:      "#FFF1EE",
+  saleBg:      "#FFF1F0",
+
+  // Giữ màu xanh lá cho các thông báo Thành công hoặc Còn hàng
   green:       "#00897B",
   greenBg:     "#E0F2F1",
 };

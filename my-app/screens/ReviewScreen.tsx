@@ -11,18 +11,41 @@ import React, { useEffect, useState } from "react";
 
 // ─── Palette ──────────────────────────────────────────────────────────────────
 const C = {
-  primary:     "#1565C0",
-  primaryMid:  "#1E88E5",
-  primarySoft: "#E3F2FD",
-  primaryTint: "#BBDEFB",
-  bg:          "#F0F6FF",
+  // Màu đỏ chuẩn thương hiệu UTE - Mạnh mẽ, nhiệt huyết
+  primary:     "#B8001A",
+
+  // Đỏ trung bình cho các trạng thái Active/Hover
+  primaryMid:  "#D0001F",
+
+  // Nền đỏ cực nhạt cho các block nội dung (thay cho màu xanh nhạt cũ)
+  primarySoft: "#FFF5F5",
+
+  // Màu hồng nhạt để highlight hoặc làm viền nhẹ
+  primaryTint: "#FFDADA",
+
+  // Nền ứng dụng: Trắng sứ ấm áp (Tránh mỏi mắt hơn trắng xanh cũ)
+  bg:          "#FFFBFB",
+
+  // Bề mặt các thẻ (Card), khung trắng tinh
   surface:     "#FFFFFF",
-  border:      "#DDEEFF",
-  text1:       "#0D1B3E",
-  text2:       "#4A5980",
-  text3:       "#9AA8C8",
-  star:        "#FFC107",
-  starOff:     "#D8E8F8",
+
+  // Viền: Màu hồng xám nhạt (Thay cho viền xanh dương cũ)
+  border:      "#FEE2E2",
+
+  // Văn bản chính: Nâu đen đậm (Hợp với đỏ hơn là xanh đen cũ)
+  text1:       "#2D0A0A",
+
+  // Văn bản phụ: Xám đỏ trung tính
+  text2:       "#6D5B5B",
+
+  // Văn bản mờ, ghi chú
+  text3:       "#AFA0A0",
+
+  // Ngôi sao đánh giá: Vàng Gold (Đồng bộ với ngôi sao trên lá cờ)
+  star:        "#FFB300",
+
+  // Ngôi sao khi không được chọn: Xám hồng nhạt
+  starOff:     "#F5EEEE",
 };
 
 // ─── Star label helper ────────────────────────────────────────────────────────

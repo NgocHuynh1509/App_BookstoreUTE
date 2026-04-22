@@ -136,24 +136,24 @@ export default NotificationScreen;
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: "#F5F7FB",
+        backgroundColor: "#FFFBFB", // Nền trắng sứ ấm áp
     },
 
     header: {
         padding: 16,
         backgroundColor: "#FFF",
         borderBottomWidth: 1,
-        borderColor: "#eee",
+        borderColor: "#FEE2E2", // Viền hồng nhạt đồng bộ
 
-        flexDirection: "row",           // 🔥 thêm
-        justifyContent: "space-between",// 🔥 thêm
-        alignItems: "center",           // 🔥 thêm
+        flexDirection: "row",
+        justifyContent: "space-between",
+        alignItems: "center",
     },
 
     title: {
         fontSize: 20,
         fontWeight: "800",
-        color: "#111",
+        color: "#2D0A0A", // Nâu đen đậm (sang trọng hơn đen thuần)
     },
 
     listContent: {
@@ -167,18 +167,18 @@ const styles = StyleSheet.create({
         padding: 14,
         marginBottom: 10,
         borderWidth: 1,
-        borderColor: "#eee",
+        borderColor: "#FEE2E2", // Viền nhẹ nhàng
     },
 
     unreadItem: {
-        backgroundColor: "#EEF5FF",
+        backgroundColor: "#FFF5F5", // Nền đỏ cực nhạt cho thông báo chưa đọc
     },
 
     iconWrap: {
         width: 44,
         height: 44,
         borderRadius: 22,
-        backgroundColor: "#DBEAFE",
+        backgroundColor: "#FFDADA", // Màu hồng nhạt cho vòng tròn icon
         justifyContent: "center",
         alignItems: "center",
         marginRight: 12,
@@ -191,19 +191,19 @@ const styles = StyleSheet.create({
     itemTitle: {
         fontSize: 15,
         fontWeight: "700",
-        color: "#111",
+        color: "#2D0A0A",
     },
 
     itemMessage: {
         marginTop: 4,
         fontSize: 14,
-        color: "#444",
+        color: "#5F4B4B", // Xám đỏ
     },
 
     itemTime: {
         marginTop: 8,
         fontSize: 12,
-        color: "#888",
+        color: "#AFA0A0",
     },
 
     emptyBox: {
@@ -217,12 +217,12 @@ const styles = StyleSheet.create({
         fontSize: 18,
         fontWeight: "700",
         marginTop: 16,
-        color: "#333",
+        color: "#2D0A0A",
     },
 
     emptySub: {
         fontSize: 14,
-        color: "#888",
+        color: "#AFA0A0",
         marginTop: 6,
         textAlign: "center",
     },
@@ -231,14 +231,14 @@ const styles = StyleSheet.create({
         flexDirection: "row",
         alignItems: "center",
         gap: 4,
-        backgroundColor: "#EFF6FF",
-        paddingHorizontal: 10,
+        backgroundColor: "#FFF5F5", // Nền hồng nhạt cho nút "Đã đọc tất cả"
+        paddingHorizontal: 12,
         paddingVertical: 6,
         borderRadius: 999,
     },
 
     readAllText: {
-        color: "#2563eb",
+        color: "#B8001A", // Màu đỏ thương hiệu UTE
         fontSize: 13,
         fontWeight: "600",
     },

@@ -19,18 +19,41 @@ import { useAuth } from "../hooks/useAuth";
 import { useNotification } from "../contexts/NotificationContext";
 
 const C = {
-  primary:      "#1565C0",
-  primaryMid:   "#1E88E5",
-  primaryLight: "#42A5F5",
-  primarySoft:  "#E3F2FD",
-  primaryTint:  "#BBDEFB",
-  bg:           "#F0F6FF",
+  // Màu đỏ chuẩn thương hiệu UTE - Mạnh mẽ, nhiệt huyết
+  primary:      "#B8001A", // Deep Red
+
+  // Đỏ trung bình cho các trạng thái Active/Hover
+  primaryMid:   "#D0001F", // Medium Red
+
+  // Đỏ sáng cho các điểm nhấn nhỏ hoặc icon
+  primaryLight: "#E53935", // Bright Red
+
+  // Nền đỏ cực nhạt cho các block nội dung (thay cho màu xanh nhạt)
+  primarySoft:  "#FFF5F5", // Very light rose
+
+  // Màu hồng nhạt để làm viền hoặc highlight nhẹ
+  primaryTint:  "#FFDADA", // Soft pink tint
+
+  // Nền ứng dụng: Trắng sứ ấm (Tránh mỏi mắt, hợp với tone đỏ)
+  bg:           "#FFFBFB", // Warm page bg
+
+  // Bề mặt các thẻ (Card) trắng tinh
   surface:      "#FFFFFF",
-  border:       "#DDEEFF",
-  text1:        "#0D1B3E",
-  text2:        "#4A5980",
-  text3:        "#9AA8C8",
-  orange:       "#FF8A00",
+
+  // Viền: Màu hồng xám nhạt (Thay cho viền xanh dương cũ)
+  border:       "#FEE2E2",
+
+  // Văn bản chính: Nâu đen đậm (Sang trọng và dịu mắt hơn hẳn xanh đen)
+  text1:        "#2D0A0A", // Deep dark mocha
+
+  // Văn bản phụ: Xám đỏ trung tính
+  text2:        "#6D5B5B",
+
+  // Văn bản mờ, ghi chú
+  text3:        "#AFA0A0",
+
+  // Màu vàng cam (Đồng bộ với ngôi sao trên lá cờ/logo)
+  orange:       "#FFB300",
 };
 
 // ─── Stagger helper ───────────────────────────────────────────────────────────

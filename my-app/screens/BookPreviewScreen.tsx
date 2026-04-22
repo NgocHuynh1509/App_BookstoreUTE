@@ -9,11 +9,20 @@ import { Ionicons } from "@expo/vector-icons";
 //     thay bằng fetch() + FileReader sẵn có trong React Native ───────────────
 
 const C = {
-  primary: "#0D5CB6",
-  primaryMid: "#1A94FF",
-  bg: "#F5F7FA",
-  text1: "#1F2937",
-  text2: "#6B7280",
+  // Màu đỏ chủ đạo UTE - Mạnh mẽ, uy tín và nhiệt huyết
+  primary:    "#B8001A",
+
+  // Màu đỏ sáng hơn cho các trạng thái nhấn (Active) hoặc icon
+  primaryMid: "#D0001F",
+
+  // Nền ứng dụng: Trắng sứ ấm (thay cho nền xám xanh lạnh cũ)
+  bg:         "#FFFBFB",
+
+  // Văn bản chính: Nâu đen đậm (Hợp với màu đỏ hơn, tạo cảm giác sang trọng)
+  text1:      "#2D0A0A",
+
+  // Văn bản phụ: Xám đỏ trung tính để giữ độ hài hòa
+  text2:      "#6D5B5B",
 };
 
 // ─── Google Drive helpers ────────────────────────────────────────────────────

@@ -21,15 +21,32 @@ const { width } = Dimensions.get("window");
 const BASE_URL = Constants.expoConfig?.extra?.API_URL;
 
 const C = {
-  primary: "#1565C0",
-  bg: "#F0F6FF",
+  // Màu đỏ chủ đạo UTE - Mạnh mẽ, nhiệt huyết và uy tín
+  primary: "#B8001A",
+
+  // Nền ứng dụng: Trắng sứ ấm (thay cho màu xanh lạnh cũ)
+  bg:      "#FFFBFB",
+
+  // Bề mặt các thẻ (Card), khung nội dung trắng tinh
   surface: "#FFFFFF",
-  text1: "#0D1B3E",
-  text2: "#4A5980",
-  orange: "#F57C00",
-  green: "#2E7D32",
-  red: "#C62828",
-  border: "#DDEEFF",
+
+  // Văn bản chính: Nâu đen đậm (Hợp với màu đỏ hơn là xanh đen)
+  text1:   "#2D0A0A",
+
+  // Văn bản phụ: Xám đỏ trung tính
+  text2:   "#6D5B5B",
+
+  // Màu cam: Chỉnh sang tone Vàng Gold (để giống Ngôi sao trên lá cờ)
+  orange:  "#FFB300",
+
+  // Màu xanh lá: Chỉnh nhẹ để hài hòa với tone nền ấm
+  green:   "#286B2C",
+
+  // Màu đỏ thông báo/lỗi: Đỏ tươi rực rỡ
+  red:     "#E53935",
+
+  // Viền: Màu hồng xám nhạt (Đồng bộ tuyệt đối với tone nóng)
+  border:  "#FEE2E2",
 };
 
 export default function ReturnDetailScreen() {

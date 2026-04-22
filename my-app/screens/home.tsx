@@ -24,21 +24,45 @@ const API_URL = Constants.expoConfig?.extra?.API_URL || "http://192.168.1.19:808
 
 // ─── Palette ──────────────────────────────────────────────────────────────────
 const C = {
-  primary:     "#1565C0",
-  primaryMid:  "#1E88E5",
-  primaryLight:"#42A5F5",
-  primarySoft: "#E3F2FD",
-  primaryTint: "#BBDEFB",
+  // Màu đỏ chuẩn thương hiệu UTE - Mạnh mẽ, nhiệt huyết
+  primary:     "#B8001A",   // Deep Red
+
+  // Đỏ trung bình cho các trạng thái Active/Hover
+  primaryMid:  "#D0001F",   // Medium Red
+
+  // Đỏ sáng cho các điểm nhấn nhỏ hoặc icon
+  primaryLight:"#E53935",   // Bright Red
+
+  // Nền đỏ cực nhạt cho các block nội dung (thay cho màu xanh nhạt)
+  primarySoft: "#FFF5F5",   // Very light rose
+
+  // Màu hồng nhạt để làm viền hoặc highlight nhẹ
+  primaryTint: "#FFDADA",   // Soft pink tint
+
+  // Trạng thái Sale: Đỏ rực rỡ đặc trưng
   sale:        "#E53935",
-  saleBg:      "#FFF1EF",
-  saleBadge:   "#EE4D2D",
-  bg:          "#F0F6FF",
+  saleBg:      "#FFF1F0",
+  saleBadge:   "#D0001F",
+
+  // Nền ứng dụng: Trắng sứ ấm (Tránh mỏi mắt, hợp với tone đỏ)
+  bg:          "#FFFBFB",   // Warm page bg
+
   surface:     "#FFFFFF",
-  border:      "#DDEEFF",
-  text1:       "#0D1B3E",
-  text2:       "#4A5980",
-  text3:       "#9AA8C8",
-  star:        "#FFC107",
+
+  // Viền: Màu hồng xám nhạt (Thay cho viền xanh dương cũ)
+  border:      "#FEE2E2",
+
+  // Văn bản chính: Nâu đen đậm (Sang trọng và dịu mắt hơn hẳn xanh đen)
+  text1:       "#2D0A0A",   // Deep dark mocha
+
+  // Văn bản phụ: Xám đỏ trung tính
+  text2:       "#6D5B5B",
+
+  // Văn bản mờ, ghi chú
+  text3:       "#AFA0A0",
+
+  // Ngôi sao đánh giá: Vàng Gold (Đồng bộ với ngôi sao trên lá cờ)
+  star:        "#FFB300",
 };
 
 // ─── Section Header ───────────────────────────────────────────────────────────
@@ -1005,55 +1029,98 @@ const s = StyleSheet.create({
   },
 modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.4)',
+    backgroundColor: 'rgba(0,0,0,0.5)',
     justifyContent: 'flex-end',
   },
+
   modalContent: {
-    backgroundColor: '#FFF',
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
+    backgroundColor: '#FFFFFF',
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
     padding: 20,
-    paddingBottom: Platform.OS === 'ios' ? 40 : 25,
+    paddingBottom: 35, // Cho iPhone có tai thỏ
   },
+
   modalHeader: {
     flexDirection: 'row',
     marginBottom: 20,
-    gap: 15,
+    borderBottomWidth: 1,
+    borderBottomColor: '#FEE2E2', // Viền hồng nhạt
+    paddingBottom: 15,
   },
+
   modalImage: {
-    width: 90,
-    height: 120,
-    borderRadius: 12,
-    marginTop: -40, // Hiệu ứng ảnh nổi lên trên nền modal
-    borderWidth: 3,
-    borderColor: '#FFF',
+    width: 100,
+    height: 130,
+    borderRadius: 8,
+    marginRight: 15,
     backgroundColor: '#F5F5F5',
   },
-  modalPrice: { fontSize: 22, fontWeight: '900', color: '#E53935' },
-  modalStock: { fontSize: 13, color: '#888', marginTop: 4 },
+
+  modalPrice: {
+    fontSize: 22,
+    fontWeight: 'bold',
+    color: '#B8001A', // Màu đỏ giá tiền nổi bật
+    marginBottom: 5,
+  },
+
+  modalStock: {
+    fontSize: 14,
+    color: '#6D5B5B', // Màu xám nâu
+  },
+
   qtyRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: 20,
-    borderTopWidth: 0.5,
-    borderColor: '#EEE',
+    marginVertical: 20,
   },
+
   qtyStepper: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#F5F5F5',
-    borderRadius: 8,
+    backgroundColor: '#FFF5F5', // Nền đỏ cực nhạt
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#FFDADA',
   },
-  stepBtn: { paddingHorizontal: 15, paddingVertical: 8 },
-  stepBtnTxt: { fontSize: 20, fontWeight: 'bold', color: '#333' },
-  qtyText: { fontSize: 16, fontWeight: '700', minWidth: 30, textAlign: 'center' },
+
+  stepBtn: {
+    width: 40,
+    height: 40,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+
+  stepBtnTxt: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#B8001A', // Nút cộng trừ màu đỏ
+  },
+
+  qtyText: {
+    paddingHorizontal: 15,
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#2D0A0A',
+  },
+
   confirmBtn: {
-    backgroundColor: '#1E88E5',
-    paddingVertical: 16,
+    backgroundColor: '#B8001A', // Nút chốt đơn đỏ chuẩn UTE
+    paddingVertical: 15,
     borderRadius: 12,
     alignItems: 'center',
-    marginTop: 10,
+    shadowColor: "#B8001A",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 5,
+    elevation: 6,
   },
-  confirmBtnTxt: { color: '#FFF', fontSize: 16, fontWeight: '800' },
+
+  confirmBtnTxt: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: 'bold',
+    textTransform: 'uppercase',
+  },
 });

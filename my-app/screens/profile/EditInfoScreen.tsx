@@ -14,20 +14,43 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const BASE_URL = Constants.expoConfig?.extra?.API_URL;
 
-// ─── Palette ──────────────────────────────────────────────────────────────────
+// ─── Palette UTE BookStore (Tone Đỏ & Vàng Ấm) ──────────────────────────────────
 const C = {
-  primary:     "#1565C0",
-  primaryMid:  "#1E88E5",
-  primarySoft: "#E3F2FD",
-  primaryTint: "#BBDEFB",
-  bg:          "#F0F6FF",
+  // Màu đỏ chính (Màu cờ/Logo) - Mạnh mẽ và uy tín
+  primary:     "#B8001A",
+
+  // Màu đỏ sáng hơn cho các trạng thái nhấn (Active)
+  primaryMid:  "#D0001F",
+
+  // Nền đỏ cực nhạt cho các thông báo nhạt (thay cho màu xanh nhạt)
+  primarySoft: "#FFF5F5",
+
+  // Màu hồng nhạt để highlight các vùng chọn
+  primaryTint: "#FFDADA",
+
+  // Nền ứng dụng: Trắng sứ ấm áp (tạo cảm giác cao cấp hơn trắng xanh)
+  bg:          "#FFFBFB",
+
+  // Bề mặt các thẻ, khung nội dung trắng tinh
   surface:     "#FFFFFF",
-  border:      "#DDEEFF",
-  borderFocus: "#1E88E5",
-  text1:       "#0D1B3E",
-  text2:       "#4A5980",
-  text3:       "#9AA8C8",
-  placeholder: "#B0C4DE",
+
+  // Viền: Màu xám hồng nhạt để đồng bộ với tone nóng
+  border:      "#FEE2E2",
+
+  // Viền khi người dùng nhấn vào ô nhập liệu (Focus)
+  borderFocus: "#B8001A",
+
+  // Văn bản chính: Nâu đen đậm (Hợp với màu đỏ hơn là xanh đen)
+  text1:       "#2D0A0A",
+
+  // Văn bản phụ: Xám đỏ trung tính
+  text2:       "#6D5B5B",
+
+  // Văn bản mờ, ghi chú
+  text3:       "#AFA0A0",
+
+  // Gợi ý trong ô nhập liệu
+  placeholder: "#D1C4C4",
 };
 
 // ─── Field wrapper ────────────────────────────────────────────────────────────

@@ -11,17 +11,39 @@ import axios from "axios"; // Đảm bảo đã import axios
 import Constants from 'expo-constants';
 
 // ─── Palette ──────────────────────────────────────────────────────────────────
+// ─── Palette ──────────────────────────────────────────────────────────────────
 const C = {
-  primary:     "#1565C0",
-  primaryMid:  "#1E88E5",
-  primarySoft: "#E3F2FD",
-  primaryTint: "#BBDEFB",
-  bg:          "#F0F6FF",
+  // Màu đỏ đậm thương hiệu - Mạnh mẽ, uy tín
+  primary:     "#B8001A",
+
+  // Màu đỏ sáng hơn - Dùng cho các nút bấm khi được nhấn (Active)
+  primaryMid:  "#D0001F",
+
+  // Màu nền đỏ cực nhạt - Thay thế cho màu xanh nhạt cũ
+  primarySoft: "#FFF5F5",
+
+  // Màu hồng nhạt - Dùng để highlight các lựa chọn hoặc viền nhẹ
+  primaryTint: "#FFDADA",
+
+  // Nền ứng dụng: Trắng sứ pha chút ấm (Tránh mỏi mắt hơn trắng xanh cũ)
+  bg:          "#FFFBFB",
+
+  // Bề mặt các thẻ (Card), khung trắng tinh
   surface:     "#FFFFFF",
-  border:      "#DDEEFF",
-  text1:       "#0D1B3E",
-  text2:       "#4A5980",
-  text3:       "#9AA8C8",
+
+  // Viền: Màu hồng xám nhạt (Đồng bộ với tone nóng)
+  border:      "#FEE2E2",
+
+  // Văn bản chính: Nâu đen đậm (Hợp với đỏ hơn là xanh đen cũ)
+  text1:       "#2D0A0A",
+
+  // Văn bản phụ: Xám đỏ trung tính
+  text2:       "#6D5B5B",
+
+  // Văn bản mờ, ghi chú hoặc icon nền
+  text3:       "#AFA0A0",
+
+  // Màu Sale: Giữ đỏ tươi rực rỡ để kích thích mua hàng
   sale:        "#E53935",
 };
 

@@ -15,21 +15,49 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import api from "../services/api";
 
+// ─── Palette UTE BookStore (Tone Đỏ & Vàng Ấm) ──────────────────────────────────
 const C = {
-  primary: "#1565C0",
-  primaryMid: "#1E88E5",
-  primarySoft: "#E3F2FD",
-  primaryTint: "#BBDEFB",
-  bg: "#F0F6FF",
-  surface: "#FFFFFF",
-  border: "#DDEEFF",
-  borderFocus: "#1E88E5",
-  text1: "#0D1B3E",
-  text2: "#4A5980",
-  text3: "#9AA8C8",
-  placeholder: "#B0C4DE",
-  error: "#E53935",
-  green: "#00897B",
+  // Màu đỏ đậm thương hiệu - Mạnh mẽ, uy tín
+  primary:     "#B8001A",
+
+  // Màu đỏ sáng hơn - Dùng cho các nút bấm khi được nhấn (Active)
+  primaryMid:  "#D0001F",
+
+  // Màu nền đỏ cực nhạt - Thay thế cho màu xanh nhạt cũ
+  primarySoft: "#FFF5F5",
+
+  // Màu hồng nhạt - Dùng để highlight các lựa chọn hoặc viền nhẹ
+  primaryTint: "#FFDADA",
+
+  // Nền ứng dụng: Trắng sứ pha chút ấm (Tránh mỏi mắt hơn trắng xanh cũ)
+  bg:          "#FFFBFB",
+
+  // Bề mặt các thẻ (Card), khung trắng tinh
+  surface:     "#FFFFFF",
+
+  // Viền: Màu hồng xám nhạt (Đồng bộ với tone nóng)
+  border:      "#FEE2E2",
+
+  // Viền khi focus vào ô nhập liệu
+  borderFocus: "#B8001A",
+
+  // Văn bản chính: Nâu đen đậm (Hợp với đỏ hơn là xanh đen cũ)
+  text1:       "#2D0A0A",
+
+  // Văn bản phụ: Xám đỏ trung tính
+  text2:       "#6D5B5B",
+
+  // Văn bản mờ, ghi chú hoặc icon nền
+  text3:       "#AFA0A0",
+
+  // Chữ gợi ý trong ô input
+  placeholder: "#D1C4C4",
+
+  // Màu lỗi: Đỏ tươi đặc trưng
+  error:       "#E53935",
+
+  // Màu xanh lá (Dùng cho thông báo thành công) - Chỉnh lại tone ấm hơn
+  green:       "#286B2C",
 };
 
 function InputField({

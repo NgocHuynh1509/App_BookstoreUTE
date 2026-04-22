@@ -13,18 +13,43 @@ const BASE_URL = Constants.expoConfig?.extra?.API_URL;
 
 // ─── Palette ──────────────────────────────────────────────────────────────────
 const C = {
-  primary:    "#1565C0",
-  primaryMid: "#1E88E5",
-  primarySoft:"#E3F2FD",
-  primaryTint:"#BBDEFB",
-  bg:         "#F0F6FF",
+  // Màu chính: Đỏ đậm (Deep Red) - mạnh mẽ và sang trọng
+  primary:    "#8B0000",
+
+  // Màu trung bình: Đỏ tươi hơn một chút (Vibrant Red) cho các nút bấm, icon
+  primaryMid: "#B8001A",
+
+  // Màu đỏ cực nhạt: Dùng cho background của các thẻ (Card) hoặc thông báo nhạt
+  primarySoft:"#FFF5F5",
+
+  // Màu đỏ nhạt: Dùng cho các khung, highlight nhẹ
+  primaryTint:"#FFDADA",
+
+  // Nền ứng dụng: Trắng pha chút đỏ rất nhẹ để tạo cảm giác ấm áp, không bị lạnh
+  bg:         "#FFF9F9",
+
+  // Các bề mặt trắng tinh khôi
   surface:    "#FFFFFF",
-  border:     "#DDEEFF",
-  borderFocus:"#1E88E5",
-  text1:      "#0D1B3E",
-  text2:      "#4A5980",
-  text3:      "#9AA8C8",
-  placeholder:"#B0C4DE",
+
+  // Viền: Màu hồng xám nhạt để đồng nhất tone
+  border:     "#FEE2E2",
+
+  // Viền khi focus: Đỏ rõ ràng
+  borderFocus:"#B8001A",
+
+  // Văn bản chính: Xanh đen cực đậm (gần như đen) để dễ đọc nhất
+  text1:      "#1A0505",
+
+  // Văn bản phụ: Xám đỏ
+  text2:      "#5F4B4B",
+
+  // Văn bản mờ/ghi chú: Xám hồng nhạt
+  text3:      "#A38E8E",
+
+  // Chỗ nhập liệu trống
+  placeholder:"#D1C4C4",
+
+  // Màu lỗi: Giữ nguyên đỏ tươi
   error:      "#E53935",
 };
 
