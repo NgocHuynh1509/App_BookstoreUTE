@@ -183,6 +183,14 @@ export default function AddressForm() {
       return Alert.alert("Lỗi", "Vui lòng nhập họ tên và số điện thoại!");
     }
 
+    const phoneRegex = /^[0-9]{10}$/;
+        if (!phoneRegex.test(formData.phoneNumber.trim())) {
+          return Alert.alert(
+            "Số điện thoại không hợp lệ",
+            "Số điện thoại phải bao gồm đúng 10 chữ số."
+          );
+        }
+
     try {
       const token  = await AsyncStorage.getItem("token");
       const url    = id ? `${BASE_URL}/addresses/${id}` : `${BASE_URL}/addresses/add`;

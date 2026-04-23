@@ -19,5 +19,8 @@ public interface ShippingAddressRepository extends JpaRepository<ShippingAddress
     @Query("SELECT s FROM ShippingAddress s WHERE s.customer.customerId = :customerId AND s.isDefault = true")
     Optional<ShippingAddress> findDefaultAddressByCustomerId(String customerId);
 
+    // Trong ShippingAddressRepository
+    List<ShippingAddress> findByCustomerCustomerIdOrderByCreatedAtAsc(String customerId);
+
 
 }

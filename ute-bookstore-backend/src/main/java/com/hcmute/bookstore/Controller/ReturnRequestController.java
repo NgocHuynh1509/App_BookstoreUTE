@@ -45,8 +45,6 @@ public class ReturnRequestController {
 
 
         returnRepo.save(rr);
-        orderRepo.save(order);
-
         return ResponseEntity.ok("Gửi yêu cầu hoàn tiền thành công");
     }
 

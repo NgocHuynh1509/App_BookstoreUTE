@@ -27,7 +27,11 @@ public class ShippingAddressController {
     @GetMapping("/default/{userId}")
     public ResponseEntity<?> getDefaultAddress(@PathVariable String userId) {
         ShippingAddress address = addressService.getDefaultAddress(userId);
-        if (address == null) return ResponseEntity.ok(null);
+
+        if (address == null) {
+            // Trả về 200 kèm body null hoặc 404 tùy theo logic Frontend của bạn
+            return ResponseEntity.ok(null);
+        }
 
         return ResponseEntity.ok(new ShippingAddressDTO(address));
     }
