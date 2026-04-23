@@ -808,13 +808,6 @@ class _CouponFormState extends ConsumerState<_CouponForm> {
                       decoration: const InputDecoration(labelText: 'Số lượt dùng'),
                     ),
                   ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: TextFormField(
-                      controller: _customerController,
-                      decoration: const InputDecoration(labelText: 'CustomerId (tuỳ chọn)'),
-                    ),
-                  ),
                 ],
               ),
               const SizedBox(height: 12),

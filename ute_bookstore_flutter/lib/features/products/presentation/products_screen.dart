@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:intl/intl.dart';
 import 'package:image_picker/image_picker.dart';
-import 'dart:io';
+import 'dart:typed_data';
 
 import '../../../widgets/admin/admin_button.dart';
 import '../../../widgets/admin/search_bar_widget.dart';
@@ -699,7 +700,7 @@ class _ProductFormState extends ConsumerState<_ProductForm> {
   late final TextEditingController _originalPriceController;
   late final TextEditingController _descriptionController;
   bool _isActive = true;
-  File? _localImage;
+  Uint8List? _selectedImageBytes;
 
   @override
   void initState() {
@@ -759,11 +760,21 @@ class _ProductFormState extends ConsumerState<_ProductForm> {
     final picker = ImagePicker();
     final picked = await picker.pickImage(source: ImageSource.gallery, imageQuality: 85);
     if (picked == null) return;
-    setState(() => _localImage = File(picked.path));
+
+    final bytes = await picked.readAsBytes();
+    setState(() => _selectedImageBytes = bytes);
+
     try {
-      final url = await ref
-          .read(productRepositoryProvider)
-          .uploadCover(picked.path, picked.name);
+      String url;
+      if (kIsWeb) {
+        url = await ref
+            .read(productRepositoryProvider)
+            .uploadCoverFromBytes(bytes, picked.name);
+      } else {
+        url = await ref
+            .read(productRepositoryProvider)
+            .uploadCover(picked.path, picked.name);
+      }
       if (!mounted) return;
       setState(() => _pictureController.text = url);
       ScaffoldMessenger.of(context).showSnackBar(
@@ -878,10 +889,10 @@ class _ProductFormState extends ConsumerState<_ProductForm> {
               ],
             ),
             const SizedBox(height: 8),
-            if (_localImage != null)
+            if (_selectedImageBytes != null)
               ClipRRect(
                 borderRadius: BorderRadius.circular(8),
-                child: Image.file(_localImage!, height: 120, fit: BoxFit.cover),
+                child: Image.memory(_selectedImageBytes!, height: 120, fit: BoxFit.cover),
               )
             else if (_pictureController.text.isNotEmpty)
               ClipRRect(

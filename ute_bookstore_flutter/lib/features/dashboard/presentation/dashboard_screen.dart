@@ -6,7 +6,6 @@ import 'package:intl/intl.dart';
 import 'package:shimmer/shimmer.dart';
 
 import '../../../app/providers.dart';
-import '../../../core/widgets/badge_icon.dart';
 import '../../../theme/admin_theme.dart';
 import '../data/dashboard_models.dart';
 import 'widgets/revenue_prediction_card.dart';
@@ -95,8 +94,6 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
     final topBooksAsync = ref.watch(dashboardTopBooksProvider(range));
     final activitiesAsync = ref.watch(dashboardRecentActivitiesProvider);
 
-    final unreadCount = summaryAsync.maybeWhen(data: (data) => data.unreadMessages, orElse: () => 0);
-
     return Scaffold(
       backgroundColor: AdminColors.background,
       appBar: AppBar(
@@ -109,14 +106,6 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
           ],
         ),
         actions: [
-          Padding(
-            padding: const EdgeInsets.only(right: 8),
-            child: BadgeIcon(
-              icon: Icons.notifications_none_rounded,
-              count: unreadCount,
-              onPressed: () {},
-            ),
-          ),
           const Padding(
             padding: EdgeInsets.only(right: 16),
             child: CircleAvatar(
@@ -264,18 +253,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                     },
                   ),
                 ),
-                const SizedBox(height: 16),
-                AnimatedEntry(
-                  delay: const Duration(milliseconds: 400),
-                  child: ordersAsync.when(
-                    data: (orders) => OrdersSummaryCard(orders: orders),
-                    loading: () => const _SkeletonRow(height: 90),
-                    error: (error, _) => _ErrorCard(
-                      message: error.toString(),
-                      onRetry: () => ref.invalidate(dashboardOrdersProvider(range)),
-                    ),
-                  ),
-                ),
+
                 const SizedBox(height: 16),
                 LayoutBuilder(
                   builder: (context, constraints) {
@@ -588,59 +566,6 @@ class RevenueSummaryCard extends StatelessWidget {
     );
   }
 }
-
-class OrdersSummaryCard extends StatelessWidget {
-  const OrdersSummaryCard({super.key, required this.orders});
-
-  final DashboardOrdersResponse orders;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: _cardDecoration,
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          CircleAvatar(
-            backgroundColor: const Color(0xFF00C2A8).withOpacity(0.12),
-            child: const Icon(Icons.shopping_cart_outlined, color: Color(0xFF00C2A8)),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text('Đơn hàng trong khoảng'),
-                AnimatedCountText(
-                  value: orders.totalOrders.toDouble(),
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
-                ),
-              ],
-            ),
-          ),
-          Flexible(
-            child: FittedBox(
-              fit: BoxFit.scaleDown,
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF4C6FFF).withOpacity(0.12),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Text(
-                  '${orders.completionRate.toStringAsFixed(1)}%',
-                  style: const TextStyle(color: Color(0xFF4C6FFF), fontWeight: FontWeight.w600),
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
 class RevenueLineChart extends StatelessWidget {
   const RevenueLineChart({super.key, required this.points});
 
@@ -1148,24 +1073,6 @@ ActivityItem _mapActivityItem(DashboardRecentActivity activity) {
       time: activity.time.isEmpty ? '—' : activity.time,
       icon: Icons.cancel_rounded,
       color: AdminColors.danger,
-    );
-  }
-  if (type == 'USER_NEW') {
-    return ActivityItem(
-      title: activity.title,
-      subtitle: activity.subtitle,
-      time: activity.time.isEmpty ? '—' : activity.time,
-      icon: Icons.person_add_alt_1_rounded,
-      color: AdminColors.success,
-    );
-  }
-  if (type == 'BOOK_NEW') {
-    return ActivityItem(
-      title: activity.title,
-      subtitle: activity.subtitle,
-      time: activity.time.isEmpty ? '—' : activity.time,
-      icon: Icons.menu_book_rounded,
-      color: AdminColors.secondary,
     );
   }
   return ActivityItem(

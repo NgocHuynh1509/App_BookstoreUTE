@@ -1,3 +1,4 @@
+import 'dart:typed_data';
 import 'product_api.dart';
 import 'product_models.dart';
 
@@ -43,6 +44,9 @@ class ProductRepository {
 
   Future<String> uploadCover(String filePath, String fileName) =>
       _api.uploadCover(filePath, fileName);
+
+  Future<String> uploadCoverFromBytes(Uint8List bytes, String fileName) =>
+      _api.uploadCoverFromBytes(bytes, fileName);
 
 }
 

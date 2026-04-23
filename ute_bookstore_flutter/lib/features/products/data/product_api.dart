@@ -1,6 +1,7 @@
 import '../../../core/api_client.dart';
 import 'product_models.dart';
 import 'package:dio/dio.dart';
+import 'dart:typed_data';
 
 class ProductApi {
   ProductApi(this._client);
@@ -58,6 +59,15 @@ class ProductApi {
   Future<String> uploadCover(String filePath, String fileName) async {
     final form = FormData.fromMap({
       'file': await MultipartFile.fromFile(filePath, filename: fileName),
+    });
+    final response = await _client.dio.post('/admin/products/upload-cover', data: form);
+    final body = response.data as Map<String, dynamic>;
+    return body['imageUrl']?.toString() ?? '';
+  }
+
+  Future<String> uploadCoverFromBytes(Uint8List bytes, String fileName) async {
+    final form = FormData.fromMap({
+      'file': MultipartFile.fromBytes(bytes, filename: fileName),
     });
     final response = await _client.dio.post('/admin/products/upload-cover', data: form);
     final body = response.data as Map<String, dynamic>;

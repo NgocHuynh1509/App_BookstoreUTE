@@ -81,7 +81,7 @@ class _ManagementScreenState extends ConsumerState<ManagementScreen> {
         screen: const CustomersScreen(),
       ),
       _MenuItem(
-        'Tin nhắn / hỗ trợ',
+        'Tin nhắn / Hỗ trợ',
         Icons.chat_bubble_outline,
         screen: ChatListScreen(repository: chatRepo),
         showDot: _hasUnread,
