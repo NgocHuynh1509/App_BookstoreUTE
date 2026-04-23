@@ -29,7 +29,7 @@ class SearchServiceTest {
     @BeforeEach
     void setUp() {
         searchService = new SearchService(booksRepository, meiliSearchService);
-        when(meiliSearchService.searchBookIds(ArgumentMatchers.anyString(), ArgumentMatchers.anyInt()))
+        when(meiliSearchService.searchBookIds(ArgumentMatchers.anyString(), ArgumentMatchers.anyString(), ArgumentMatchers.anyInt()))
                 .thenReturn(List.of());
         when(booksRepository.searchForAi(ArgumentMatchers.anyString(), ArgumentMatchers.any(Pageable.class)))
                 .thenReturn(List.of());

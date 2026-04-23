@@ -242,31 +242,6 @@ public class AdminDashboardService {
             entries.add(new ActivityEntry(orderDate, activity));
         }
 
-        List<Users> recentUsers = usersRepository
-                .findAllByOrderByCreatedAtDesc(PageRequest.of(0, safeLimit * 2));
-        if (recentUsers.isEmpty()) {
-            recentUsers = usersRepository.findAllByOrderByRegistrationDateDesc(PageRequest.of(0, safeLimit * 2));
-        }
-        for (Users user : recentUsers) {
-            LocalDateTime userTime = user.getCreatedAt();
-            if (userTime == null && user.getRegistrationDate() != null) {
-                userTime = user.getRegistrationDate().atStartOfDay();
-            }
-            if (userTime == null) {
-                continue;
-            }
-            DashboardRecentActivityResponse activity = new DashboardRecentActivityResponse();
-            activity.setType("USER_NEW");
-            activity.setTitle("Khách hàng mới");
-            String subtitle = user.getFullName() != null ? user.getFullName() : user.getUserName();
-            if (subtitle == null && user.getCustomer() != null) {
-                subtitle = user.getCustomer().getFullName();
-            }
-            activity.setSubtitle(subtitle != null ? subtitle : "Tài khoản mới");
-            activity.setTime(formatActivityTime(Date.from(userTime.atZone(ZoneId.systemDefault()).toInstant())));
-            entries.add(new ActivityEntry(Date.from(userTime.atZone(ZoneId.systemDefault()).toInstant()), activity));
-        }
-
         entries.sort((a, b) -> b.time.compareTo(a.time));
         DashboardRecentActivitiesResponse response = new DashboardRecentActivitiesResponse();
         List<DashboardRecentActivityResponse> items = new ArrayList<>();
