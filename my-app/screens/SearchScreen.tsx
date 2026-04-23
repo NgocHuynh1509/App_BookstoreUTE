@@ -224,12 +224,12 @@ export default function SearchScreen({ navigation }: any) {
                   key={item.id}
                   style={[s.histRow, idx === history.length - 1 && { borderBottomWidth: 0 }]}
                   onPress={() => {
-                    setKeyword(item.keyword);
                     navigation.navigate("SearchResult", {
                       keyword: item.keyword,
                       mode: "search",
                       bookId: "",
-                    });                  }}
+                    });
+                  }}
                   activeOpacity={0.75}
                 >
                   <View style={s.histIconWrap}>

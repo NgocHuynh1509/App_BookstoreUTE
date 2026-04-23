@@ -349,15 +349,16 @@ export default function ProfileScreen() {
             <MenuItem
                 icon="notifications-outline"
                 text="Thông báo"
+                onPress={() => navigation.navigate("NotifyTab")}
             />
             <MenuItem
                 icon="help-buoy-outline"
                 text="Trung tâm hỗ trợ"
-            />
-            <MenuItem
-                icon="settings-outline"
-                text="Cài đặt"
-                noBorder
+                onPress={() =>
+                    navigation.navigate("Chat", {
+                      tab: "ai",
+                    })
+                }
             />
           </View>
 

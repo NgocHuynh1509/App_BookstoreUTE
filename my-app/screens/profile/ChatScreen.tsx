@@ -177,6 +177,12 @@ const ChatScreen: React.FC = () => {
         return () => disconnectWebSocket();
     }, [activeTab, userData]);
 
+    useEffect(() => {
+        if (route.params?.tab === "ai") {
+            setActiveTab("ai");
+        }
+    }, [route.params]);
+
     const initChat = async () => {
         setLoading(true);
         setMessages([]); setPage(0); setHasMore(true);

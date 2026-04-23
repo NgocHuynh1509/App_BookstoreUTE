@@ -135,4 +135,16 @@ public class BookService {
 
         return discount.doubleValue();
     }
+
+    public List<BookCardResponse> searchBooks(String keyword) {
+        if (keyword == null || keyword.trim().isEmpty()) {
+            return List.of();
+        }
+
+        List<Books> books = bookRepository.searchBooks(keyword.trim());
+
+        return books.stream()
+                .map(this::toBookCardResponse)
+                .toList();
+    }
 }

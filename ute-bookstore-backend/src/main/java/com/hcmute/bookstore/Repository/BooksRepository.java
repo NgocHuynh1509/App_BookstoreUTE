@@ -94,4 +94,14 @@ public interface BooksRepository extends JpaRepository<Books, String> {
             @org.springframework.data.repository.query.Param("categoryName") String categoryName,
             org.springframework.data.domain.Pageable pageable
     );
+
+
+    @org.springframework.data.jpa.repository.Query("""
+    SELECT b FROM Books b
+    WHERE (b.isActive = true OR b.isActive IS NULL)
+      AND LOWER(b.title) LIKE LOWER(CONCAT(:keyword, '%'))
+    ORDER BY b.soldQuantity DESC
+""")
+    List<Books> searchBooks(@org.springframework.data.repository.query.Param("keyword") String keyword);
+
 }

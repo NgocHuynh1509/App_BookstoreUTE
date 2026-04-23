@@ -144,6 +144,66 @@ export default function SearchResultScreen({ route, navigation }: any) {
   const [mode, setMode]                         = useState(routeMode);
   const [selectedBookId, setSelectedBookId]     = useState(routeBookId);
 
+  // const loadData = async () => {
+  //   setLoading(true);
+  //   try {
+  //     let data: any[] = [];
+  //
+  //     if (mode === "recommend" && selectedBookId) {
+  //       const res = await api.get(`/api/recommend/${selectedBookId}`);
+  //
+  //       const raw = typeof res.data === "string"
+  //           ? JSON.parse(res.data)
+  //           : res.data;
+  //
+  //       if (!Array.isArray(raw)) {
+  //         setBooks([]);
+  //         return;
+  //       }
+  //
+  //       const detailList = await Promise.all(
+  //           raw.map(async (item: any) => {
+  //             try {
+  //               const detail = await api.get(`/books/${item.bookId}`);
+  //               return {
+  //                 ...detail.data,
+  //                 score: item.score,
+  //               };
+  //             } catch (err) {
+  //               console.log("Lỗi load book:", item.bookId, err);
+  //               return null;
+  //             }
+  //           })
+  //       );
+  //
+  //       data = detailList.filter(Boolean);
+  //     } else {
+  //       const res = await api.get("/books/search", {
+  //         params: { keyword: searchText.trim() },
+  //       });
+  //
+  //       data = Array.isArray(res.data) ? [...res.data] : [];
+  //     }
+  //
+  //     if (sort === "low-high") {
+  //       data.sort((a, b) => getBookPrice(a) - getBookPrice(b));
+  //     }
+  //     if (sort === "high-low") {
+  //       data.sort((a, b) => getBookPrice(b) - getBookPrice(a));
+  //     }
+  //     if (sort === "newest") {
+  //       data.sort((a, b) => String(getBookId(b)).localeCompare(String(getBookId(a))));
+  //     }
+  //
+  //     setBooks(data);
+  //   } catch (err) {
+  //     console.log("Lỗi load search result:", err);
+  //     setBooks([]);
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // };
+
   const loadData = async () => {
     setLoading(true);
     try {
@@ -178,8 +238,15 @@ export default function SearchResultScreen({ route, navigation }: any) {
 
         data = detailList.filter(Boolean);
       } else {
-        const res = await api.get("/books", {
-          params: { search: searchText },
+        const keyword = searchText.trim();
+
+        if (!keyword) {
+          setBooks([]);
+          return;
+        }
+
+        const res = await api.get("/books/search", {
+          params: { keyword },
         });
 
         data = Array.isArray(res.data) ? [...res.data] : [];
@@ -204,6 +271,14 @@ export default function SearchResultScreen({ route, navigation }: any) {
     }
   };
 
+  const handleManualSearch = () => {
+    const keyword = searchText.trim();
+    if (!keyword) return;
+
+    setMode("search");
+    setSelectedBookId("");
+  };
+
   // cập nhật khi params đổi
   useEffect(() => {
     setSearchText(routeKeyword || "");
@@ -215,11 +290,12 @@ export default function SearchResultScreen({ route, navigation }: any) {
     loadData();
   }, [searchText, sort, selectedBookId, mode]);
 
-  const handleManualSearch = () => {
-    setMode("search");
-    setSelectedBookId("");
-    loadData();
-  };
+  // const handleManualSearch = () => {
+  //   if (!searchText.trim()) return;
+  //   setMode("search");
+  //   setSelectedBookId("");
+  //   loadData();
+  // };
 
   const activeSort = SORT_OPTIONS.find(x => x.key === sort);
 
@@ -516,8 +592,6 @@ const s = StyleSheet.create({
   dropdownItemActive: { backgroundColor: C.primarySoft },
   dropdownTxt:        { fontSize: 14, color: C.text2 },
   dropdownTxtActive:  { color: C.primaryMid, fontWeight: "700" },
-
-  gridRow: { justifyContent: "space-between", gap: 12 },
 
   centerBox: { alignItems: "center", paddingTop: 60, gap: 10 },
   emptyIconWrap: {

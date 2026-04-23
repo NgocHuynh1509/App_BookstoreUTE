@@ -28,6 +28,13 @@ public class HomeController {
         return bookService.getBooks(category, page, limit);
     }
 
+    @GetMapping("/books/search")
+    public List<BookCardResponse> searchBooks(
+            @RequestParam String keyword
+    ) {
+        return bookService.searchBooks(keyword);
+    }
+
     @GetMapping("/books/best-sellers")
     public List<BookCardResponse> getBestSellers(
             @RequestParam(defaultValue = "10") int limit

@@ -1,15 +1,8 @@
 package com.hcmute.bookstore.Service;
 
-import com.hcmute.bookstore.Entity.Books;
-import com.hcmute.bookstore.Entity.Orders;
-import com.hcmute.bookstore.Entity.Review;
-import com.hcmute.bookstore.Entity.Users;
+import com.hcmute.bookstore.Entity.*;
 import com.hcmute.bookstore.Exception.AlreadyReviewedException;
-import com.hcmute.bookstore.Repository.BooksRepository;
-import com.hcmute.bookstore.Repository.OrderDetailRepository;
-import com.hcmute.bookstore.Repository.OrdersRepository;
-import com.hcmute.bookstore.Repository.ReviewRepository;
-import com.hcmute.bookstore.Repository.UsersRepository;
+import com.hcmute.bookstore.Repository.*;
 import com.hcmute.bookstore.dto.CreateReviewRequest;
 import com.hcmute.bookstore.dto.CreateReviewResponse;
 import com.hcmute.bookstore.dto.MyReviewResponse;
@@ -18,6 +11,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.text.SimpleDateFormat;
+import java.time.LocalDateTime;
 import java.util.Date;
 import java.util.Optional;
 import java.util.UUID;
@@ -31,6 +25,7 @@ public class ReviewService {
     private final OrdersRepository ordersRepository;
     private final OrderDetailRepository orderDetailRepository;
     private final BooksRepository booksRepository;
+    private final CouponRepository couponRepository;
 
     @Transactional
     public CreateReviewResponse createReview(String emailFromToken, CreateReviewRequest request) {
@@ -93,19 +88,66 @@ public class ReviewService {
         review.setComment(request.getComment());
         review.setCreationDate(new Date());
 
+//        reviewRepository.save(review);
+//
+//        if (request.getRating() == 5) {
+//            String couponCode = "RVW" + UUID.randomUUID().toString().replace("-", "").substring(0, 8).toUpperCase();
+//            return new CreateReviewResponse(
+//                    "Gửi đánh giá thành công",
+//                    new CreateReviewResponse.RewardData("coupon", couponCode)
+//            );
+//        }
+//
+//        return new CreateReviewResponse(
+//                "Gửi đánh giá thành công",
+//                new CreateReviewResponse.RewardData("points", null)
+//        );
         reviewRepository.save(review);
 
         if (request.getRating() == 5) {
-            String couponCode = "RVW" + UUID.randomUUID().toString().replace("-", "").substring(0, 8).toUpperCase();
+
+            String couponCode = "RVW" + UUID.randomUUID().toString()
+                    .replace("-", "")
+                    .substring(0, 8)
+                    .toUpperCase();
+
+            // tránh trùng code
+            while (couponRepository.existsByCodeIgnoreCase(couponCode)) {
+                couponCode = "RVW" + UUID.randomUUID().toString()
+                        .replace("-", "")
+                        .substring(0, 8)
+                        .toUpperCase();
+            }
+
+            Coupon coupon = new Coupon();
+            coupon.setId("CP" + UUID.randomUUID().toString()
+                    .replace("-", "")
+                    .substring(0, 10)
+                    .toUpperCase());
+            coupon.setCode(couponCode);
+            coupon.setDiscountPercent(10);
+            coupon.setMinOrderValue(100000);
+            coupon.setMaxDiscount(30000);
+            coupon.setExpiryDate(LocalDateTime.now().plusDays(7));
+            coupon.setUsageLimit(1);
+            coupon.setUsedCount(0);
+            coupon.setCustomer(user.getCustomer());
+
+            couponRepository.save(coupon);
+
             return new CreateReviewResponse(
                     "Gửi đánh giá thành công",
                     new CreateReviewResponse.RewardData("coupon", couponCode)
             );
         }
 
+        Integer currentPoints = user.getRewardPoints() != null ? user.getRewardPoints() : 0;
+        user.setRewardPoints(currentPoints + 10);
+        usersRepository.save(user);
+
         return new CreateReviewResponse(
                 "Gửi đánh giá thành công",
-                new CreateReviewResponse.RewardData("points", null)
+                new CreateReviewResponse.RewardData("points", "10")
         );
     }
 
